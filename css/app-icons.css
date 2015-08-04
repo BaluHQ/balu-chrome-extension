@@ -1,0 +1,73 @@
+.searchIcon {
+  font-size: 25px;
+  color: orange;
+}
+
+.searchLinkIconPopup {
+    padding-top: 0rem;
+    padding-bottom: 0.3rem;
+}
+
+.searchLinkIcon {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+
+.accountIcon {
+  font-size: 40px;
+  color: orange;
+  text-shadow: 1px 4px 6px #FFF,0 0 0 #000,1px 4px 6px #FFF;
+  vertical-align: middle;
+}
+
+.accountLinkIcon {
+    background-color: white;
+    border-style: none;
+}
+
+accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLinkIcon:focus {
+  background-color: white;
+}
+
+.minimiseBaluIcon {
+    font-size: 20px;
+    color: orange;
+}
+
+
+.addNewIcon {
+    font-size: 40px;
+    color: orange;
+}
+
+
+.navIcon {
+    font-size: 40px;
+    color: orange;
+}
+
+.altProdIcon {
+    font-size: 15px;
+    color: orange;
+}
+
+.voteClass_voted {
+    font-size: 15px;
+    color: red;
+}
+
+.voteClass_notVoted {
+    font-size: 15px;
+    color: #FFDB99;
+}
+
+.voteClass_nothing {
+    font-size: 15px;
+    color: orange;
+}
+
+
+.infoIcon {
+    font-size: 16px;
+    color: blue;
+}

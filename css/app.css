@@ -1,0 +1,147 @@
+/*
+.sideBar {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    display: block;
+    width: 300px;
+    height: 100%;
+    zIndex: 2147483647;
+    background: white;
+}
+*/
+.iframeBody {
+
+}
+.column,
+.columns {
+  padding-left: 0.1rem;
+  padding-right: 0.1rem;}
+
+.button {
+    padding-right: 1rem;
+    padding-left: 1rem;
+}
+
+
+.footer{
+  bottom: 5px;
+  position: fixed;
+  width: 100%;
+  height: 63px;
+  padding-top: 5px;
+  background-color: white;
+
+}
+
+.bottomNavDiv{
+    background-color: #DCDCDC;
+    height: 40px;
+    margin-bottom: 2px;
+}
+
+.footerDiv{
+    background-color: white;
+    height: 10px;
+    border-top-style: solid;
+    border-top-width: 1px;
+    border-top-color: #808080;
+}
+
+.footerText {
+    background-color: white;
+    font-size: 10px;
+}
+
+.contentDiv {
+    padding-bottom: 68px;
+    margin: 0 auto;
+}
+
+.origProductBlock {
+    padding: 10px 10px;
+
+}
+
+.origProductHeaderStrip{
+    background-color: #808080;
+}
+
+.origProductHeaderStripText{
+    padding-left: 5px;
+    font-size: 13px;
+    font-weight: bold;
+    color: orange;
+    position: relative;
+}
+
+.whyDoWeCare {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    font-size: 11px;
+}
+
+.whyDoWeCare_link {
+    color: white;
+    font-weight: lighter;
+}
+
+.altProductsBlock {
+    padding: 0px 10px;
+}
+
+.altProductBlock {
+    padding: 5px 0px;
+    position: relative;
+}
+
+.altProductLink {
+
+}
+
+.altImage {
+    width: auto;
+    height: 100px;
+}
+
+
+.altText {
+    vertical-align: top;
+    font-size: 13px;
+    display: inline-block;
+    padding-left: 5px;
+
+}
+
+.altText-top {
+
+}
+
+.altText-bottom {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    text-align: right;
+    font-size: 12px;
+    color: orange;
+}
+
+
+@-webkit-keyframes rotate {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.searchingIcon{
+    height: 40px;
+    width: 40px;
+    -webkit-animation-name:             rotate;
+    -webkit-animation-duration:         10s;
+    -webkit-animation-iteration-count:  infinite;
+    -webkit-animation-timing-function:  linear;
+}

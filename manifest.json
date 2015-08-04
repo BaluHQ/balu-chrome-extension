@@ -1,0 +1,101 @@
+{
+
+    /*
+     * Manifest header information
+     */
+
+    "manifest_version": 2,
+    "name":             "Balu",
+    "options_page":     "options.html",
+    "description":      "1. Search every page for 2. hardcoded product names and 3. display them in a popup",
+    "version":          "0.01",
+    "offline_enabled":  false, // whether or not the extension should operate when Chrome is off line
+
+    /*
+     * Background (event) page
+     *
+     * Background pages can run single, long-running scripts to manage some task or state
+     * Page or browser actions, or option pages, can request state from the background page.
+     * In this sense, it is the foundation of the extension.
+     *
+     * Consider, when possible, using an event pages instead of background pages (because,
+     * if it's not actively doing something, event pages are unloaded, freeing memory and
+     * other system resources)
+     */
+
+    "background": {
+        "scripts":     ["js/parse-1.4.2.min.js",
+                        "js/background.js"],
+        "persistent": true // false would make it an event page, not a background page, which is what Google recommend. But then webRequest wouldn't work, requiring me to hardcode local copy of Parse.js
+        // If I change back to false: "If your extension uses window.setTimeout() or window.setInterval(), switch to using the alarms API instead. DOM-based timers won't be honored if the event page shuts down."
+    },
+
+
+    /*
+     * Browser Action
+     *
+     * Create an icon to the right of the address bar
+     * A page_action would create an icon IN the address bar instead
+     */
+
+    "browser_action": {
+        "default_title": "Balu",
+        "default_icon":  "images/icon-browser_action.png",
+        "default_popup": "popup.html"
+    },
+
+
+    /*
+     * Content Scripts
+     *
+     * Inject a content script into the users' web pages.
+     *
+     */
+
+    // We need a script that will inject into every page and search for product matches
+    "content_scripts": [{
+        "matches":    ["*://*/*"], // specify which pages the content script will be injected into.
+        "js":         ["js/search.js","js/content_script.js"], // I would add parse / etc libraries here if needed in content_scripts
+        "run_at":     "document_end" // When the script is injected: document_start", "document_end", or "document_idle".
+    }],
+
+
+    /*
+     * Web Accessible Resources
+     *
+     * Resourced needed by the content script
+     *
+     */
+
+    "web_accessible_resources": [
+        "images/*.jpg",
+        "images/*.png",
+        "js/inject_script.js",
+        "options.html",
+        "css/foundation.css",
+        "css/app.css",
+        "css/foundation-icons.css",
+        "css/foundation-icons.woff",
+        "css/foundation-icons.ttf",
+        "css/app-icons.css",
+        "js/vendor/modernizr.js",
+        "js/vendor/jquery.js",
+        "js/foundation.min.js"
+
+    ],
+
+    /*
+     * Permissions
+     *
+     * Chrome permission settings for the extension
+     *
+     */
+
+    "permissions": [
+        "http://*/*",
+        "https://*/*",
+        "storage",
+        "tabs"
+    ]
+
+}
