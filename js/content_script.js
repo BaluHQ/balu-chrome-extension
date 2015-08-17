@@ -240,19 +240,18 @@ function waitForTabIdToComeBackThenRequestPageSearch(){
 
         log('content_script.waitForTabIdToComeBackThenRequestPageSearch: Ending wait: gvThisTab is set','PROCS');
 
-        if (gvThisTab.isWebsiteOnOrOff === 'ON') {
-
             // Inject form handler script into page
             var formHandlerScript = document.createElement('script');
             formHandlerScript.type="text/javascript";
             formHandlerScript.src = chrome.extension.getURL('js/inject_script.js');
             document.getElementsByTagName('head')[0].appendChild(formHandlerScript);
 
-            // Request background script displays the side bar and searches the page (in parallel)
-            gvPort.postMessage({tabId:    gvThisTab.tab.id,
-                                sender:   'content_script',
-                                subject:  'pleaseSearchThePage'});
-        }
+            if(gvThisTab.isWebsiteOnOrOff === 'ON') {
+                // Request background script displays the side bar and searches the page (in parallel)
+                gvPort.postMessage({tabId:    gvThisTab.tab.id,
+                                    sender:   'content_script',
+                                    subject:  'pleaseSearchThePage'});
+            }
     } else {
         log('content_script.waitForTabIdToComeBackThenRequestPageSearch: Waiting: gvThisTab is not set yet',' INFO');
         window.setTimeout(function(){return waitForTabIdToComeBackThenRequestPageSearch();},50);
@@ -328,7 +327,7 @@ function createSideBar(thenCreateSideBarContent,username,userId,recommendationDa
         iframe = document.createElement('iframe');
 
         iframe.id = 'iFrameBaluSideBar';
-        iframe.src = 'about:blank';
+        //iframe.src = 'about:blank';
         iframe.className = 'sideBar';
 
         // Style the iframe
@@ -348,6 +347,7 @@ function createSideBar(thenCreateSideBarContent,username,userId,recommendationDa
 
         // append iFrame to document (in doing so, contentWindow etc are created)
         html.appendChild(iframe);
+        iframe.contentDocument.body.height = '80%';
 
     }
 
@@ -500,7 +500,7 @@ function createSignInSideBarContent() {
     // Log in form
 
     userForm += '<div class="row">';
-    userForm += '  <div class="small-4 columns end">';
+    userForm += '  <div class="small-8 columns end">';
     userForm += '    <h4>Sign In to Balu</h4>';
     userForm += '  </div>';
     userForm += '</div>';
@@ -528,7 +528,7 @@ function createSignInSideBarContent() {
 
     userForm += '<br />';
     userForm += '<div class="row">';
-    userForm += '  <div class="small-4 columns end">';
+    userForm += '  <div class="small-8 columns end">';
     userForm += '    <h4>Create a New Account</h4>';
     userForm += '  </div>';
     userForm += '</div>';
@@ -665,6 +665,7 @@ function createResultsSideBarContent(doc, username, userId, recommendations, pro
             // productGroupName itself
             var lastJ = 0;
             if (productGroupHeaders) {
+                productGroupHead += '      <div style="margin-right: 30px">';
                 for (j = 0; j < productGroupHeaders[recommendations[i].productGroupName].length; j++){
                     if (j === productGroupHeaders[recommendations[i].productGroupName].length-1) {
                         // last in group, don't put a comma at the end
@@ -674,6 +675,8 @@ function createResultsSideBarContent(doc, username, userId, recommendations, pro
                     }
                     lastJ = j;
                 }
+                productGroupHead += '      </div>';
+                productGroupHead += '      <span data-tooltip aria-haspopup="true" class="has-tip whyDoWeCare" title="Learn more about the harmful side effects of the ' + productGroupHeaders[recommendations[i].productGroupName][lastJ].whyDoWeCare + ' industry"><a class="whyDoWeCare_link" target="_blank" href="http://www.getbalu.org/why-do-we-care/' + productGroupHeaders[recommendations[i].productGroupName][lastJ].whyDoWeCare + '">why care?&nbsp;</a></span>';
             } else {
                 productGroupHead += recommendations[i].productGroupName;
             }
@@ -683,7 +686,7 @@ function createResultsSideBarContent(doc, username, userId, recommendations, pro
             // whyDoWeCare as well. But we're not grouping these productGroupHeaders by search category, we're just grouping
             // by product group. So if you had one product group name in two categories (Coffee in food and in drink) then which
             // whyDoWeCare do we use? Food or Drink? Logic a few lines above just takes the random last one.
-            productGroupHead += '      <span data-tooltip aria-haspopup="true" class="has-tip whyDoWeCare" title="Learn more about the harmful side effects of the ' + productGroupHeaders[recommendations[i].productGroupName][lastJ].whyDoWeCare + ' industry"><a class="whyDoWeCare_link" target="_blank" href="http://www.getbalu.org/why-do-we-care/' + productGroupHeaders[recommendations[i].productGroupName][lastJ].whyDoWeCare + '">why care?&nbsp;</a></span>';
+
             productGroupHead += '    </div>';
             productGroupHead += '  </div>';
             productGroupHead += '  </span>';
@@ -709,17 +712,20 @@ function createResultsSideBarContent(doc, username, userId, recommendations, pro
 
         recBlock += '<div class="altProductsBlock">';
         recBlock += '  <div class="row collapse altProductBlock">';
-        recBlock += '    <div class="small-5 columns"><div class="row">';
-        recBlock += '      <a href="javascript:window.parent.hyperlink_Rec(\'' + recommendations[i].productURL + '\',\'' + recommendations[i].recommendationId + '\');">';
-        recBlock += '        <img class="altImage" src="' + recommendations[i].imageURL + '" />';
-        recBlock += '      </a>';
+        recBlock += '    <div class="small-5 columns">';
+        recBlock += '      <div class="row text-center">';
+        recBlock += '        <a href="javascript:window.parent.hyperlink_Rec(\'' + recommendations[i].productURL + '\',\'' + recommendations[i].recommendationId + '\');">';
+        recBlock += '          <img class="altImage" src="' + recommendations[i].imageURL + '" />';
+        recBlock += '        </a>';
         recBlock += '      </div>';
         recBlock += '    </div>';
         recBlock += '    <div class="small-7 columns altText">';
         recBlock += '      <div class="altText-top">';
-        recBlock += '        <b><a href="javascript:window.parent.hyperlink_Rec(\'' + recommendations[i].productURL + '\',\'' + recommendations[i].recommendationId + '\');" class="altProductLink" target="_blank">' + recommendations[i].brand + '</a> <span data-tooltip aria-haspopup="true" class="has-tip" title="' + recommendations[i].brand + '\r\r' + recommendations[i].brandSpiel + '"><i class="fi-info infoIcon"></i></b>';
+        recBlock += '        <b><a href="javascript:window.parent.hyperlink_Rec(\'' + recommendations[i].productURL + '\',\'' + recommendations[i].recommendationId + '\');" class="altProductLink" target="_blank">' + recommendations[i].brand + '</a>';// <span data-tooltip aria-haspopup="true" class="has-tip" title="' + recommendations[i].brand + '\r\r' + recommendations[i].brandSpiel + '"><i class="fi-info infoIcon"></i></b>';
         recBlock += '        <br />';
         recBlock += '        <a href="javascript:window.parent.hyperlink_Rec(\'' + recommendations[i].productURL + '\',\'' + recommendations[i].recommendationId + '\');" class="altProductLink" target="_blank">' + recommendations[i].productName + '</a>';
+        recBlock += '        <br />';
+        recBlock += '        <span data-tooltip aria-haspopup="true" class="has-tip" style="font-size: 11px" title="' + recommendations[i].brand + '\r\r' + recommendations[i].brandSpiel + '">why care?<span>';
         recBlock += '      </div>';
         recBlock += '    </div>';
         recBlock += '    <div class="altText-bottom">';

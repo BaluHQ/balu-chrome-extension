@@ -38,11 +38,12 @@ function searchPage_master(searchData,tabURL,isBaluShowOrHide,websiteURL,callbac
                                  isBaluShowOrHide: isBaluShowOrHide,
                                  callback:         callback};
 
+
     // Call getElements, which switches on the websiteURL and pulls the
     // correct DOM elements from the page based on the website we're looking at.
     // Then call, in sequence, the sexSearch, then the productSearch, then the callback
     // to the contentScript (which is requestRetrieveRecommendations)
-    getElements(websiteURL,sexSearch,productSearch,contentScriptCallback);
+    getElements(websiteURL,sexSearch,productSearch,contentScriptCallback,1);
 
 }
 
@@ -50,16 +51,21 @@ function searchPage_master(searchData,tabURL,isBaluShowOrHide,websiteURL,callbac
 /*
  *
  */
-function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentScriptCallback) {
+function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentScriptCallback,attemptCount) {
 
-    log('search.getElements: Start','PROCS');
+    log('search.getElements: Start >>> attemptCount == ' + attemptCount,'PROCS');
+
+    var runSexSearch = true;
+    var foundDOMElement = false; // if we don't find the DOM element we wait a few seconds and try again
+    var observer;
 
     // To do, would like some email alerts sent to me if a DOM elements fails to pull
     var productNameElements;
     var breadcrumbsElements;
     var productNameElement;
     var breadcrumbsElement;
-    var productName;
+    var spans;
+    var productNames = [];
     var breadcrumbs;
     var sexOverride;
     // we want the text after the first forward slash, for searching.
@@ -67,11 +73,15 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentS
 
     switch(websiteURL){
 
+        /*
+         * FASHION
+         */
+
         case 'www.asos.com':
 
             productNameElement = document.getElementById('ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle');
             if(productNameElement){
-                productName = productNameElement.textContent.toLowerCase();
+                productNames.push(productNameElement.textContent.toLowerCase());
             }
 
             breadcrumbsElement = document.getElementById('ctl00_ContentMainPage_ctlBreadCrumbs_lblBreadCrumbs');
@@ -81,17 +91,26 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentS
 
             // to do: pick up filter tickboxes for sex
 
+            if(productNameElement) {
+                foundDOMElement = true;
+            }
+
         break;
 
         case 'www.debenhams.com':
 
             productNameElements = document.getElementsByClassName('product-top-info clearfix');
             if(productNameElements[0]){
-                productName = productNameElements[0].textContent.toLowerCase();
+                productNames.push(productNameElements[0].textContent.toLowerCase());
             }
+
             breadcrumbsElement = document.getElementById('WC_BreadCrumbTrailDisplay_div_1');
             if(breadcrumbsElement){
                 breadcrumbs = breadcrumbsElement.innerHTML.toLowerCase();
+            }
+
+            if(productNameElements[0]) {
+                foundDOMElement = true;
             }
 
         break;
@@ -100,39 +119,54 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentS
 
             productNameElements = document.getElementsByClassName('productHeading');
             if(productNameElements[0]){
-                productName = productNameElements[0].textContent.toLowerCase();
+                productNames.push(productNameElements[0].textContent.toLowerCase());
             }
 
             breadcrumbsElement = document.getElementById('breadcrumb');
             if(breadcrumbsElement){
                 breadcrumbs = breadcrumbsElement.innerHTML.toLowerCase();
             }
+
+            if(productNameElements[0]) {
+                foundDOMElement = true;
+            }
+
         break;
 
         case 'www.next.co.uk':
 
             productNameElements = document.getElementsByClassName('StyleCopy');
             if(productNameElements[0]){
-                productName = productNameElements[0].textContent.toLowerCase();
+                productNames.push(productNameElements[0].textContent.toLowerCase());
             }
 
             breadcrumbsElements = document.getElementsByClassName('BreadcrumbNavigation');
             if(breadcrumbsElements[0]){
                 breadcrumbs = breadcrumbsElements[0].innerHTML.toLowerCase();
             }
+
+            if(productNameElements[0]) {
+                foundDOMElement = true;
+            }
+
         break;
 
         case 'www.newlook.com':
 
             productNameElements = document.getElementsByClassName('title_container');
             if(productNameElements[0]){
-                productName = productNameElements[0].textContent.toLowerCase();
+                productNames.push(productNameElements[0].textContent.toLowerCase());
             }
 
             breadcrumbsElements = document.getElementsByClassName('breadcrumb');
             if(breadcrumbsElements[0]){
                 breadcrumbs = breadcrumbsElements[0].innerHTML.toLowerCase();
             }
+
+            if(productNameElements[0]) {
+                foundDOMElement = true;
+            }
+
         break;
 
         case 'www.topshop.com':
@@ -141,7 +175,7 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentS
             if(productNameElements[0]){
                 var subTags = productNameElements[0].getElementsByTagName('h1');
                 if(subTags[0]) {
-                    productName = subTags[0].innerHTML.toLowerCase();
+                    productNames.push(subTags[0].innerHTML.toLowerCase());
                 }
             }
 
@@ -152,18 +186,174 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,contentS
 
             // topshop is women only
             sexOverride = 'women';
+
+            if(productNameElements[0]) {
+                foundDOMElement = true;
+            }
+
+        break;
+
+        case 'www.tesco.com':
+
+            runSexSearch = false;
+
+            // Two cases, multi-items or single item.
+            // Check multi-items first and if no elements found, check single item
+
+            var allProductsGrid = document.getElementsByClassName('allProducts');
+            var productDetailsContainer;
+            // The allProducts class is the grid containing all search results. It's a div. Inside it are:
+               // div: productLists
+               //   ul: products grid (or products line for list view)
+               //     li: product
+               //       div: desc (or descWRap for list view)
+               //         h2: (or h3 for list view)
+               //           a:
+               //             span class=image,
+               //             span ... (special offers, price, etc)
+               //             span data-title="true"                   <-- This is our product name!
+
+            if(allProductsGrid[0]) {
+                spans = allProductsGrid[0].getElementsByTagName('span');
+                for (i = 0; i < spans.length; i++) {
+                    if(spans[i].getAttribute('data-title') === 'true') {
+                        productNames.push(spans[i].innerHTML.toLowerCase());
+                    }
+                }
+            } else {
+                productDetailsContainer = document.getElementsByClassName('productDetailsContainer');
+                // The productDetailsContainer class is the box containing the product. It's a div. Inside it are:
+                   // div: productDescription
+                   //   div: productWrapper
+                   //     div: descriptionDetails
+                   //       div: desc
+                   //         h1:
+                   //           span data-title="true"    <-- This is our product name!
+
+                if(productDetailsContainer[0]) {
+                    spans = productDetailsContainer[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
+                    for (i = 0; i < spans.length; i++) {
+                        if(spans[i].getAttribute('data-title') === 'true') {
+                            productNames.push(spans[i].innerHTML.toLowerCase());
+                        }
+                    }
+                }
+            }
+
+            if(allProductsGrid[0] || productDetailsContainer[0]) {
+                foundDOMElement = true;
+            }
+
+        break;
+
+        case 'groceries.asda.com':
+
+            runSexSearch = false;
+
+            // Two cases, multi-items or single item.
+            // Check multi-items first and if no elements found, check single item
+
+            var listings = document.getElementsByClassName('listings');
+            // The allProducts class is the grid containing all search results. It's a div. Inside it are:
+               // div: listings
+               //   div: listing
+               //     div: container
+               //       div: slider
+               //         div: product
+               //           div: product-contnet
+               //             span: title
+               //               a:           (Title contains product name)
+               //                 span:                        <-- This is our product name!
+
+            if(listings[0]) {
+
+                // First things first, Asda doesn't refresh the page so we need to keep an eye on the listsings DOM from now on
+
+                if(!observeDOM) { // only if we haven't already done this . To do: this won't work if we are opening multiple tabs? :(
+
+                        var observeDOM = (function(){
+                        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
+                            eventListenerSupported = window.addEventListener;
+
+                        return function(obj, callback){
+                            if( MutationObserver ){
+                                // define a new observer
+                                var obs = new MutationObserver(function(mutations, observer){
+                                    if( mutations[0].addedNodes.length || mutations[0].removedNodes.length )
+                                        callback();
+                                });
+                                // have the observer observe foo for changes in children
+                                obs.observe( obj, { childList:true, subtree:true });
+                            }
+                            else if( eventListenerSupported ){
+                                obj.addEventListener('DOMNodeInserted', callback, false);
+                                obj.addEventListener('DOMNodeRemoved', callback, false);
+                            }
+                        };
+                    })();
+
+                    // Observe a specific DOM element:
+                    observeDOM( document.getElementById('listings') ,function(){
+
+                        console.log('search.getElements: ASDA DOM changed',' INFO');
+                        getElements(websiteURL,sexSearchCallback,productSearchCallback,contentScriptCallback,attemptCount);
+                    });
+                }
+
+                // Now go ahead and pull out our spans
+
+                spans = listings[0].getElementsByTagName('span');
+                for (i = 0; i < spans.length; i++) {
+                    if(spans[i].getAttribute('class') === 'title') {
+                        productNames.push(spans[i].textContent.toLowerCase());
+                    }
+                }
+            } /*else {
+                var productDetailsContainer = document.getElementsByClassName('productDetailsContainer');
+                // The productDetailsContainer class is the box containing the product. It's a div. Inside it are:
+                   // div: productDescription
+                   //   div: productWrapper
+                   //     div: descriptionDetails
+                   //       div: desc
+                   //         h1:
+                   //           span data-title="true"    <-- This is our product name!
+
+                if(productDetailsContainer[0]) {
+                    spans = productDetailsContainer[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
+                    for (i = 0; i < spans.length; i++) {
+                        if(spans[i].getAttribute('data-title') === 'true') {
+                            productNames.push(spans[i].innerHTML.toLowerCase());
+                        }
+                    }
+                }
+            }*/
+
+            if(listings[0] /* || ohter one */) {
+                foundDOMElement = true;
+            }
+
         break;
 
         default:
 
     }
 
-    var pageElements = {productName: productName,
-                        breadcrumbs: breadcrumbs,
-                        URLText:     URLText,
-                        sexOverride: sexOverride};
+    if(!foundDOMElement && attemptCount < 10) {
+        window.setTimeout(function(){attemptCount++; return getElements(websiteURL,sexSearch,productSearch,contentScriptCallback,attemptCount);},100);
+    } else if (foundDOMElement) {
+        var pageElements = {productNames: productNames,
+                            breadcrumbs:  breadcrumbs,
+                            URLText:      URLText,
+                            sexOverride:  sexOverride};
 
-    sexSearchCallback(pageElements,websiteURL,productSearchCallback,contentScriptCallback);
+        if(runSexSearch) {
+            sexSearchCallback(pageElements,websiteURL,productSearchCallback,contentScriptCallback);
+        } else {
+            productSearchCallback(pageElements,websiteURL,contentScriptCallback);
+        }
+    } else {
+        log('search.getElements: Failed to find DOM elements for websiteURL == ' + websiteURL,'ERROR');
+    }
 }
 
 /*
@@ -211,18 +401,24 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, contentScrip
              }
          }
 
-         // Next, let's see whether the sex is in the product name
-         if (pageElements.productName) {
-             if(!foundMen && !foundWomen) {
-                 if (pageElements.productName.indexOf('women') > -1 ||
-                     pageElements.productName.indexOf('woman') > -1 ||
-                     pageElements.productName.indexOf('lady') > -1 ||
-                     pageElements.productName.indexOf('female') > -1) {
-                     foundWomen = true;
-                 } else if (pageElements.productName.indexOf('men') > -1 ||
-                            pageElements.productName.indexOf('man') > -1 ||
-                            pageElements.productName.indexOf('male') > -1) {
-                     foundMen = true;
+         // Next, let's see whether the sex is in any of the product name (not that I've built multi-item
+         // search for fashion yet, but for now we're assuming that if we find a sex in one product we can
+         // say that all products on the page are that sex
+         if (pageElements.productNames) {
+             for (i = 0; i < pageElements.productNames.length; i++){
+                 if(!foundMen && !foundWomen) {
+                     if (pageElements.productNames[i].indexOf('women') > -1 ||
+                         pageElements.productNames[i].indexOf('woman') > -1 ||
+                         pageElements.productNames[i].indexOf('lady') > -1 ||
+                         pageElements.productNames[i].indexOf('female') > -1) {
+                         foundWomen = true;
+                         break;
+                     } else if (pageElements.productNames[i].indexOf('men') > -1 ||
+                                pageElements.productNames[i].indexOf('man') > -1 ||
+                                pageElements.productNames[i].indexOf('male') > -1) {
+                         foundMen = true;
+                         break;
+                     }
                  }
              }
          }
@@ -252,7 +448,7 @@ function productSearch(pageElements,websiteURL,contentScriptCallback) {
 
     var functionName = 'productSearch';
 
-    if(pageElements.productName) {
+    if(pageElements.productNames) {
 
         var searchResults = [];
         var productGroupHeaders = {};
@@ -277,76 +473,92 @@ function productSearch(pageElements,websiteURL,contentScriptCallback) {
             // Only search for this searchProduct if it belongs to a searchCategory that is valid for the user's current website
             if(contentScriptCallback.searchData[i].websiteURL === websiteURL) {
 
-                position_brand = pageElements.productName.indexOf(contentScriptCallback.searchData[i].brand_LC);
+                // for each product on the users web page (may be single product screen; may be multi product search results etc)
+                // Break as soon as we find the current searchProduct - we don't need to search the entire page, we only need to
+                // find it once
+                var foundThisItem;
+                for (j = 0; j < pageElements.productNames.length; j++) {
 
-                if(contentScriptCallback.searchData[i].searchTerm1 !== '') {
-                    position_searchTerm1  = pageElements.productName.indexOf(contentScriptCallback.searchData[i].searchTerm1_LC);
-                } else {
-                    position_searchTerm1 = -2;
-                }
-
-                if(contentScriptCallback.searchData[i].searchTerm2 !== '') {
-                    position_searchTerm2  = pageElements.productName.indexOf(contentScriptCallback.searchData[i].searchTerm2_LC);
-                } else{
-                    position_searchTerm2 = -2;
-                }
-
-                if(contentScriptCallback.searchData[i].searchTerm3 !== '') {
-                    position_searchTerm3  = pageElements.productName.indexOf(contentScriptCallback.searchData[i].searchTerm3_LC);
-                } else{
-                    position_searchTerm3 = -2;
-                }
-
-                // If we're doing a search that requires a match on sex then pageElements.useSex will have been set by the sexSearch function
-                // Otherwise, skip sex entirely and call it a pass
-                if (pageElements.useSex) {
-                    // if this SearchProduct has no sex specified, then we want to pass
-                    if (contentScriptCallback.searchData[i].sex === ''){
-                        matchedSex = true;
+                    if(contentScriptCallback.searchData[i].brand_LC !== 'all') {
+                        position_brand = pageElements.productNames[j].indexOf(contentScriptCallback.searchData[i].brand_LC);
                     } else {
-                        // If we found mention of both man and woman item, then this is a pass regardless of what's on the searchProduct
-                        if(pageElements.foundMen && pageElements.foundWomen) {
+                        position_brand = -2;
+                    }
+
+                    if(contentScriptCallback.searchData[i].searchTerm1 !== '') {
+                        position_searchTerm1  = pageElements.productNames[j].indexOf(contentScriptCallback.searchData[i].searchTerm1_LC);
+                    } else {
+                        position_searchTerm1 = -2;
+                    }
+
+                    if(contentScriptCallback.searchData[i].searchTerm2 !== '') {
+                        position_searchTerm2  = pageElements.productNames[j].indexOf(contentScriptCallback.searchData[i].searchTerm2_LC);
+                    } else{
+                        position_searchTerm2 = -2;
+                    }
+
+                    if(contentScriptCallback.searchData[i].searchTerm3 !== '') {
+                        position_searchTerm3  = pageElements.productNames[j].indexOf(contentScriptCallback.searchData[i].searchTerm3_LC);
+                    } else{
+                        position_searchTerm3 = -2;
+                    }
+
+                    // If we're doing a search that requires a match on sex then pageElements.useSex will have been set by the sexSearch function
+                    // Otherwise, skip sex entirely and call it a pass
+                    if (pageElements.useSex) {
+                        // if this SearchProduct has no sex specified, then we want to pass
+                        if (contentScriptCallback.searchData[i].sex === ''){
                             matchedSex = true;
                         } else {
-                            if (contentScriptCallback.searchData[i].sex_LC === 'men' && pageElements.foundMen) {
-                                matchedSex = true;
-                            } else if (contentScriptCallback.searchData[i].sex_LC === 'women' && pageElements.foundWomen) {
+                            // If we found mention of both man and woman item, then this is a pass regardless of what's on the searchProduct
+                            if(pageElements.foundMen && pageElements.foundWomen) {
                                 matchedSex = true;
                             } else {
-                                matchedSex = false;
+                                if (contentScriptCallback.searchData[i].sex_LC === 'men' && pageElements.foundMen) {
+                                    matchedSex = true;
+                                } else if (contentScriptCallback.searchData[i].sex_LC === 'women' && pageElements.foundWomen) {
+                                    matchedSex = true;
+                                } else {
+                                    matchedSex = false;
+                                }
                             }
                         }
+                    } else {
+                        matchedSex = true; // this avoids failing the final condition of the function in cases where we don't need to match a sex.
                     }
-                } else {
-                    matchedSex = true; // this avoids failing the final condition of the function in cases where we don't need to match a gender.
-                }
 
+                    // To do: For fashion I've taken brand out of the equation, because there are so many and I reckon anything on ASOS-proper
+                    // is worthy of recommendation. All brands for fashion are set to "All"
+                    // Hence, we're effectively just working at productGroup level, e.g. a searchProduct would be called T-Shirt, or Jeans, etc.
+                    // Eventually I'd like to build a brands table, mabye work by exception rather than inclusion...?
 
-                // To do: I'm taking brand out for now, because there are so many and I reckon anything on ASOS-proper is worth of recommendation.
-                // Hence, we're effectively just working at productGroup level, e.g. a searchProduct would be called T-Shirt, or Jeans, etc.
-                // Eventually I'd like to build a brands table, mabye work by exception rather than inclusion...?
+                    // Firsty, see whether we're using OR conditions or AND conditions
 
-                // Firsty, see whether we're using OR conditions or AND conditions
+                    foundThisItem = false;
 
-                var foundThisItem = false;
+                    // We've set our position vars to -2 if the searchProduct didn't have a searchTerm entered.
+                    // This way we can ignore blank values for AND (i.e. a product with all blank values will always return)
+                    // and take them into account for OR (i.e. a product with one blank value will NOT always return!)
+                    if(contentScriptCallback.searchData[i].andOr === 'AND') {
+                        //log('search.productSearch: determining AND search result >>> position_brand == ' + position_brand + ', position_searchTerm1 == ' + position_searchTerm1 + ', position_searchTerm2 == ' + position_searchTerm2 + ', position_searchTerm3 == ' + position_searchTerm3 + ', matchedSex == ' + matchedSex,' TEMP');
+                        if (((position_brand > -1      || position_brand === -2) &&
+                            (position_searchTerm1 > -1 || position_searchTerm3 === -2) &&
+                            (position_searchTerm2 > -1 || position_searchTerm2 === -2) &&
+                            (position_searchTerm3 > -1 || position_searchTerm3 === -2)) && matchedSex) {
 
-                // We've set our position vars to -2 if the searchProduct didn't have a searchTerm entered.
-                // This way we can ignore blank values for AND (i.e. a product with all blank values will always return)
-                // and take them into account for OR (i.e. a product with one blank value will NOT always return!)
-                if(contentScriptCallback.searchData[i].andOr === 'AND') {
-                    if (/*position_brand > -1 && */((position_searchTerm1 > -1 || position_searchTerm3 === -2) &&
-                                                    (position_searchTerm2 > -1 || position_searchTerm2 === -2) &&
-                                                    (position_searchTerm3 > -1 || position_searchTerm3 === -2)) && matchedSex) {
-
-                        foundThisItem = true;
+                            foundThisItem = true;
+                            break;
+                        }
                     }
-                }
-                else {
-
-                    if (/*position_brand > -1 && */(position_searchTerm1 > -1 ||
-                                                    position_searchTerm2 > -1 ||
-                                                    position_searchTerm3 > -1) && matchedSex) {
-                        foundThisItem = true;
+                    else {
+                        //log('search.productSearch: determining OR search result >>> position_brand == ' + position_brand + ', position_searchTerm1 == ' + position_searchTerm1 + ', position_searchTerm2 == ' + position_searchTerm2 + ', position_searchTerm3 == ' + position_searchTerm3 + ', matchedSex == ' + matchedSex,' INFO');
+                        if ((position_brand > -1 || position_brand === -2) &&
+                            (position_searchTerm1 > -1 ||
+                             position_searchTerm2 > -1 ||
+                             position_searchTerm3 > -1) && matchedSex) {
+                            foundThisItem = true;
+                            break;
+                        }
                     }
                 }
 

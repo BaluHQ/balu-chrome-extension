@@ -31,28 +31,37 @@ function DOMContentLoadedListener(){
 
     log('options.DOMContentLoadedListener: Start','PROCS');
 
+    if (!gvBackground) {
+        gvBackground = chrome.extension.getBackgroundPage();
+    }
     var htmlString = '';
+
+    Parse.initialize('mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu', 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY');
+    var user = Parse.User.current();
 
     var contentDiv = document.getElementById("contentDiv");
 
     htmlString += '<form id="manualSearchForm">';
     htmlString += '<div class="row">';
-    htmlString += '  <div class="small-12 columns header">';
-    htmlString += '    <div class="row collapse">';
-    htmlString += '      <div class="small-6 columns">';
-    htmlString += '        <input type="text" id="fieldManualProductSearch" placeholder="Search" class="radius">';
-    htmlString += '      </div>';
-    htmlString += '      <div class="small-2 column text-center">';
-    htmlString += '        <a href="" id="manualProductSearchSubmitButton" class="button postfix searchLinkIconPopup radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
-    htmlString += '      </div>';
-    htmlString += '      <div class="small-2 column text-center">';
-    htmlString += '        <a href="' + chrome.extension.getURL("options.html") + '" target="_blank" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
-    htmlString += '      </div>';
-    htmlString += '      <div class="small-2 column text-center">';
-    htmlString += '        <a href="http://www.getbalu.org/webapp/addNewRecommendation.html?userId=' + gvBackground.getUserId() + '" target="_blank" class="button postfix accountLinkIcon"><i class="fi-plus addNewIcon"></i></a>';
-    htmlString += '      </div>';
-    htmlString += '    </div>';
-    htmlString += '  </div>';
+    if(user) {
+        htmlString += '  <div class="small-12 columns header">';
+        htmlString += '    <div class="row collapse">';
+        htmlString += '      <div class="small-6 columns">';
+        htmlString += '        <input type="text" id="fieldManualProductSearch" placeholder="Search" class="radius">';
+        htmlString += '      </div>';
+        htmlString += '      <div class="small-2 column text-center">';
+        htmlString += '        <a href="" id="manualProductSearchSubmitButton" class="button postfix searchLinkIconPopup radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
+        htmlString += '      </div>';
+        htmlString += '      <div class="small-2 column text-center">';
+        htmlString += '        <a href="' + chrome.extension.getURL("options.html") + '" target="_blank" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
+        htmlString += '      </div>';
+        htmlString += '      <div class="small-2 column text-center">';
+        htmlString += '        <div id="showAddRecommendationWindowButton" class="button postfix accountLinkIcon"><i class="fi-plus addNewIcon"></i></div>';
+        //htmlString += '        <a href="http://www.getbalu.org/webapp/addNewRecommendation.html?userId=' + gvBackground.getUserId() + '" target="_blank" class="button postfix accountLinkIcon"><i class="fi-plus addNewIcon"></i></a>';
+        htmlString += '      </div>';
+        htmlString += '    </div>';
+        htmlString += '  </div>';
+    }
     htmlString += '</div>';
     htmlString += '</form>';
 
@@ -60,27 +69,39 @@ function DOMContentLoadedListener(){
         htmlString += 'Balu is turned off. To get ethical recommendations while you shop <a href="' + chrome.extension.getURL("options.html") + '" target="_blank">turn Balu on</a><br />';
         contentDiv.innerHTML += htmlString;
     } else {
-        Parse.initialize('mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu', 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY');
 
-        if(!Parse.User.current()){
+        if(!user){
             htmlString += '<a href="' + chrome.extension.getURL("options.html") + '" target="_blank">Log in</a> to get Balu\'s ethical recommendations while you shop<br />';
             contentDiv.innerHTML += htmlString;
         } else{
-            if(gvBackground.gvIsBaluShowOrHide === 'HIDE' || gvBackground.gvIsBaluShowOrHide_untilRefresh === 'HIDE'){
-                htmlString += 'To show the Balu side bar, <a id="showBaluSideBarOnClick" href="">click here</a><br />';
-                contentDiv.innerHTML += htmlString;
-                document.getElementById("showBaluSideBarOnClick").addEventListener('click', showBaluSideBarOnClick);
-            } else {
-                htmlString += 'To edit settings for Balu, <a href="' + chrome.extension.getURL("options.html") + '" target="_blank">click here</a><br />';
-                contentDiv.innerHTML += htmlString;
-            }
+            chrome.tabs.getSelected(function(tab) {
+                if(gvBackground.gvIsBaluShowOrHide === 'HIDE'){
+                    htmlString += 'To show the Balu side bar, <a id="showBaluSideBarOnClick" href="">click here</a><br />';
+                    contentDiv.innerHTML += htmlString;
+                    document.getElementById("showBaluSideBarOnClick").addEventListener('click', showBaluSideBarOnClick);
+                } else {
+                    htmlString += 'To edit settings for Balu, <a href="' + chrome.extension.getURL("options.html") + '" target="_blank">click here</a><br />';
+                    contentDiv.innerHTML += htmlString;
+                }
+                document.getElementById("manualProductSearchSubmitButton").addEventListener('click', manualProductSearchSubmit);
+                document.getElementById("fieldManualProductSearch").addEventListener('keydown', manualProductSearchEnterKeyListener);
+                document.getElementById("showAddRecommendationWindowButton").addEventListener('click',showAddRecommendationWindow);
+            });
          }
     }
-    document.getElementById("manualProductSearchSubmitButton").addEventListener('click', manualProductSearchSubmit);
-    document.getElementById("fieldManualProductSearch").addEventListener('keydown', manualProductSearchEnterKeyListener);
+
 }
 
+/*
+ *
+ */
+function showAddRecommendationWindow() {
 
+    log('options.showAddRecommendationWindow: Start','PROCS');
+
+    chrome.windows.create({'url': 'userSubmittedRec.html', 'type': 'popup', 'width': 430, 'height': 500}, function(window) {
+    });
+}
 /*
  *
  */
@@ -88,12 +109,14 @@ function showBaluSideBarOnClick(){
 
     log('options.showBaluSideBarOnClick: Start','PROCS');
 
-    gvBackground.gvIsBaluShowOrHide = 'SHOW';
-    gvBackground.gvIsBaluShowOrHide_untilRefresh = 'SHOW';
-    gvBackground.searchThePage_allTabs();
-    window.close();
-    chrome.storage.sync.set({'isBaluShowOrHide':'SHOW'}, function(){
-        log('options.baluShowOrHideListener: alwaysShow checked, storage.sync.isBaluShowOrHide set to SHOW',' INFO');
+    chrome.tabs.getSelected(function(tab) {
+        gvBackground.gvIsBaluShowOrHide = 'SHOW';
+        gvBackground.gvTabs[tab.id].isBaluShowOrHide_untilRefresh = 'SHOW';
+        gvBackground.searchThePage_allTabs();
+        window.close();
+        chrome.storage.sync.set({'isBaluShowOrHide':'SHOW'}, function(){
+            log('options.baluShowOrHideListener: alwaysShow checked, storage.sync.isBaluShowOrHide set to SHOW',' INFO');
+        });
     });
 }
 

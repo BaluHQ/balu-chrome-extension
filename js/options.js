@@ -28,10 +28,14 @@ var gvTestWebsiteURL = 'balutestwebsite.html';
 /*
  *
  */
-function DOMContentLoadedListener(){
+function DOMContentLoadedListener(event){
 
     log('options.DOMContentLoadedListener: Start','LSTNR');
 
+    // The popups's
+    //if(window.location.href.indexOf('userSubmittedRec') !== -1) {
+    //    return;
+    //}
     // Set up log in / out form
 
     var userFormDiv = document.getElementById("userFormDiv");
@@ -181,23 +185,43 @@ function DOMContentLoadedListener(){
 
         Parse.initialize('mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu', 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY');
 
-        var Website = Parse.Object.extend("Website");
-        var websiteQuery = new Parse.Query(Website);
-        websiteQuery.ascending('websiteURL');
+        var CategoryWebsiteJoin = Parse.Object.extend("CategoryWebsiteJoin");
+        var categoryWebsiteQuery = new Parse.Query(CategoryWebsiteJoin);
 
-        websiteQuery.find({
-            success: function(websites){
+        categoryWebsiteQuery.include('searchCategory');
+        categoryWebsiteQuery.include('website');
+
+        categoryWebsiteQuery.ascending('categoryName_sort,websiteURL_sort');
+
+        categoryWebsiteQuery.notEqualTo('website',{__type: "Pointer",className: "Website", objectId: 'Z5y6RkdrX1'}); // To do, can I not use dot notation here to filter on the website name?
+
+        categoryWebsiteQuery.find({
+            success: function(categoryWebsites){
 
                 settings += '<ul>';
 
-                for (var i = 0; i < websites.length; i++) {
-                    if(gvTestWebsiteURL != websites[i].get('websiteURL').toLowerCase()) {
-                        if(websites[i].get('isWebsiteOnOrOff') === 'ON') {
-                            settings += '    <li><label>' + websites[i].get('websiteURL') + '</label></li>';
-                        }
+                var previousSearchCategory = "-1";
+                var currentSearchCategory = "-1";
+                var nextSearchCategory = "-1";
+
+                for (var i = 0; i < categoryWebsites.length; i++) {
+                    currentSearchCategory = categoryWebsites[i].get('searchCategory').get('categoryName');
+                    if(i < categoryWebsites.length-1){
+                        nextSearchCategory = categoryWebsites[i+1].get('searchCategory').get('categoryName') ;
                     }
+                    if(currentSearchCategory != previousSearchCategory) {
+                        settings += '   <li><label>' + currentSearchCategory + '</label>';
+                        settings += '   <ul>';
+                    }
+                    if(categoryWebsites[i].get('website').get('isWebsiteOnOrOff') === 'ON') {
+                        settings += '      <li><label><a href="http://' + categoryWebsites[i].get('website').get('websiteURL') + '">' + categoryWebsites[i].get('website').get('websiteURL') + '</a></label></li>';
+                    }
+                    if(currentSearchCategory != nextSearchCategory) {
+                        settings += '    </ul>';
+                    }
+                    previousSearchCategory = currentSearchCategory;
                 }
-                settings += '</ul>';
+                settings += '</ul></ul>';
 
                 settings += '  </div>';
                 settings += '</div>';
@@ -209,13 +233,13 @@ function DOMContentLoadedListener(){
                 // Now that it's all added to the DOM we can do the last few tasks:
 
                 // Add event listeners
-/*
+
                 document.getElementById("alwaysShow").addEventListener('click', baluShowOrHideListener);
                 document.getElementById("alwaysHide").addEventListener('click', baluShowOrHideListener);
 
                 document.getElementById("baluOn").addEventListener('click', baluOnOrOffListener);
                 document.getElementById("baluOff").addEventListener('click', baluOnOrOffListener);
-*/
+
 /*
                 for (var j = 0; j < websites.length; j++) {
                     if(gvTestWebsiteURL != websites[j].get('websiteURL').toLowerCase()) {
@@ -242,7 +266,7 @@ function DOMContentLoadedListener(){
                 });
 
             },
-            error: parseError
+            error: gvBackground.parseErrorFind
         });
 
     }
@@ -408,7 +432,7 @@ function signUpUser(email,password){
 
     log('options.signUpUser: Start','PROCS');
 
-    gvBackground.signUserUp(null,email,password);
+    gvBackground.signUserUp(null,email,password,email);
 
     setTimeout(function(){location.reload();}, 2000);
 
@@ -436,9 +460,6 @@ function signUpUser(email,password){
      gvBackground.log(message, level);
  }
 
- function parseError(result, error) {
-     alert("Error: " + error.code + " " + error.message);
- }
 
 function userLog(eventName, data) {
     var noTabId;

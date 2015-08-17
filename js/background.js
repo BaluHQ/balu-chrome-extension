@@ -7,7 +7,6 @@
  */
 var gvIsBaluOnOrOff;
 var gvIsBaluShowOrHide;
-var gvIsBaluShowOrHide_untilRefresh;
 var gvWebsites;
 var gvProductSearch;
 var gvTabs = [];
@@ -16,7 +15,7 @@ var gvTabs = [];
 var gvLogErrors = true;
 var gvLogProcs  = true;
 var gvLogDebugs = true;
-var gvLogInfos  = false;
+var gvLogInfos  = true;
 var gvLogLstnrs = false;
 var gvLogTemps  = true;
 
@@ -97,7 +96,7 @@ function portMessageListener(msg){
 
         case 'content_script | pleaseSearchThePage':
             log('background.portMessageListener: Request received: pleaseSearchThePage','PROCS');
-            gvIsBaluShowOrHide_untilRefresh = 'SHOW';
+            gvTabs[msg.tabId].isBaluShowOrHide_untilRefresh = 'SHOW';
             searchThePage(msg.tabId);
         break;
 
@@ -123,7 +122,7 @@ function portMessageListener(msg){
 
         case 'content_script | pleaseHideBaluUntilRefresh':
             log('background.portMessageListener: Request received: pleaseHideBaluUntilRefresh >>> msg.tabId == ' + msg.tabId,'PROCS');
-            gvIsBaluShowOrHide_untilRefresh = 'HIDE';
+            gvTabs[msg.tabId].isBaluShowOrHide_untilRefresh = 'HIDE';
             requestHideSideBar(msg.tabId); // without setting any variables or storage, sidebar will display after next refresh
         break;
 
@@ -285,20 +284,16 @@ function connectTab(tab,returnTabToContentScript){
         chrome.browserAction.setBadgeText({text: ""});
     }
 
-    // Second, create a port - but only if we need to.
+    // Second, create a port
     // We do this on every page load, because the page is disconnected everytime the tab unloads (user navigates))
-    var port;
-    if(isWebsiteOnOrOff === 'ON') {
-        port = chrome.tabs.connect(tab.id, {name:'background'});
-        port.onMessage.addListener(portMessageListener);
-        log('background.connectTab: ' + tab.id + ' connected',' INFO');
-    } else {
-        log('background.connectTab: ' + tab.id + ' NOT connected',' INFO');
-    }
+    var port = chrome.tabs.connect(tab.id, {name:'background'});
+    port.onMessage.addListener(portMessageListener);
+    log('background.connectTab: ' + tab.id + ' connected',' INFO');
 
     // Third, save / update the tab in gvTabs
     gvTabs[tab.id] = {tab:              tab,
                       isWebsiteOnOrOff: isWebsiteOnOrOff,
+                      isBaluShowOrHide_untilRefresh: 'SHOW',
                       websiteId:        websiteId,
                       websiteURL:       websiteURL,
                       port:             port};
@@ -350,7 +345,7 @@ function displaySignInSideBar_allTabs(){
     for(var tab in gvTabs) {
         // just incase the port has disconnected for whatever reason. In theory that's a bug,
         // but I can't commit the time right now to identifying it. So just catch it here.
-        if(gvTabs[tab].port !== null){
+        if(gvTabs[tab].port !== null && gvTabs[tab].isWebsiteOnOrOff === 'ON'){
             displaySignInSideBar(tab);
         }
     }
@@ -384,9 +379,11 @@ function displaySignInSideBar(tabId){
  *
  */
 function searchThePage_allTabs(){
-    log('background.displaySideBarAndSearchThePage_allTabs: Start','PROCS');
+    log('background.searchThePage_allTabs: Start','PROCS');
     for(var tab in gvTabs) {
-        searchThePage(tab);
+        if(gvTabs[tab].tab.url.indexOf('chrome-extension://') === -1) {
+            searchThePage(tab);
+        }
     }
 }
 
@@ -658,9 +655,9 @@ function signUserUp(tabId,username,password,email){
     log("background.signUserUp: Start",'PROCS');
 
     var user = new Parse.User();
-    user.set("username", username);
+    user.set("username", username.toLowerCase());
     user.set("password", password);
-    user.set("email",    email);
+    user.set("email",    email.toLowerCase());
 
     // If we got a sign up request then sign them up and log them in, and ask the content_script to search the page
     user.signUp(null, {
@@ -677,7 +674,7 @@ function signUserUp(tabId,username,password,email){
  */
 function logUserIn(tabId,username,password){
 
-    log("background.logUserIn: Start: " + username + ' | ' + password,'PROCS');
+    log("background.logUserIn: Start",'PROCS');
 
     Parse.User.logIn(username,password, {
         success: function(user) {
@@ -685,7 +682,7 @@ function logUserIn(tabId,username,password){
             userLog(tabId,'USER_LOG_IN',{user: user});
             searchThePage_allTabs();
         },
-        error: parseError
+        error: parseErrorUser
     });
 }
 
@@ -1015,7 +1012,10 @@ function displayResults(tabId,username,userId,recommendationData,productGroupHea
 
     log("background.displayResults: Start",'PROCS');
 
-    if(gvIsBaluShowOrHide === 'SHOW') {
+    // use productGroupHeaders as a proxy for identifying a manual search
+    if (productGroupHeaders === null) {
+        requestDisplayResultsSideBar(tabId,username,userId,recommendationData,productGroupHeaders,searchTerm);
+    } else if(gvIsBaluShowOrHide === 'SHOW') {
         chrome.browserAction.setBadgeText({text: ""});
         requestDisplayResultsSideBar(tabId,username,userId,recommendationData,productGroupHeaders,searchTerm);
     } else {
@@ -1072,7 +1072,12 @@ function requestHideSideBar(tabId){
  */
 function getUserId(){
     Parse.initialize('mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu', 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY');
-    return Parse.User.current().id;
+    if(Parse.User.current()){
+        return Parse.User.current().id;
+    } else {
+        return null;
+    }
+
 }
 /**************************
  * Error and Log handling *

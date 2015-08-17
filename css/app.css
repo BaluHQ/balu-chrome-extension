@@ -11,7 +11,7 @@
 }
 */
 .iframeBody {
-
+  height: 99%; /* prevents scroll bar appearing until needed */
 }
 .column,
 .columns {
@@ -75,7 +75,7 @@
     position: relative;
 }
 
-.whyDoWeCare {
+.whyDoWeCare { /* the one that appears in the header */
     position: absolute;
     right: 0;
     bottom: 0;
@@ -85,6 +85,13 @@
 .whyDoWeCare_link {
     color: white;
     font-weight: lighter;
+}
+
+.whyDoWeCare_recBody {  /* the one that appears in the rec body */
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    font-size: 11px;
 }
 
 .altProductsBlock {

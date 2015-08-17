@@ -12,12 +12,12 @@
 (function initialise(){
 
     log('inject_script.initialise: Start','PROCS');
-
+/*
     var parseLibrary=document.createElement('script');
     parseLibrary.setAttribute("type","text/javascript");
     parseLibrary.setAttribute("src", "http://www.parsecdn.com/js/parse-1.4.2.min.js");
     document.getElementsByTagName("head")[0].appendChild(parseLibrary);
-
+*/
 })();
 
 /*************
