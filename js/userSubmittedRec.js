@@ -6,27 +6,38 @@
  * Global variables
  */
 
-var gvBackground = chrome.extension.getBackgroundPage();
-
- // Logging control
- var gvLogErrors = true;
- var gvLogProcs  = true;
- var gvLogDebugs = true;
- var gvLogInfos  = false;
- var gvLogLstnrs = false;
- var gvLogTemps  = true;
-
+var gvScriptName_userSubmittedRec_userSubmittedRec = 'userSubmittedRec';
+var gvParams;
 
 /*
  *
  */
 (function initialise(){
 
-    log('addNewRec.initialise: Start','PROCS');
-
+    log(gvScriptName_userSubmittedRec_userSubmittedRec + '.initialise: Start','INITS');
     window.addEventListener('DOMContentLoaded', DOMContentLoadedListener);
 
+    gvParams = getSearchParameters();
+
 })();
+
+/*
+ * Decode get parameter to get userId
+ */
+ function getSearchParameters() {
+       var prmstr = window.location.search.substr(1);
+       return prmstr !== null && prmstr !== "" ? transformToAssocArray(prmstr) : {};
+ }
+
+ function transformToAssocArray( prmstr ) {
+     var params = {};
+     var prmarr = prmstr.split("&");
+     for ( var i = 0; i < prmarr.length; i++) {
+         var tmparr = prmarr[i].split("=");
+         params[tmparr[0]] = tmparr[1];
+     }
+     return params;
+ }
 
 /**********************
  * Listener Functions *
@@ -37,10 +48,13 @@ var gvBackground = chrome.extension.getBackgroundPage();
  */
 function DOMContentLoadedListener(){
 
-    log('addNewRec.DOMContentLoadedListener: Start','LSTNR');
+    log(gvScriptName_userSubmittedRec_userSubmittedRec + '.DOMContentLoadedListener: Start','LSTNR');
 
     displayPage(getAddNewRecFormHTML());
 }
+
+
+
 
 /******************
  * HTML Functions *
@@ -52,7 +66,7 @@ function DOMContentLoadedListener(){
 
 function displayPage(contentHTML) {
 
-   log("userSubmittedRec.displayPage: Start",'PROCS');
+   log(gvScriptName_userSubmittedRec_userSubmittedRec + '.displayPage: Start','PROCS');
 
    var htmlString = '';
 
@@ -61,8 +75,9 @@ function displayPage(contentHTML) {
    htmlString += '<br />';
    htmlString += contentHTML;
 
-   document.getElementById('container').innerHTML = htmlString;
+   document.getElementById('contentDiv').innerHTML = htmlString;
    document.getElementById('submitButton').addEventListener('click',addNewRec);
+   document.getElementById('returnToSidebar').addEventListener('click',returnToSidebar);
 
  }
 
@@ -71,9 +86,17 @@ function displayPage(contentHTML) {
  */
 function getAddNewRecFormHTML(thankYouText) {
 
-    log('userSubmittedRec.getAddNewRecFormHTML: Start','PROCS');
+    log(gvScriptName_userSubmittedRec_userSubmittedRec + '.getAddNewRecFormHTML: Start','PROCS');
 
     var htmlString = '';
+
+    // To do: need to know whether this came from popup or not and, if so, not to show return to sidebar button
+    if (gvParams.fromPopup === 'true') {
+        // nothing
+    } else {
+        htmlString += '<a id="returnToSidebar" class="button radius tiny right">Return to sidebar</a>';
+    }
+
 
     if(thankYouText) {
         htmlString += '<div class="row">';
@@ -128,7 +151,7 @@ function getAddNewRecFormHTML(thankYouText) {
  */
 function addNewRec() {
 
-    log('userSubmittedRec.addNewRec: Start','PROCS');
+    log(gvScriptName_userSubmittedRec_userSubmittedRec + '.addNewRec: Start','PROCS');
 
     var fieldProductName  = document.getElementById("fieldProductName_addRec");
     var fieldURLOrTwitter = document.getElementById("fieldURLorTwitter_addRec");
@@ -138,6 +161,7 @@ function addNewRec() {
     var URLOrTwitter = fieldURLOrTwitter.value;
     var why          = fieldWhy.value;
 
+// to do, replace with vars
     Parse.initialize("mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu", "IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY");
 
     var UserSubmittedRec = Parse.Object.extend("UserSubmittedRec");
@@ -156,17 +180,30 @@ function addNewRec() {
     });
 }
 
+/*
+ *
+ */
+function returnToSidebar() {
+
+    log(gvScriptName_userSubmittedRec_userSubmittedRec + '.returnToSidebar: Start','PROCS');
+
+    chrome.runtime.sendMessage({sender:  'content_script',
+                                subject: 'pleaseRefreshTab'});
+
+}
+
 /**************************
  * Error and Log handling *
  **************************/
 
 function log(message, level) {
-    gvBackground.log(message, level);
+    chrome.runtime.sendMessage({sender:  'content_script',
+                                subject: 'pleaseLogMessageOnConsole',
+                                message:  message,
+                                level:    level});
 }
 
-function parseError(result, error) {
-    alert("Error: " + error.code + " " + error.message);
-}
+function parseErrorSave(object,error) {gvBackground.parseErrorSave(object,error);}
 
 function userLog(eventName, data) {
    var noTabId;

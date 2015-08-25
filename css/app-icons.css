@@ -38,6 +38,8 @@ accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLi
 .addNewIcon {
     font-size: 40px;
     color: orange;
+    text-shadow: 1px 4px 6px #FFF,0 0 0 #000,1px 4px 6px #FFF;
+    vertical-align: middle;
 }
 
 

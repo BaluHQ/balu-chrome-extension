@@ -1,18 +1,30 @@
-/*
-.sideBar {
-    position: fixed;
-    top: 0px;
-    right: 0px;
-    display: block;
-    width: 300px;
-    height: 100%;
-    zIndex: 2147483647;
-    background: white;
-}
-*/
+/********
+ * Body *
+ ********/
+
 .iframeBody {
   height: 99%; /* prevents scroll bar appearing until needed */
 }
+
+.optionsBody {
+  min-width: 300px;
+  position: relative;
+  vertical-align: middle;
+  padding-left: 10px;
+}
+
+.popupBody {
+  min-width: 300px;
+  position: relative;
+  vertical-align: middle;
+}
+
+.userSubmittedRecBody {
+
+}
+
+/* .... */
+
 .column,
 .columns {
   padding-left: 0.1rem;
