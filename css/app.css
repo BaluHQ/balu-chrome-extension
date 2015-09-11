@@ -1,9 +1,22 @@
 /********
  * Body *
  ********/
-
+.brandSpielToolTips {width: 250px}
+.custom .joyride-nub {
+    visibility: hidden;
+}
 .iframeBody {
   height: 99%; /* prevents scroll bar appearing until needed */
+}
+
+.popupBody {
+    margin-top: 2px;
+    margin-left: 2px;
+    margin-right: 2px;
+    margin-bottom: 2px;
+}
+.header {
+    margin-left: 2px;
 }
 
 .optionsBody {
@@ -20,9 +33,21 @@
 }
 
 .userSubmittedRecBody {
-
+  margin-left: 20px;
+  margin-right: 20px;
+}
+.userBlockBrandBody {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+.userSubmittedWebsiteRec{
+  margin-left: 20px;
+  margin-right: 20px;
 }
 
+.brandSpielHidden {
+    visibility: hidden;
+}
 /* .... */
 
 .column,
@@ -37,13 +62,15 @@
 
 
 .footer{
-  bottom: 5px;
+  bottom: 0px;
   position: fixed;
   width: 100%;
-  height: 63px;
-  padding-top: 5px;
+  height: 20px; /*63px;*/
+  margin-top: 5px;
   background-color: white;
-
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #808080;
 }
 
 .bottomNavDiv{
@@ -52,12 +79,10 @@
     margin-bottom: 2px;
 }
 
-.footerDiv{
-    background-color: white;
-    height: 10px;
-    border-top-style: solid;
-    border-top-width: 1px;
-    border-top-color: #808080;
+
+.footerDivs{
+    height: 20px;
+    padding-right: 10px;
 }
 
 .footerText {
@@ -71,19 +96,30 @@
 }
 
 .origProductBlock {
-    padding: 10px 10px;
+    padding: 0px 10px;
 
 }
 
+.hrClass {
+    padding: 0px 0px;
+    margin: 10px 0px;
+}
+
 .origProductHeaderStrip{
-    background-color: #808080;
+
+}
+
+.origProductHeaderStripWhyCare{
+    font-size: 11px;
+    color: #A0522D;
+    position: relative;
 }
 
 .origProductHeaderStripText{
     padding-left: 5px;
     font-size: 13px;
     font-weight: bold;
-    color: orange;
+    color: #A0522D;
     position: relative;
 }
 
@@ -116,7 +152,7 @@
 }
 
 .altProductLink {
-
+    color: #D2691E;
 }
 
 .altImage {
@@ -134,7 +170,7 @@
 }
 
 .altText-top {
-
+    padding-left: 5px;
 }
 
 .altText-bottom {

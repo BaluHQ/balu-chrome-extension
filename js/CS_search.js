@@ -23,15 +23,18 @@ var gvScriptName_CSSearch = 'CS_search';
  * When all searching is finished, this is the function that's called
  * to pass the results back to the extension
  */
-function processSearchResults(searchResults,productGroupHeaders,foundSomething){
+function processSearchResults(searchResults,foundSomething){
 
-      log(gvScriptName_CSSearch + '.processSearchResults: Start','PROCS');
+    if(searchResults !== null) {
+        log(gvScriptName_CSSearch + '.processSearchResults: Start (searchResults.length == ' + searchResults.length + ')','PROCS');
+    } else{
+        log(gvScriptName_CSSearch + '.processSearchResults: Start (searchResults is null)','PROCS');
+    }
 
-      if (foundSomething) {
-          sendMessage('pleaseRetrieveRecommendations',{searchResults:       searchResults,
-                                                       productGroupHeaders: productGroupHeaders});
-      }
- }
+    if (foundSomething) {
+        sendMessage('BG_main','pleaseRetrieveRecommendations',{searchResults: searchResults});
+    }
+}
 
 /*
  * This function searches the HTML of the page for each of the SearchProducts.
@@ -58,7 +61,7 @@ function searchPage_master(searchData,tabURL,websiteURL){
     // correct DOM elements from the page based on the website we're looking at.
     // Then call, in sequence, the sexSearch, then the productSearch, then the callback
     // to the contentScript (which is receiveSearchResults)
-    getElements(websiteURL,sexSearch,productSearch,searchData,1);
+    getElements(tabURL,websiteURL,sexSearch,productSearch,searchData,1);
 
 }
 
@@ -66,7 +69,7 @@ function searchPage_master(searchData,tabURL,websiteURL){
 /*
  *
  */
-function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchData,attemptCount) {
+function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,searchData,attemptCount) {
 
     log(gvScriptName_CSSearch + '.getElements: Start >>> attemptCount == ' + attemptCount,'PROCS');
 
@@ -83,7 +86,7 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
     // pageElements to be searched
     var productNames = [];
     var breadcrumbs;
-    var URLText = gvThisTab.tab.url.substring(gvThisTab.tab.url.indexOf('/')).toLowerCase(); // we want the text after the first forward slash, for searching.
+    var URLText = tabURL.substring(tabURL.indexOf('/')).toLowerCase(); // we want the text after the first forward slash, for searching.
     var menFilter = 'NO';
     var womenFilter = 'NO';
 
@@ -99,6 +102,87 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
     switch(websiteURL){
 
         /*
+         * AMAZON
+         */
+
+        case 'www.amazon.co.uk':
+
+            runSexSearch = true;
+
+            // Breadcrumbs
+
+            var amazonInfoBar = document.getElementById('s-result-info-bar-content');
+            if(amazonInfoBar !== null) {
+                breadcrumbs = amazonInfoBar.textContent.toLowerCase();
+            }
+
+            // Search results page //
+
+            var amazon_resultsCol = document.getElementById('resultsCol');
+
+            // The resultsCol div is the grid that (usually) contains all search results.
+            // What's inside it depends on the view, but it seems that all the
+            // product names are links with class = s-access-detail-page
+
+            // If resultsCol is not there, then try searchResults div
+
+            var amazon_searchResults;
+            if (amazon_resultsCol === null) {
+                amazon_searchResults = document.getElementById('searchResults');
+            }
+
+var temp = '';
+            if(amazon_resultsCol !== null) {
+                var amazon_links = amazon_resultsCol.querySelectorAll('a.s-access-detail-page');
+                for (i = 0; i < amazon_links.length; i++) {
+                    productNames.push(amazon_links[i].textContent.toLowerCase());
+temp += i + ': ' + amazon_links[i].textContent.toLowerCase() + '\r';
+                }
+            } else if(amazon_searchResults !== null) {
+                var amazon_h3s = amazon_searchResults.querySelectorAll('h3.newaps');
+                for (i = 0; i < amazon_h3s.length; i++) {
+                    productNames.push(amazon_h3s[i].textContent.toLowerCase());
+temp += i + ': ' + amazon_h3s[i].textContent.toLowerCase() + '\r';
+                }
+            }
+
+            // product pages
+
+            var amazon_titleSection = document.getElementById('titleSection');
+            if(amazon_titleSection !== null) {
+                productNames.push(amazon_titleSection.textContent.toLowerCase().trim());
+temp += '> ' + amazon_titleSection.textContent.toLowerCase().trim() + '\r';
+            }
+
+if (temp.length > 20) {
+    //alert(temp);
+}
+
+/*
+            // Product page //
+
+            var sainsbury_productTitleDescriptionContainers = [];
+
+            if(sainsbury_productLister === null){
+
+                sainsbury_productTitleDescriptionContainers = document.getElementsByClassName('productTitleDescriptionContainer');
+
+                // The productTitleDescriptionContainer class is the box containing the product. It's a div. Inside it are:
+                   // h1:                  <-- This is our product name!
+                   // div: reviews
+
+                if(sainsbury_productTitleDescriptionContainers.length > 0) {
+                    var sainsbury_header1s = sainsbury_productTitleDescriptionContainers[0].getElementsByTagName('h1');
+                    productNames.push(sainsbury_header1s[0].innerHTML.toLowerCase().trim());
+                }
+            }
+*/
+            if(amazon_resultsCol !== null || amazon_searchResults !== null || amazon_titleSection !== null) {
+                didWeFindEverything = true;
+            }
+
+        break;
+        /*
          * FASHION
          */
 
@@ -106,9 +190,12 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
 
             // Breadcrumbs (same on search result and product page) //
 
-            var asos_lblBreadCrumbs = document.getElementById('ctl00_ContentMainPage_ctlBreadCrumbs_lblBreadCrumbs');
-            if(asos_lblBreadCrumbs !== null){
-                breadcrumbs = asos_lblBreadCrumbs.innerHTML.toLowerCase();
+            var asos_lblBreadCrumbs = document.getElementsByClassName('breadcrumb');
+            if(asos_lblBreadCrumbs.length === 0){
+                asos_lblBreadCrumbs = document.getElementsByClassName('breadcrumbs');
+            }
+            if(asos_lblBreadCrumbs.length > 0){
+                breadcrumbs = asos_lblBreadCrumbs[0].textContent.toLowerCase();
             }
 
             // Men/women filter checkboxes //
@@ -127,8 +214,16 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
 
             // Search results page //
 
-            var asos_productList = document.getElementsByClassName('product-list');
+            var asos_productList;
+            var asos_categoryItems = [];
 
+            asos_productList = document.getElementsByClassName('product-list');
+            // There are ASOS category pages too (google ASOS T-shirt and click the top sponsored link), which
+            // have a different container div class
+
+            if(asos_productList.length === 0){
+                asos_categoryItems = document.getElementsByClassName('category-items');
+            }
             // The product-list class is the grid containing all search results. It's a div. Inside it are:
                // ul:
                //   li:
@@ -137,17 +232,31 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
                //       div: name-fade
                //         span: class="name"            <-- This is our product name!
 
+
             if(asos_productList.length > 0) {
                 var asos_spans = asos_productList[0].getElementsByTagName('span');
                 for (i = 0; i < asos_spans.length; i++) {
-                    productNames.push(asos_spans[i].innerHTML.toLowerCase());
+                    if(asos_spans[i].className === 'name'){
+                        productNames.push(asos_spans[i].innerHTML.toLowerCase());
+                    }
+                }
+
+            // The category-items class is a bit different. It has a ul/li too, but each li contains two <a> tags,
+            // one with the image and one (class=desc) with the product name
+               //
+               //  ...
+
+            } else if(asos_categoryItems.length > 0){
+                var asos_As = asos_categoryItems[0].querySelectorAll('a.desc');
+                for (var j = 0; j < asos_As.length; j++) {
+                    productNames.push(asos_As[j].textContent.toLowerCase());
                 }
             }
 
             // Product page //
             var asos_lblProductTitle;
 
-            if(asos_productList.length === 0) {
+            if(asos_productList.length === 0 && asos_categoryItems.length === 0) {
 
                 asos_lblProductTitle = document.getElementById('ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle');
 
@@ -161,7 +270,7 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
                }
             }
 
-            if(asos_lblBreadCrumbs !== null && (asos_productList.length > 0 || asos_lblProductTitle !== null)) {
+            if(asos_lblBreadCrumbs !== null && (asos_productList.length > 0 || asos_categoryItems.length > 0 || asos_lblProductTitle !== null)) {
                 didWeFindEverything = true;
             }
 
@@ -456,6 +565,13 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
 
             topshop_wrapperPageContent = document.getElementById('wrapper_page_content');
 
+            // There's a wrapper_page_conent on the search and product page, but the one on the search page
+            // has a class of
+            if(topshop_wrapperPageContent !== null) {
+                if(topshop_wrapperPageContent.className !== 'category_products') {
+                    topshop_wrapperPageContent = null;
+                }
+            }
             // wrapper_page_content is a div, containing:
             //   div: wrapper_product_list         [one for each row]
             //     div: sp_5 block_5               [example, obvs these are different for each block]
@@ -500,11 +616,10 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
         case 'www.tesco.com':
 
             runSexSearch = false;
-            var tescoSpans = [];
 
             // Search results page //
 
-            var allProductsGrid = document.getElementsByClassName('allProducts');
+            var tesco_allProductsGrid = document.getElementsByClassName('allProducts');
 
             // The allProducts class is the grid containing all search results. It's a div. Inside it are:
                // div: productLists
@@ -517,8 +632,8 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
                //             span ... (special offers, price, etc)
                //             span data-title="true"                   <-- This is our product name!
 
-            if(allProductsGrid.length > 0) {
-                tescoSpans = allProductsGrid[0].getElementsByTagName('span');
+            if(tesco_allProductsGrid.length > 0) {
+                tescoSpans = tesco_allProductsGrid[0].getElementsByTagName('span');
                 for (i = 0; i < tescoSpans.length; i++) {
                     if(tescoSpans[i].getAttribute('data-title') === 'true') {
                         productNames.push(tescoSpans[i].innerHTML.toLowerCase());
@@ -528,9 +643,11 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
 
             // Product page //
 
-            if(allProductsGrid.length === 0) {
+            var tesco_productDetailsContainer = [];
 
-                var productDetailsContainer = document.getElementsByClassName('productDetailsContainer');
+            if(tesco_allProductsGrid.length === 0) {
+
+                tesco_productDetailsContainer = document.getElementsByClassName('productDetailsContainer');
 
                 // The productDetailsContainer class is the box containing the product. It's a div. Inside it are:
                    // div: productDescription
@@ -540,15 +657,19 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
                    //         h1:
                    //           span data-title="true"    <-- This is our product name!
 
-                if(productDetailsContainer.length > 0) {
-                    tescoSpans = productDetailsContainer[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
+                if(tesco_productDetailsContainer.length > 0) {
+                    var tesco_Spans = tesco_productDetailsContainer[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
                     // there should only ever be one, but for good measure we'll loop through
-                    for (i = 0; i < tescoSpans.length; i++) {
-                        if(tescoSpans[i].getAttribute('data-title') === 'true') {
-                            productNames.push(tescoSpans[i].innerHTML.toLowerCase());
+                    for (i = 0; i < tesco_Spans.length; i++) {
+                        if(tesco_Spans[i].getAttribute('data-title') === 'true') {
+                            productNames.push(tesco_Spans[i].innerHTML.toLowerCase());
                         }
                     }
                 }
+            }
+
+            if(tesco_allProductsGrid.length > 0 || tesco_productDetailsContainer.length > 0) {
+                didWeFindEverything = true;
             }
 
         break;
@@ -559,7 +680,7 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
 
             // Search results page //
 
-            var productLister = document.getElementById('productLister');
+            var sainsbury_productLister = document.getElementById('productLister');
 
             // The productLister div is the grid containing all search results. Inside it are:
                // div: productLister
@@ -575,27 +696,33 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
                //               img:
                //           div: promotion
 
-            if(productLister !== null) {
-                var headers = productLister.getElementsByTagName('h3');
-                for (i = 0; i < headers.length; i++) {
-                    productNames.push(headers[i].innerHTML.toLowerCase());
+            if(sainsbury_productLister !== null) {
+                var sainsbury_header3s = sainsbury_productLister.getElementsByTagName('h3');
+                for (i = 0; i < sainsbury_header3s.length; i++) {
+                    productNames.push(sainsbury_header3s[i].innerHTML.toLowerCase());
                 }
             }
 
             // Product page //
 
-            if(productLister !== null){
+            var sainsbury_productTitleDescriptionContainers = [];
 
-                var productTitleDescriptionContainers = document.getElementsByClassName('productTitleDescriptionContainer');
+            if(sainsbury_productLister === null){
+
+                sainsbury_productTitleDescriptionContainers = document.getElementsByClassName('productTitleDescriptionContainer');
 
                 // The productTitleDescriptionContainer class is the box containing the product. It's a div. Inside it are:
                    // h1:                  <-- This is our product name!
                    // div: reviews
 
-                if(productTitleDescriptionContainers.length > 0) {
-                    var header = productTitleDescriptionContainers[0].getElementsByTagName('h1');
-                    productNames.push(header[0].innerHTML.toLowerCase().trim());
+                if(sainsbury_productTitleDescriptionContainers.length > 0) {
+                    var sainsbury_header1s = sainsbury_productTitleDescriptionContainers[0].getElementsByTagName('h1');
+                    productNames.push(sainsbury_header1s[0].innerHTML.toLowerCase().trim());
                 }
+            }
+
+            if(sainsbury_productLister !== null || sainsbury_productTitleDescriptionContainers.length > 0) {
+                didWeFindEverything = true;
             }
 
         break;
@@ -615,7 +742,7 @@ function getElements(websiteURL,sexSearchCallback,productSearchCallback,searchDa
 
     if(!didWeFindEverything && attemptCount < 10) {
         // If we don't have any productNames yet then we try the page a few times, in case it has any fancy ajax-esque loading of the search results
-        window.setTimeout(function(){attemptCount++; return getElements(websiteURL,sexSearch,productSearch,searchData,attemptCount);},100);
+        window.setTimeout(function(){attemptCount++; return getElements(tabURL,websiteURL,sexSearch,productSearch,searchData,attemptCount);},100);
     } else if (productNames.length > 0) {
         var pageElements = {productNames: productNames,
                             breadcrumbs:  breadcrumbs,
@@ -688,11 +815,9 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) 
              }
          }
 
-         // Next, let's see whether the sex is in any of the product name (not that I've built multi-item
-         // search for fashion yet, but for now we're assuming that if we find a sex in one product we can
-         // say that all products on the page are that sex)
+         // Next, let's see whether the sex is in the product name. Don't run this for multi item pages otherwise a single word containing "men" on a women's items list can prevent the sidebar showing at all (asos, skirts)
          // To do: this should be better than this. Move this sub-sex search into product search level so it only applies to the relevant product
-         if (pageElements.productNames) {
+         if (pageElements.productNames.length === 1) {
              for (i = 0; i < pageElements.productNames.length; i++){
                  if(!foundMen && !foundWomen) {
                      if (pageElements.productNames[i].indexOf('women') > -1 ||
@@ -737,7 +862,6 @@ function productSearch(pageElements,websiteURL,searchData) {
     var functionName = 'productSearch';
 
     var searchResults = [];
-    var productGroupHeaders = {};
     var productGroupNamesArray = [];
 
     var foundSomething = false;
@@ -745,6 +869,14 @@ function productSearch(pageElements,websiteURL,searchData) {
     var position_searchTerm1;
     var position_searchTerm2;
     var position_searchTerm3;
+    var position_searchTerm4;
+    var position_searchTerm5;
+    var position_searchTerm6;
+    var position_searchTerm7;
+    var position_negativeSearchTerm1;
+    var position_negativeSearchTerm2;
+    var position_negativeSearchTerm3;
+    var position_negativeSearchTerm4;
     var matchedSex;
 
     // for each searchProduct
@@ -754,15 +886,24 @@ function productSearch(pageElements,websiteURL,searchData) {
         position_searchTerm1 = -1;
         position_searchTerm2 = -1;
         position_searchTerm3 = -1;
+        position_searchTerm4 = -1;
+        position_searchTerm5 = -1;
+        position_searchTerm6 = -1;
+        position_searchTerm7 = -1;
+        position_negativeSearchTerm1 = -1;
+        position_negativeSearchTerm2 = -1;
+        position_negativeSearchTerm3 = -1;
+        position_negativeSearchTerm4 = -1;
         matchedSex = false;
 
         // Only search for this searchProduct if it belongs to a searchCategory that is valid for the user's current website
         if(searchData[i].websiteURL === websiteURL) {
 
             // for each product on the users web page (may be single product screen; may be multi product search results etc)
-            // Break as soon as we find the current searchProduct - we don't need to search the entire page, we only need to
-            // find it once
-            var foundThisItem;
+            // Go through all of them and tally a score of how many hits we get. This will help us order our results.
+            var foundThisItemInThisElement = false;
+            var excludeThisItemInThisElement = false;
+            var howManyTimesHaveWeMatchedSearchProduct = 0;
             for (j = 0; j < pageElements.productNames.length; j++) {
 
                 if(searchData[i].brand_LC !== 'all') {
@@ -772,21 +913,70 @@ function productSearch(pageElements,websiteURL,searchData) {
                 }
 
                 if(searchData[i].searchTerm1 !== '') {
-                    position_searchTerm1  = pageElements.productNames[j].indexOf(searchData[i].searchTerm1_LC);
+//                    alert(pageElements.productNames[j] + ' - index of - ' + searchData[i].searchTerm1_LC);
+                    position_searchTerm1 = pageElements.productNames[j].indexOf(searchData[i].searchTerm1_LC);
                 } else {
                     position_searchTerm1 = -2;
                 }
 
                 if(searchData[i].searchTerm2 !== '') {
-                    position_searchTerm2  = pageElements.productNames[j].indexOf(searchData[i].searchTerm2_LC);
+                    position_searchTerm2 = pageElements.productNames[j].indexOf(searchData[i].searchTerm2_LC);
                 } else{
                     position_searchTerm2 = -2;
                 }
 
                 if(searchData[i].searchTerm3 !== '') {
-                    position_searchTerm3  = pageElements.productNames[j].indexOf(searchData[i].searchTerm3_LC);
+                    position_searchTerm3 = pageElements.productNames[j].indexOf(searchData[i].searchTerm3_LC);
                 } else{
                     position_searchTerm3 = -2;
+                }
+
+                if(searchData[i].searchTerm4 !== '') {
+                    position_searchTerm4 = pageElements.productNames[j].indexOf(searchData[i].searchTerm4_LC);
+                } else{
+                    position_searchTerm4 = -2;
+                }
+
+                if(searchData[i].searchTerm5 !== '') {
+                    position_searchTerm5 = pageElements.productNames[j].indexOf(searchData[i].searchTerm5_LC);
+                } else{
+                    position_searchTerm5 = -2;
+                }
+
+                if(searchData[i].searchTerm6 !== '') {
+                    position_searchTerm6 = pageElements.productNames[j].indexOf(searchData[i].searchTerm6_LC);
+                } else{
+                    position_searchTerm6 = -2;
+                }
+
+                if(searchData[i].searchTerm7 !== '') {
+                    position_searchTerm7 = pageElements.productNames[j].indexOf(searchData[i].searchTerm7_LC);
+                } else{
+                    position_searchTerm7 = -2;
+                }
+
+                if(searchData[i].negativeSearchTerm1 !== '') {
+                    position_negativeSearchTerm1 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm1_LC);
+                } else{
+                    position_negativeSearchTerm1 = -2;
+                }
+
+                if(searchData[i].negativeSearchTerm2 !== '') {
+                    position_negativeSearchTerm2 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm2_LC);
+                } else{
+                    position_negativeSearchTerm2 = -2;
+                }
+
+                if(searchData[i].negativeSearchTerm3 !== '') {
+                    position_negativeSearchTerm3 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm3_LC);
+                } else{
+                    position_negativeSearchTerm3 = -2;
+                }
+
+                if(searchData[i].negativeSearchTerm4 !== '') {
+                    position_negativeSearchTerm4 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm4_LC);
+                } else{
+                    position_negativeSearchTerm4 = -2;
                 }
 
                 // If we're doing a search that requires a match on sex then pageElements.useSex will have been set by the sexSearch function
@@ -820,59 +1010,111 @@ function productSearch(pageElements,websiteURL,searchData) {
 
                 // Firsty, see whether we're using OR conditions or AND conditions
 
-                foundThisItem = false;
+                foundThisItemInThisElement = false;
+                excludeThisItemInThisElement = false;
 
                 // We've set our position vars to -2 if the searchProduct didn't have a searchTerm entered.
                 // This way we can ignore blank values for AND (i.e. a product with all blank values will always return)
                 // and take them into account for OR (i.e. a product with one blank value will NOT always return!)
                 if(searchData[i].andOr === 'AND') {
-                    //log(gvScriptName_CSSearch + '.productSearch: determining AND search result >>> position_brand == ' + position_brand + ', position_searchTerm1 == ' + position_searchTerm1 + ', position_searchTerm2 == ' + position_searchTerm2 + ', position_searchTerm3 == ' + position_searchTerm3 + ', matchedSex == ' + matchedSex,' TEMP');
-                    if (((position_brand > -1      || position_brand === -2) &&
-                        (position_searchTerm1 > -1 || position_searchTerm3 === -2) &&
-                        (position_searchTerm2 > -1 || position_searchTerm2 === -2) &&
-                        (position_searchTerm3 > -1 || position_searchTerm3 === -2)) && matchedSex) {
+                    if((position_brand > -1      || position_brand === -2)          &&
+                       ((position_searchTerm1 > -1 || position_searchTerm1 === -2)  &&
+                        (position_searchTerm2 > -1 || position_searchTerm2 === -2)  &&
+                        (position_searchTerm3 > -1 || position_searchTerm3 === -2)  &&
+                        (position_searchTerm4 > -1 || position_searchTerm4 === -2)  &&
+                        (position_searchTerm5 > -1 || position_searchTerm5 === -2)  &&
+                        (position_searchTerm6 > -1 || position_searchTerm6 === -2)  &&
+                        (position_searchTerm7 > -1 || position_searchTerm7 === -2)) && matchedSex) {
 
-                        foundThisItem = true;
-                        break;
+                        foundThisItemInThisElement = true;
+
                     }
                 }
-                else {
-                    //log(gvScriptName_CSSearch + '.productSearch: determining OR search result >>> position_brand == ' + position_brand + ', position_searchTerm1 == ' + position_searchTerm1 + ', position_searchTerm2 == ' + position_searchTerm2 + ', position_searchTerm3 == ' + position_searchTerm3 + ', matchedSex == ' + matchedSex,' INFO');
+                // For our negative AND search, it's just like above except that if they are all blank we don't want to exclude
+                // the searchProduct (because negativeSearchTerms are an optional feature)
+                if(searchData[i].negativeAndOr === 'AND') {
+
+                    if(((position_negativeSearchTerm1 > -1 || position_negativeSearchTerm1 === -2)  &&
+                        (position_negativeSearchTerm2 > -1 || position_negativeSearchTerm2 === -2)  &&
+                        (position_negativeSearchTerm3 > -1 || position_negativeSearchTerm3 === -2)  &&
+                        (position_negativeSearchTerm4 > -1 || position_negativeSearchTerm4 === -2)) &&
+                       !(position_negativeSearchTerm1 === -2 &&
+                         position_negativeSearchTerm2 === -2 &&
+                         position_negativeSearchTerm3 === -2 &&
+                         position_negativeSearchTerm4 === -2)) {
+
+                        excludeThisItemInThisElement = true;
+                    }
+                }
+
+                if(searchData[i].andOr === 'OR') {
+/*
+                    if(searchData[i].productName === 'Cheese'){
+
+                        alert('searchData.brand == ' + searchData[i].brand + ', pageElements.productNames == ' + pageElements.productNames[j] + ', position_brand == ' + position_brand);
+                        alert('searchData[i].searchTerm1 == ' + searchData[i].searchTerm1 + ' (searchTerm1_LC == ' + searchData[i].searchTerm1_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm1 == ' + position_searchTerm1);
+                        alert('searchData[i].searchTerm2 == ' + searchData[i].searchTerm2 + ' (searchTerm2_LC == ' + searchData[i].searchTerm2_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm2 == ' + position_searchTerm2);
+                        alert('searchData[i].searchTerm3 == ' + searchData[i].searchTerm3 + ' (searchTerm3_LC == ' + searchData[i].searchTerm3_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm3 == ' + position_searchTerm3);
+                        alert('searchData[i].searchTerm4 == ' + searchData[i].searchTerm4 + ' (searchTerm4_LC == ' + searchData[i].searchTerm4_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm4 == ' + position_searchTerm4);
+                        alert('searchData[i].searchTerm5 == ' + searchData[i].searchTerm5 + ' (searchTerm5_LC == ' + searchData[i].searchTerm5_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm5 == ' + position_searchTerm5);
+                        alert('searchData[i].searchTerm6 == ' + searchData[i].searchTerm6 + ' (searchTerm6_LC == ' + searchData[i].searchTerm6_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm6 == ' + position_searchTerm6);
+                        alert('searchData[i].searchTerm7 == ' + searchData[i].searchTerm7 + ' (searchTerm7_LC == ' + searchData[i].searchTerm7_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm7 == ' + position_searchTerm7);
+
+                        alert(position_brand);
+                        alert(position_searchTerm1);
+                        alert(matchedSex);
+
+                    }
+
+                    */
+
+
                     if ((position_brand > -1 || position_brand === -2) &&
                         (position_searchTerm1 > -1 ||
                          position_searchTerm2 > -1 ||
-                         position_searchTerm3 > -1) && matchedSex) {
-                        foundThisItem = true;
-                        break;
+                         position_searchTerm3 > -1 ||
+                         position_searchTerm4 > -1 ||
+                         position_searchTerm5 > -1 ||
+                         position_searchTerm6 > -1 ||
+                         position_searchTerm7 > -1) && matchedSex) {
+
+                        foundThisItemInThisElement = true;
                     }
                 }
-            }
 
-            if (foundThisItem) {
+                if(searchData[i].negativeAndOr === 'OR') {
+
+                    if((position_negativeSearchTerm1 > -1 ||
+                        position_negativeSearchTerm2 > -1 ||
+                        position_negativeSearchTerm3 > -1 ||
+                        position_negativeSearchTerm4 > -1)) {
+
+                            excludeThisItemInThisElement = true;
+                    }
+                }
+
+                if (foundThisItemInThisElement && !excludeThisItemInThisElement) {
+                    howManyTimesHaveWeMatchedSearchProduct++;
+                }
+
+            } // This is the end of the loop that cycles through the page elements
+
+            searchData[i].numberOfSearchHits = howManyTimesHaveWeMatchedSearchProduct;
+
+            if (howManyTimesHaveWeMatchedSearchProduct > 0) {
                 searchResults.push(searchData[i]);
-
-                 // Save an associative array of arrays of productHeader records {productName, whyDoWeCare}, indexed by ProductGroup, so we can easily
-                 // retrieve the SearchProduct.ProductNames when we display the sidebar. Along with the product name
-                 // include the whyDoWeCare value
-
-                 var productHeaderRec = {productName: searchData[i].productName,
-                                         whyDoWeCare: searchData[i].whyDoWeCare};
-
-                 if(!productGroupHeaders[searchData[i].productGroupName]) {
-                     productGroupHeaders[searchData[i].productGroupName] = [productHeaderRec];
-                 } else {
-                     productGroupHeaders[searchData[i].productGroupName].push(productHeaderRec);
-                 }
-                 foundSomething = true;
+                foundSomething = true;
             }
-         }
-     }
 
-     userLog('SEARCH',{searchWebsite: websiteURL, searchAlgorithmFunction: functionName, searchProductsFound: searchResults.length});
+        } // this is the end of the if statement that checks the searchProduct is valid on this website
 
-     log(gvScriptName_CSSearch + '.productSearch: results >>> searchResults.length == ' + searchResults.length,'DEBUG');
-     // This is usually going to be content_script.receiveSearchResults
-     processSearchResults(searchResults,productGroupHeaders,foundSomething);
+    } // This is the end of the loop that cycles through the searchData array (i.e. a blown out list of searchProducts)
+
+    userLog('SEARCH',{searchWebsite: websiteURL, searchAlgorithmFunction: functionName, searchProductsFound: searchResults.length});
+
+    log(gvScriptName_CSSearch + '.productSearch: results >>> searchResults.length == ' + searchResults.length,'DEBUG');
+    // This is usually going to be content_script.receiveSearchResults
+    processSearchResults(searchResults,foundSomething);
 
 }
 

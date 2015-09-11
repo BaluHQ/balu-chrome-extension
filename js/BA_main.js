@@ -41,7 +41,7 @@ function waitForBackgroundPageThenBuildPopupHTML(counter){
 
     // Every 50 miliseconds, recheck to see whether we have retrieved data
 
-    if(gvBackground){
+    if(gvBackground !== null){
         log(gvScriptName_BAMain + '.waitForBackgroundPageThenBuildPopupHTML: Ending wait: gvBackground is set','PROCS');
         buildPopupHTML();
     } else {
@@ -148,18 +148,6 @@ function buildPopupHTML(){
             lvHtmlString += '    </div>';
             lvHtmlString += '  </div>';
             lvHtmlString += '</div>';
-        } else
-
-        // If Balu is off
-        if(!isBaluOn) {
-            lvHtmlString += 'Balu is turned off. To get Balu\'s ethical recommendations while you shop click on the account button above and turn Balu back on.';
-            lvHtmlString += '<br />';
-        } else
-
-        // If user is not logged in
-        if(!isLoggedIn) {
-            lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the account button above and log in or create a new account.<br />';
-            lvHtmlString += '<br />';
 
         // If Balu is on and the user is logged in, then display the header (manual search and options page link)
         } else {
@@ -190,14 +178,22 @@ function buildPopupHTML(){
 
         if(isInvalidTab) {
             lvHtmlString += 'To search Balu, navigate to a real website (like <a href="http://www.google.com" target="_blank">Google.com</a>) and open this popup again.';
-            lvHtmlString += '<br />';
+        //    lvHtmlString += '<br />';
+        } else
+        if(!isBaluOn) {
+            lvHtmlString += 'Balu is turned off. To get Balu\'s ethical recommendations while you shop click on the account button above and turn Balu back on.';
+        //    lvHtmlString += '<br />';
         } else
         if(!gvActiveTab) {
             lvHtmlString += 'Something\'s wrong! Can you try refreshing your page and clicking the Balu icon again? If you\'re still having problems <a href="mailto:info@getbalu.org" target="_blank">contact us</a>.';
         } else
         if(!isWebsiteOn){
-            lvHtmlString += 'You can search Balu manually using the search box above.<br /><br /><span style="font-size: 12px">Your current website is not an active Balu website. Click on the account button above to see a list of all active websites.<br /><br />We are "turning on" more websites as quickly as we can. If there\'s one you think we should include, please <a href="mailto:info@getbalu.org" target="_blank">get in touch</a> and let us know about it.</span>';
-            lvHtmlString += '<br />';
+            lvHtmlString += 'You can search Balu manually using the search box above.<br /><br /><span style="font-size: 12px">Your current website is not an active Balu website. If this is a site you think we should "turn on", please <a id="showUserSubmittedWebsiteRecWindow_link">tell us</a>.<br /><br />We are "turning on" more websites as quickly as we can; click on the account button above to see a list of current active websites.</span>';
+    //        lvHtmlString += '<br />';
+        } else
+        if(!isLoggedIn) {
+            lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the account button above and log in or create a new account.';
+    //        lvHtmlString += '<br />';
         } else
 
         // If we have forced the sidebar on because of a temp hide, then close the popup - we've done what we need to do with it.
@@ -208,19 +204,19 @@ function buildPopupHTML(){
         // If we are permanent hidden, regarldess of whether we have any recs
         if(!isSidebarVisibleForAllTabs){
                 lvHtmlString += 'Balu is not set to automatically display the sidebar. You\'ll see a number on the Balu icon instead.<br /><br />To change this setting, click the account icon above.';
-                lvHtmlString += '<br />';
+    //            lvHtmlString += '<br />';
         } else
 
         // If we are not permanently hidden and we don't have any recs
         if(isSidebarVisibleForAllTabs && !isThereAnyRecommendationsForThisTab) {
-            lvHtmlString += 'Balu does not have any ethical alternatives for products on this page. If you know of any, please tell us about them by <b>clicking on the plus icon above</b>.';
-            lvHtmlString += '<br />';
+            lvHtmlString += 'Balu does not have any ethical alternatives for products on this page. If you know of any, please tell us about them by <b>clicking on the plus icon above.';
+    //        lvHtmlString += '<br />';
         } else
 
         // If sidebar is set to visible and we have recommendations (i.e. the sidebar is actually displayed without being forced!)
         if((isSidebarVisibleForAllTabs && isSidebarVisibleForAllTabs_untilRestart && isSidebarVisibleOnThisTab) && isThereAnyRecommendationsForThisTab) {
             lvHtmlString += 'Ethical recommendations are being displayed in the Balu sidebar. If you are having issues seeing them contact us at <a href="mailto:info@getbalu.org" target="_blank">info@getbalu.org</a>.<br /><br />If you have own ethical recommendations to share with the Balu community, click on the plus icon above.';
-            lvHtmlString += '<br />';
+    //        lvHtmlString += '<br />';
         }
 
         var lvContentDiv = document.getElementById("contentDiv");
@@ -231,6 +227,9 @@ function buildPopupHTML(){
             document.getElementById("fieldManualSearch").addEventListener('keydown', manualSearch_keydown_listener);
             document.getElementById("showOptionsPageWindow_icon").addEventListener('click',showOptionsPageWindow_listener);
             document.getElementById("showUserSubmittedRecWindow_icon").addEventListener('click',showUserSubmittedRecWindow_listener);
+        }
+        if (!isWebsiteOn){
+            document.getElementById('showUserSubmittedWebsiteRecWindow_link').addEventListener('click',showUserSubmittedWebsiteRecWindow_listener);
         }
     });
 }
@@ -268,6 +267,13 @@ function showUserSubmittedRecWindow_listener() {
     log(gvScriptName_BAMain + '.showUserSubmittedRecWindow_listener: Start','PROCS');
 
     gvBackground.showUserSubmittedRecWindow(gvActiveTab.tab.id);
+}
+
+function showUserSubmittedWebsiteRecWindow_listener(){
+
+    log(gvScriptName_BAMain + '.showUserSubmittedWebsiteRecWindow_listener: Start','PROCS');
+
+    gvBackground.showUserSubmittedWebsiteRecWindow(gvActiveTab.tab.id);
 }
 
 /**************************

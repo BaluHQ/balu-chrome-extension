@@ -28,142 +28,164 @@ gvScriptName_BGMessaging = 'BG_APIs';
  */
 function chromeMessageListener(msg, sender, callback){
 
-    var logMessage = gvScriptName_BGMessaging + ' >> message <- ' + msg.sender + ':    ' + msg.subject;
+    var logMessage = gvScriptName_BGMessaging + ' >> message <- ' + msg.sender + ': ' + msg.subject;
 
     switch (msg.sender + ' | ' + msg.subject) {
 
         // Initalise and activate the sidebar (called from CS_main at init)
-        case 'content_script | pleaseInitialiseThisTab':
+        case 'CS_main | pleaseInitialiseThisTab':
             log(logMessage,'MESSG');
             // We can't init the tab until we know whether it matches a Balu website (and subsequently, we can't
             // search the page until we have the searchData), so we're going to make sure these data have been
             // pulled from the Parse database before we proceed
-            if (gvIsBaluOnOrOff === 'ON') {
-                waitForSearchDataThenInitialiseTab(sender.tab,callback,1);
-            } else {
+            if (gvIsBaluOnOrOff === 'OFF') {
                 log(gvScriptName_BGMessaging + '.onMessage: gvIsBaluOnOrOff == ' + gvIsBaluOnOrOff + ', so doing nothing',' INFO');
+            } else {
+                waitForExtensionInitThenInitialiseTab(sender.tab,1);
             }
         break;
 
-        case 'content_script | pleaseRefreshTab':
+        case 'CS_main | pleaseMarkJoyrideAsDone':
             log(logMessage,'MESSG');
-            if (gvIsBaluOnOrOff === 'ON') {
-                if(msg.tabId) {
-                    refreshTab(msg.tabId);
-                } else {
-                    refreshTab_allTabs();
-                }
-            } else {
-                log(gvScriptName_BGMessaging + '.onMessage: gvIsBaluOnOrOff == ' + gvIsBaluOnOrOff + ', so doing nothing',' INFO');
-            }
+            markJoyrideAsDone();
         break;
 
         // Retrieve recommendations (Called from CS_search after search)
 
-        case 'content_script | pleaseRetrieveRecommendations':
+        case 'CS_main | pleaseRetrieveRecommendations':
             log(logMessage,'MESSG');
-            getRecommendations(msg.tabId,msg.data.searchResults,msg.data.productGroupHeaders,displayRecommendations);
+            getRecommendations(sender.tab.id,msg.data.searchResults,displayRecommendations);
         break;
 
         // Main sidebar functionality (called by CS_main listeners)
 
-        case 'content_script | pleaseRunManualSearch':
+        case 'CS_main | pleaseRunManualSearch':
             log(logMessage,'MESSG');
-            manualSearch(msg.tabId, msg.data.searchTerm);
+            manualSearch(sender.tab.id, msg.data.searchTerm);
         break;
 
-        case 'content_script | pleaseShowOptionsPageWindow':
+        case 'CS_main | pleaseShowOptionsPageWindow':
             log(logMessage,'MESSG');
-            showOptionsPageWindow(msg.tabId);
+            showOptionsPageWindow(sender.tab.id);
         break;
 
-        case 'content_script | pleaseShowWhyDoWeCareWindow':
+        case 'CS_main | pleaseShowWhyDoWeCareWindow':
             log(logMessage,'MESSG');
-            showWhyDoWeCareWindow(msg.tabId,msg.data.whyDoWeCareURLName);
+            showWhyDoWeCareWindow(sender.tab.id,msg.data.whyDoWeCare);
         break;
 
-        case 'content_script | pleaseShowProductLinkWindow':
+        case 'CS_main | pleaseShowProductLinkWindow':
             log(logMessage,'MESSG');
-            showProductLinkWindow(msg.tabId,msg.data.productURL,msg.data.recommendationId,msg.data.pageConfirmationSearch);
+            showProductLinkWindow(sender.tab.id,msg.data.productURL,msg.data.recommendationId,msg.data.recProductName,msg.data.pageConfirmationSearch);
         break;
 
-        case 'content_script | pleaseVoteProductUp':
+        case 'CS_main | pleaseVoteProductUp':
             log(logMessage,'MESSG');
-            voteProductUpOrDown(msg.tabId,msg.data.recommendationId,'UP');
+            voteProductUpOrDown(sender.tab.id,msg.data.recommendationId,'UP');
         break;
 
-        case 'content_script | pleaseVoteProductDown':
+        case 'CS_main | pleaseVoteProductDown':
             log(logMessage,'MESSG');
-            voteProductUpOrDown(msg.tabId,msg.data.recommendationId,'DOWN');
+            voteProductUpOrDown(sender.tab.id,msg.data.recommendationId,'DOWN');
         break;
 
-        case 'content_script | pleaseShowUserSubmittedRecWindow':
+        case 'CS_main | pleaseShowTweetWindow':
             log(logMessage,'MESSG');
-            showUserSubmittedRecWindow(msg.tabId);
+            showTweetWindow(sender.tab.id,msg.data.tweetContent);
         break;
 
-        case 'content_script | pleaseHideSidebar_untilRefresh':
+        case 'CS_main | pleaseShowBlockBrandWindow':
             log(logMessage,'MESSG');
-            hideSidebar_untilRefresh(msg.tabId);
+            msg.data.tabURL = sender.tab.url;
+            showBlockBrandWindow(sender.tab.id,msg.data);
         break;
 
-        case 'content_script | pleaseHideSidebar_untilRestart':
+        case 'CS_main | pleaseBlockThisBrand':
             log(logMessage,'MESSG');
-            hideSidebar_untilRestart(msg.tabId);
+            blockBrand(sender.tab.id,msg.data);
         break;
 
-        case 'content_script | pleaseShowFAQWindow':
+        case 'CS_main | pleaseShowUserSubmittedRecWindow':
             log(logMessage,'MESSG');
-            showFAQWindow(msg.tabId);
+            showUserSubmittedRecWindow(sender.tab.id);
         break;
 
-        case 'content_script | pleaseShowPrivacyWindow':
+        case 'CS_main | pleaseSaveUserSubmittedRec':
             log(logMessage,'MESSG');
-            showPrivacyWindow(msg.tabId);
+            saveUserSubmittedRec(sender.tab.id,msg.data.formFieldValues);
+        break;
+
+        case 'CS_main | pleaseSaveUserSubmittedWebsiteRec':
+            log(logMessage,'MESSG');
+            saveUserSubmittedWebsiteRec(sender.tab.id,msg.data.formFieldValues);
+        break;
+
+        case 'CS_main | pleaseHideSidebar_untilRefresh':
+            log(logMessage,'MESSG');
+            hideSidebar_untilRefresh(sender.tab.id);
+        break;
+
+        case 'CS_main | pleaseHideSidebar_untilRestart':
+            log(logMessage,'MESSG');
+            hideSidebar_untilRestart(sender.tab.id);
+        break;
+
+        case 'CS_main | pleaseShowFAQWindow':
+            log(logMessage,'MESSG');
+            showFAQWindow(sender.tab.id);
+        break;
+
+        case 'CS_main | pleaseShowPrivacyWindow':
+            log(logMessage,'MESSG');
+            showPrivacyWindow(sender.tab.id);
         break;
 
         // Log in sidebar
 
-        case 'content_script | pleaseLogUserIn':
+        case 'CS_main | pleaseLogUserIn':
             log(logMessage,'MESSG');
-            logUserIn(msg.tabId,msg.data.username, msg.data.password);
+            logUserIn(sender.tab.id,msg.data.username, msg.data.password);
         break;
 
-        case 'content_script | pleaseSignUserUp':
+        case 'CS_main | pleaseSignUserUp':
             log(logMessage,'MESSG');
-            signUserUp(msg.tabId, msg.data.username, msg.data.password);
+            signUserUp(sender.tab.id, msg.data.username, msg.data.password);
         break;
 
         // Tab tracking
 
-        case 'content_script | pleaseTrackThisTab':
+        case 'CS_main | pleaseTrackThisTab':
             log(logMessage,'MESSG');
-            if(gvTrackedTabs[msg.tabId]){
+            if(gvTrackedTabs[sender.tab.id]){
                 log('Tab is being tracked, calling callback to search page',' INFO');
-                callback(gvTrackedTabs[msg.tabId]);
+                callback(gvTrackedTabs[sender.tab.id]);
             } else {
                 log('Tab is NOT being tracked, ending execution',' INFO');
             }
         break;
 
-        case 'content_script | pleaseRegisterTrackedTabAsOK':
+        case 'CS_main | pleaseRegisterTrackedTabAsOK':
             log(logMessage,'MESSG');
-            removeTrackedTab(msg.tabId,msg.data.trackedTab);
+            removeTrackedTab(sender.tab.id,msg.data.trackedTab);
         break;
 
-        case 'content_script | pleaseRegisterTrackedTabAsProblem':
+        case 'CS_main | pleaseRegisterTrackedTabAsProblem':
             log(logMessage,'MESSG');
-            reportTrackedTabError(msg.tabId,msg.data.trackedTab);
+            reportTrackedTabError(sender.tab.id,msg.data.trackedTab);
         break;
 
         // Logging
 
-        case 'content_script | pleaseLogMessageOnConsole':
+        case 'CS_main | pleaseLogMessageOnConsole':
             log(msg.message,msg.level);
         break;
 
-        case 'content_script | pleaseLogEventInUserLog':
-            userLog(msg.tabId,msg.eventName,msg.data);
+        case 'userSubmittedRec | pleaseLogMessageOnConsole':
+            log(msg.message,msg.level);
+        break;
+
+        case 'CS_main | pleaseLogEventInUserLog':
+            userLog(sender.tab.id,msg.eventName,msg.data);
         break;
 
         // Catch All
@@ -183,7 +205,7 @@ function chromeMessageListener(msg, sender, callback){
      log(gvScriptName_BGMessaging + ' >> message -> content_script:    ' + subject, 'MESSG');
 
      chrome.tabs.sendMessage(tabId,
-                             {sender:  'background_script',
+                             {sender:  'BG_main',
                               subject: subject,
                               data:    data},
                               null, // options

@@ -19,6 +19,9 @@ var gvScriptName_CSMessaging = 'CS_APIs';
  * INCOMING *
  ************/
 
+/*
+ * Messages from the extension (Chrome APIs)
+ */
 function chromeMessageListener(msg, sender, callback) {
 
     var logMessage = gvScriptName_CSMessaging + ' >> message <- ' + msg.sender + ': ' + msg.subject;
@@ -27,57 +30,137 @@ function chromeMessageListener(msg, sender, callback) {
 
         // Core search functions
 
-        case 'background_script | pleaseSearchThePage':
+        case 'BG_main | pleaseSearchThePage':
             log(logMessage,'MESSG');
             // We handover to the search JS script to handle the search, and when done it will
             // call our callback function: processSearchResults
-            searchPage_master(msg.data.searchData,gvThisTab.tab.url,gvThisTab.website.websiteURL);
+            searchPage_master(msg.data.searchData,msg.data.tabURL,msg.data.websiteURL);
         break;
 
-        case 'background_script | pleaseDisplayRecommendations':
+        case 'BG_main | pleaseDisplayRecommendations':
             log(logMessage,'MESSG');
-            createSidebar(createResultsSidebarContent,msg.data.recommendationData, msg.data.productGroupHeaders, msg.data.searchTerm);
+            createSidebar(createResultsSidebarContent,msg.data.recommendationData, msg.data.searchTerm, msg.data.showJoyride);
         break;
 
         // Logging in and out
 
-        case 'background_script | pleaseDisplayLogInSidebar':
+        case 'BG_main | pleaseDisplayLogInSidebar':
             log(logMessage,'MESSG');
             createSidebar(createLogInSidebarContent);
         break;
 
         // Sidebar visibility
 
-        case 'background_script | pleaseHideSidebar':
+        case 'BG_main | pleaseHideSidebar':
             log(logMessage,'MESSG');
             hideSidebar();
+        break;
+
+        // Comms from BG_main to popup windows
+
+        case 'BG_main | pleaseShowUserSubmittedRecSuccessWindow':
+            log(logMessage,'MESSG');
+            showUserSubmittedRecSuccess(); // this is in userSubmittedRec.js script
+        break;
+
+        case 'BG_main | pleaseShowUserSubmittedWebsiteRecSuccessWindow':
+            log(logMessage,'MESSG');
+            showUserSubmittedWebsiteRecSuccess(); // this is in userSubmittedWebsiteRec.js script
+        break;
+
+        case 'BG_main | pleaseShowUserBlockBrandSuccessWindow':
+            log(logMessage,'MESSG');
+            showUserBlockBrandSuccess(); // this is in userBlockBrand.js script
         break;
 
         // Default
 
         default:
-            log('UNKNOWN MESSAGE >>> ' + logMessage,'ERROR');
-    }
+            if(msg.sender === 'BG_main') {
+                log('UNKNOWN MESSAGE >>> ' + logMessage,'ERROR');
+            } else {
+                // do nothing
+
+                // The userSubRec screen adds a second message listener (in addition to the background script's)
+                // that will respond to the chrome.runtime.sendMessage messages (sent by the content_script).
+                // It will therefore pick up messages sent from content_script to background - messages that
+                // this handler function doesn't accept. If we log these as errors we create an infinite loop for
+                // as long as the subRec window is open.
+            }
+     }
+}
+
+
+/*
+ * Messages from the page (HTML postMessage)
+ */
+function iFrameListener(msg) {
+
+    var logMessage = gvScriptName_CSMessaging + ' >> message <- ' + msg.data.sender + ': ' + msg.data.subject;
+
+    switch (msg.data.sender + " | " + msg.data.subject) {
+
+        //
+
+        case 'IF_main | pleaseRegisterIframeAsReady':
+            log(logMessage,'MESSG');
+            // A recursive wait function will be waiting for this var to go to true
+            gvIsIframeReady = true;
+        break;
+
+        case 'IF_main | pleaseMarkJoyrideAsDone':
+            log(logMessage,'MESSG');
+            sendMessage('BG_main','pleaseMarkJoyrideAsDone',msg.data);
+        break;
+
+        // logging
+
+        case 'IF_main | pleaseLogEventInUserLog':
+            log(logMessage,'MESSG');
+            userLog(msg.data.data.eventName,msg.data.data.data);
+        break;
+
+        case 'IF_main | pleaseLogMessageOnConsole':
+            log(msg.data.message,msg.data.level);
+        break;
+
+        // default
+        default:
+            if (msg.data.sender === 'IF_main') {
+                log('UNKNOWN MESSAGE >>> ' + logMessage,'ERROR');
+            } else {
+                // No error handling here, because lots of DOM messages are fired off by some pages and we don't want to clutter up the logs
+            }
+     }
 }
 
 /************
  * OUTGOING *
  ************/
 
-function sendMessage(subject,data,callback){
+/*
+ *
+ */
+function sendMessage(recipient,subject,data,callback){
 
-    log(gvScriptName_CSMessaging + ' >> message -> background_script: ' + subject, 'MESSG');
+    if(recipient === 'BG_main'){
+        log(gvScriptName_CSMessaging + ' >> message -> ' + recipient + ': ' + subject, 'MESSG');
 
-    var tabId;
-    if(gvThisTab){
-        tabId = gvThisTab.tab.id;
+        chrome.runtime.sendMessage({sender:  'CS_main',
+                                    subject: subject,
+                                    data:    data},
+                                    callback);
+
+    } else if (recipient === 'IF_main'){
+        log(gvScriptName_CSMessaging + ' >> message -> ' + recipient + ': ' + subject, 'MESSG');
+
+        window.frames.iFrameBaluSidebar.contentWindow.postMessage({sender: 'CS_main',
+                                                                   subject: subject,
+                                                                   data:    data}, '*');
+    } else {
+        log(gvScriptName_CSMessaging + '.sendMessage: UNKOWN RECIPIENT', 'ERROR');
     }
 
-    chrome.runtime.sendMessage({tabId:   tabId,
-                                sender:  'content_script',
-                                subject: subject,
-                                data:    data},
-                                callback);
 }
 
 /**************************
@@ -86,7 +169,7 @@ function sendMessage(subject,data,callback){
 
 function log(message, level) {
 
-    chrome.runtime.sendMessage({sender:  'content_script',
+    chrome.runtime.sendMessage({sender:  'CS_main',
                                 subject: 'pleaseLogMessageOnConsole',
                                 message:  message,
                                 level:    level});
@@ -94,13 +177,7 @@ function log(message, level) {
 
 function userLog(eventName, data) {
 
-    var tabId;
-    if(gvThisTab){
-        tabId = gvThisTab.tab.id;
-    }
-
-    chrome.runtime.sendMessage({tabId:      tabId,
-                                sender:     'content_script',
+    chrome.runtime.sendMessage({sender:     'CS_main',
                                 subject:    'pleaseLogEventInUserLog',
                                 eventName:  eventName,
                                 data:       data});

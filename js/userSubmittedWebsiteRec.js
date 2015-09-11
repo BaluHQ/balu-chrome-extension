@@ -6,7 +6,7 @@
  * Global variables
  */
 
-var gvScriptName_userSubmittedRec = 'userSubmittedRec';
+var gvScriptName_userSubmittedRec = 'userSubmittedWebsiteRec';
 
 /*
  * We listen for DOM loaded because that triggers the script that displays the form
@@ -34,7 +34,7 @@ function DOMContentLoadedListener(){
 
     log(gvScriptName_userSubmittedRec + '.DOMContentLoadedListener: Start','LSTNR');
 
-    displayPage(getAddNewRecFormHTML());
+    displayPage(getAddNewWebsiteRecFormHTML());
 }
 
 
@@ -60,16 +60,16 @@ function displayPage(contentHTML) {
    htmlString += contentHTML;
 
    document.getElementById('contentDiv').innerHTML = htmlString;
-   document.getElementById('submitButton').addEventListener('click',addNewRec);
+   document.getElementById('submitButton').addEventListener('click',addNewWebsiteRec);
 
  }
 
 /*
  *
  */
-function getAddNewRecFormHTML(thankYouText) {
+function getAddNewWebsiteRecFormHTML(thankYouText) {
 
-    log(gvScriptName_userSubmittedRec + '.getAddNewRecFormHTML: Start','PROCS');
+    log(gvScriptName_userSubmittedRec + '.getAddNewWebsiteRecFormHTML: Start','PROCS');
 
     var htmlString = '';
 
@@ -82,10 +82,9 @@ function getAddNewRecFormHTML(thankYouText) {
         htmlString += '<hr />';
 
     }
-    htmlString += '<form>';
     htmlString += '  <div class="row">';
     htmlString += '    <div class="small-12 end columns">';
-    htmlString += '      <h3 class="subheader">Share your favourite products!</h3>';
+    htmlString += '      <h3 class="subheader">Tell us about a website you think Balu should cover</h3>';
     htmlString += '    </div>';
     htmlString += '  </div>';
     htmlString += '  <div class="row">';
@@ -95,26 +94,9 @@ function getAddNewRecFormHTML(thankYouText) {
     htmlString += '  </div>';
     htmlString += '  <div class="row">';
     htmlString += '    <div class="small-12 columns">';
-    htmlString += '      <label>Tell us the name of a great product or brand';
-    htmlString += '        <input required type="text" id="fieldProductName_addRec" placeholder="Product name" />';
-    htmlString += '      </label>';
+    htmlString += '      <input required type="text" id="fieldWebsite_addWebsiteRec" placeholder="Website URL or name" />';
     htmlString += '    </div>';
     htmlString += '  </div>';
-    htmlString += '  <div class="row">';
-    htmlString += '    <div class="small-12 columns">';
-    htmlString += '      <label>Do you know the company\'s website or Twitter username  ?';
-    htmlString += '        <input type="text" id="fieldURLorTwitter_addRec" placeholder="Website or Twitter" />';
-    htmlString += '      </label>';
-    htmlString += '    </div>';
-    htmlString += '  </div>';
-    htmlString += '  <div class="row">';
-    htmlString += '    <div class="small-12 columns">';
-    htmlString += '      <label>Tell us why you think this product is so awesome (optional)';
-    htmlString += '        <textarea id="fieldWhy_addRec" placeholder="This product is a great ethical alternative to...' + String.fromCharCode(10) + String.fromCharCode(10) + 'Because..." rows="6"></textarea>';
-    htmlString += '      </label>';
-    htmlString += '    </div>';
-    htmlString += '  </div>';
-    htmlString += '</form>';
 
     return htmlString;
 }
@@ -122,17 +104,16 @@ function getAddNewRecFormHTML(thankYouText) {
 /*
  * Called on receipt of a successful submission
  */
-function showUserSubmittedRecSuccess() {
+function showUserSubmittedWebsiteRecSuccess() {
 
-    log(gvScriptName_userSubmittedRec + '.showUserSubmittedRecSuccess: Start','PROCS');
+    log(gvScriptName_userSubmittedRec + '.showUserSubmittedWebsiteRecSuccess: Start','PROCS');
 
     var successMessage = '';
     successMessage += 'Thank You! <br /><br />';
     successMessage += 'Balu relies on everybody helping each other. So we really appreciate your contribution. Keep them coming!<br /><br />';
-    successMessage += 'You\'ll see your recommendation in the Balu sidebar just as soon as we can add it to the database.<br /><br />';
-    successMessage += 'Got any more great products you want to share with the world...?';
+    successMessage += 'We are "turning on" more websites as quickly as we can. We\'ll prioritise your suggestion.<br /><br />';
 
-    displayPage(getAddNewRecFormHTML(successMessage));
+    displayPage(getAddNewWebsiteRecFormHTML(successMessage));
 }
 
 /******************
@@ -142,19 +123,15 @@ function showUserSubmittedRecSuccess() {
 /*
  *
  */
-function addNewRec() {
+function addNewWebsiteRec() {
 
-    log(gvScriptName_userSubmittedRec + '.addNewRec: Start','PROCS');
+    log(gvScriptName_userSubmittedRec + '.addNewWebsiteRec: Start','PROCS');
 
-    var fieldProductName  = document.getElementById("fieldProductName_addRec");
-    var fieldURLOrTwitter = document.getElementById("fieldURLorTwitter_addRec");
-    var fieldWhy          = document.getElementById("fieldWhy_addRec");
+    var fieldWebsiteRec  = document.getElementById("fieldWebsite_addWebsiteRec");
 
-    var formFieldValues = {productName:  fieldProductName.value,
-                           URLOrTwitter: fieldURLOrTwitter.value,
-                           why:          fieldWhy.value};
+    var formFieldValues = {fieldWebsiteRec:  fieldWebsiteRec.value};
 
-    sendMessage('pleaseSaveUserSubmittedRec',{formFieldValues: formFieldValues});
+    sendMessage('pleaseSaveUserSubmittedWebsiteRec',{formFieldValues: formFieldValues});
 }
 
 /**************************

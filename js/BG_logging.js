@@ -14,7 +14,7 @@ var gvLogProcs  = true;
 var gvLogMessg  = true;
 var gvLogDebugs = false;
 var gvLogInfos  = true;
-var gvLogInits  = false;
+var gvLogInits  = true;
 var gvLogLstnrs = false;
 var gvLogTemps  = true;
 
@@ -39,7 +39,7 @@ function userLog(tabId, eventName, data) {
     Parse.initialize(gvAppId, gvJSKey);
 
     var tabURL;
-    if(tabId){
+    if(gvTabs[tabId]){
         tabURL = gvTabs[tabId].tab.url;
     }
 
@@ -48,10 +48,12 @@ function userLog(tabId, eventName, data) {
     // For the UserLog events that require no bespoke code...
     if(eventName === 'USER_LOG_IN' ||
        eventName === 'USER_LOG_OUT' ||
+       eventName === 'USER_PASSWORD_RESET' ||
        eventName === 'USER_SIGNED_UP' ||
        eventName === 'HIDE_SIDEBAR_REFRESH' ||
        eventName === 'HIDE_SIDEBAR_RESTART' ||
        eventName === 'SHOW_USER_SUB_REC_WINDOW' ||
+       eventName === 'SHOW_USER_SUB_WEB_REC_WINDOW' ||
        eventName === 'SHOW_FAQ_WINDOW' ||
        eventName === 'SHOW_PRIVACY_WINDOW' ||
        eventName === 'OPTIONS: SHOW_OPTIONS' ||
@@ -230,13 +232,12 @@ function userLog(tabId, eventName, data) {
 
                 var UserLog_RecClickThrough = Parse.Object.extend("UserLog_RecClickThrough");
                 var userLog_RecClickThrough = new UserLog_RecClickThrough({ACL: new Parse.ACL(user)});
-
                 userLog_RecClickThrough.set('eventName',eventName);
                 userLog_RecClickThrough.set('tabURL',tabURL);
                 userLog_RecClickThrough.set('user',user);
                 userLog_RecClickThrough.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_RecClickThrough.set('hyperlinkURL',data.productURL);
-                userLog_RecClickThrough.set('recProductName',data.productName);
+                userLog_RecClickThrough.set('recProductName',data.recProductName);
 
                 userLog_RecClickThrough.save({
                     success: function(){
@@ -257,6 +258,7 @@ function userLog(tabId, eventName, data) {
                 userLog_TrackedTabError.set('originalURL',data.originalURL);
                 userLog_TrackedTabError.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_TrackedTabError.set('productName',data.productName);
+                userLog_TrackedTabError.set('pageConfirmationSearch',data.pageConfirmationSearch);
 
                 userLog_TrackedTabError.save({
                     success: function(){
@@ -303,11 +305,109 @@ function userLog(tabId, eventName, data) {
 
             break;
 
+            case 'SHOW_TWEET_WINDOW':
+
+                var UserLog_TweetWindow = Parse.Object.extend("UserLog_TweetWindow");
+                var userLog_TweetWindow = new UserLog_TweetWindow({ACL: new Parse.ACL(user)});
+
+                userLog_TweetWindow.set('eventName',eventName);
+                userLog_TweetWindow.set('tabURL',tabURL);
+                userLog_TweetWindow.set('user',user);
+                userLog_TweetWindow.set('tweetContent',data.tweetContent);
+
+                userLog_TweetWindow.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
+            break;
+
+            case 'USER_BLOCK_BRAND':
+
+                var UserLog_BlockBrand = Parse.Object.extend("UserLog_BlockBrand");
+                var userLog_BlockBrand = new UserLog_BlockBrand({ACL: new Parse.ACL(user)});
+
+                userLog_BlockBrand.set('eventName',eventName);
+                userLog_BlockBrand.set('tabURL',tabURL);
+                userLog_BlockBrand.set('user',user);
+                userLog_BlockBrand.set('ethicalBrand',{__type: "Pointer",className: "EthicalBrand",objectId: data.brandId});
+                userLog_BlockBrand.set('brandName',data.brandName);
+                userLog_BlockBrand.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
+                userLog_BlockBrand.set('productName',data.productName);
+                userLog_BlockBrand.set('reason',data.reason);
+
+                userLog_BlockBrand.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
+            break;
+
+            case 'USER_UNBLOCK_BRAND':
+
+                UserLog_BlockBrand = Parse.Object.extend("UserLog_BlockBrand");
+                userLog_BlockBrand = new UserLog_BlockBrand({ACL: new Parse.ACL(user)});
+
+                userLog_BlockBrand.set('eventName',eventName);
+                userLog_BlockBrand.set('tabURL',data.tabURL);
+                userLog_BlockBrand.set('user',user);
+                userLog_BlockBrand.set('ethicalBrand',{__type: "Pointer",className: "EthicalBrand",objectId: data.brandId});
+                userLog_BlockBrand.set('brandName','');
+                userLog_BlockBrand.set('recommendation',null);
+                userLog_BlockBrand.set('productName',data.productName);
+                userLog_BlockBrand.set('reason',data.reason);
+
+                userLog_BlockBrand.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
+            break;
+
+            case 'JOYRIDE_POST_STEP':
+            case 'JOYRIDE_POST_RIDE':
+            case 'JOYRIDE_REACTIVATE':
+
+                UserLog_Joyride = Parse.Object.extend("UserLog_Joyride");
+                userLog_Joyride = new UserLog_Joyride({ACL: new Parse.ACL(user)});
+
+                userLog_Joyride.set('eventName',eventName);
+                userLog_Joyride.set('tabURL',tabURL);
+                userLog_Joyride.set('joyrideIndex',data.joyrideIndex);
+
+                userLog_Joyride.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+            break;
+
             default:
                 log(gvScriptName_BGLogging + '.userLog: ERROR, unhandled event name (' + eventName + ') passed to UserLog','ERROR');
 
         }
     }
+}
+
+function logError(eventName,data){
+
+    log(gvScriptName_BGLogging + '.logError: Start >>> eventName == ' + eventName,' INFO');
+
+    var ErrorLog = Parse.Object.extend("ErrorLog");
+    var errorLog = new ErrorLog();
+
+    errorLog.set('eventName',eventName);
+    errorLog.set('message',data.message);
+
+    errorLog.save({
+        success: function(){
+
+        },
+        error: parseErrorSave
+    });
 }
 
 

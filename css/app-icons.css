@@ -15,7 +15,7 @@
 
 .accountIcon {
   font-size: 40px;
-  color: orange;
+  color: #A0522D;
   text-shadow: 1px 4px 6px #FFF,0 0 0 #000,1px 4px 6px #FFF;
   vertical-align: middle;
 }
@@ -31,13 +31,22 @@ accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLi
 
 .minimiseBaluIcon {
     font-size: 20px;
-    color: orange;
+    color: #A0522D;
 }
 
+.brandSpielIcon {
+    font-size: 15px;
+    color: #A0522D;
+}
+
+.joyrideIcon {
+    font-size: 15px;
+    color: white;
+}
 
 .addNewIcon {
     font-size: 40px;
-    color: orange;
+    color: #A0522D;
     text-shadow: 1px 4px 6px #FFF,0 0 0 #000,1px 4px 6px #FFF;
     vertical-align: middle;
 }
@@ -45,14 +54,18 @@ accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLi
 
 .navIcon {
     font-size: 40px;
-    color: orange;
+    color: #A0522D;
 }
 
 .altProdIcon {
     font-size: 15px;
-    color: orange;
+    color: #A0522D;
 }
 
+.twitterIcon {
+    font-size: 15px;
+    color: #C69781;
+}
 .voteClass_voted {
     font-size: 15px;
     color: red;
@@ -60,15 +73,22 @@ accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLi
 
 .voteClass_notVoted {
     font-size: 15px;
-    color: #FFDB99;
+    color: #C69781;
 }
 
 .voteClass_nothing {
     font-size: 15px;
-    color: orange;
+    color: #C69781;
 }
 
-
+.blockedBrand_notBlocked {
+    font-size: 15px;
+    color: #C69781;
+}
+.unBlockBrandTickIcon {
+    font-size: 15px;
+    color: #C69781;
+}
 .infoIcon {
     font-size: 16px;
     color: blue;

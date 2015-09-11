@@ -35,7 +35,9 @@ function createOptionsPage(){
 
     log(gvScriptName_OPMain + '.createOptionsPage: Start','PROCS');
 
-    var contentDiv = document.getElementById('contentDiv');
+    var settingsDiv = document.getElementById('settingsDiv');
+    var blockedBrandsDiv = document.getElementById('blockedBrandsDiv');
+    var websitesDiv = document.getElementById('websitesDiv');
 
     // First half of page is the log in form (log out button, or log in / sign up form) and the settings (if logged in)
 
@@ -48,8 +50,10 @@ function createOptionsPage(){
 
         userFormHTML += '<br />';
         userFormHTML += '<div class="row">';
-        userFormHTML += '  <div class="large-4 columns end">';
-        userFormHTML += '    <a id="logOutButton" href="#" class="button radius tiny">Log Out</a>';
+        userFormHTML += '  <div class="large-8 columns">';
+        userFormHTML += '    <a id="logOutButton" class="button radius tiny">Log Out</a>';
+        userFormHTML += '    <a id="resetPasswordButton" class="button radius tiny">Reset Password</a>';
+        userFormHTML += '   <span style="visibility: hidden" id="resetPasswordEmailConfirmation">Password reset email sent.</span>';
         userFormHTML += '  </div>';
         userFormHTML += '</div>';
 
@@ -103,6 +107,23 @@ function createOptionsPage(){
         settingsHTML += '  </div>';
         settingsHTML += '</div>';
 
+        // Reactivate Joyride
+
+        if(!chrome.extension.getBackgroundPage().gvShowJoyride) {
+
+            settingsHTML += '<div class="row">';
+            settingsHTML += '  <div class="large-4 columns end">';
+            settingsHTML += '    <h4>Reactivate the Balu sidebar tour</h4>';
+            settingsHTML += '  </div>';
+            settingsHTML += '</div>';
+
+            settingsHTML += '<div class="row">';
+            settingsHTML += '  <div class="large-8 columns end">';
+            settingsHTML += '    <a id="reactivateJoyRide_button" class="button radius tiny">Reactivate</a>';
+            settingsHTML += '  </div>';
+            settingsHTML += '</div>';
+        }
+
     } else {
 
         // Log in form
@@ -116,18 +137,26 @@ function createOptionsPage(){
         userFormHTML += '  <div class="row">';
         userFormHTML += '    <div class="large-4 columns">';
         userFormHTML += '      <label>Email';
-        userFormHTML += '        <input type="text" id="fieldLogInEmail" placeholder="Email" required="yes">';
+        userFormHTML += '        <input type="text" id="fieldLogInEmail" placeholder="Email" required="yes" />';
         userFormHTML += '      </label>';
         userFormHTML += '    </div>';
         userFormHTML += '    <div class="large-4 columns end">';
         userFormHTML += '      <label>Password';
-        userFormHTML += '        <input type="password" id="fieldLogInPassword" placeholder="Password" required="yes">';
+        userFormHTML += '        <input type="password" id="fieldLogInPassword" placeholder="Password" required="yes" />';
         userFormHTML += '      </label>';
         userFormHTML += '    </div>';
         userFormHTML += '  </div>';
         userFormHTML += '  <div class="row">';
-        userFormHTML += '    <div class="large-4 columns end">';
-        userFormHTML += '      <input id="logInUserButton" class="button radius" type="button" value="Log In">';
+        userFormHTML += '    <div class="large-8 columns end">';
+        userFormHTML += '      <input id="logInUserButton" class="button radius" type="button" value="Log In" />';
+        userFormHTML += '      <input id="forgotPasswordButton" class="button radius" type="button" value="I\'ve forgotten my password" />';
+        userFormHTML += '    </div>';
+        userFormHTML += '  </div>';
+        userFormHTML += '  <div id="forgotPasswordForm" style="display: none" class="row">';
+        userFormHTML += '    <div class="large-8 columns end">';
+        userFormHTML += '      <input id="fieldForgotPasswordEmail" placeholder="Enter your email address" type="text" />';
+        userFormHTML += '      <input id="submitForgotPasswordButton" class="button radius" type="button" value="Request password reset">';
+        userFormHTML += '      <span id="forgotPasswordEmailConfirmation" style="visibility: hidden">Password resent email sent</span>';
         userFormHTML += '    </div>';
         userFormHTML += '  </div>';
         userFormHTML += '</form>';
@@ -164,22 +193,26 @@ function createOptionsPage(){
 
     var topHalfDiv = document.createElement('DIV');
     topHalfDiv.innerHTML = userFormHTML + settingsHTML;
-    contentDiv.appendChild(topHalfDiv);
+    settingsDiv.appendChild(topHalfDiv);
 
     // Now that it's all added to the DOM we can do the last few tasks:
-
 
     if(userLoggedIn) {
 
         // Create listeners
 
         document.getElementById("logOutButton").addEventListener('click', logOutButton_listener);
+        document.getElementById("resetPasswordButton").addEventListener('click', resetPasswordButton_listener);
 
         document.getElementById("alwaysShow").addEventListener('click', baluShowOrHide_listener);
         document.getElementById("alwaysHide").addEventListener('click', baluShowOrHide_listener);
 
         document.getElementById("baluOn").addEventListener('click', baluOnOrOff_listener);
         document.getElementById("baluOff").addEventListener('click', baluOnOrOff_listener);
+
+        if(!chrome.extension.getBackgroundPage().gvShowJoyride){
+            document.getElementById('reactivateJoyRide_button').addEventListener('click', reactivateJoyRide_listener);
+        }
 
         // Set radio buttons
 
@@ -203,13 +236,70 @@ function createOptionsPage(){
         // Create listeners
         document.getElementById("logInUserButton").addEventListener('click', logInButton_listener);
         document.getElementById("fieldLogInPassword").addEventListener('keydown', logInPasswordField_keydown_listener);
+        document.getElementById("forgotPasswordButton").addEventListener('click', forgotPasswordButton_listener);
+        document.getElementById("submitForgotPasswordButton").addEventListener('click', submitForgotPasswordButton_listener);
         document.getElementById("signUserUpButton").addEventListener('click', signUpButton_listener);
         document.getElementById("fieldSignUpPassword").addEventListener('keydown', signUpPasswordField_keydown_listener);
     }
 
-    // Website list
-
     if(userLoggedIn) {
+
+        Parse.initialize(chrome.extension.getBackgroundPage().gvAppId, chrome.extension.getBackgroundPage().gvJSKey);
+
+        // Blocked Brands
+
+        var blockedBrandsHTML = '';
+
+        var UserBlockedBrand = Parse.Object.extend("UserBlockedBrand");
+        var userBlockedBrandQuery = new Parse.Query(UserBlockedBrand);
+
+        userBlockedBrandQuery.include('ethicalBrand');
+        userBlockedBrandQuery.ascending('createdAt');
+
+        userBlockedBrandQuery.find({
+            success: function(userBlockedBrands){
+
+                blockedBrandsHTML += '<div class="row">';
+                blockedBrandsHTML += '  <div class="large-4 columns end">';
+                blockedBrandsHTML += '    <h4>Blocked Brands</h4>';
+
+                if(userBlockedBrands.length === 0){
+
+                    blockedBrandsHTML += '<ul><li>You have no blocked brands</li></ul>';
+
+                    blockedBrandsHTML += '  </div>';
+                    blockedBrandsHTML += '</div>';
+
+                    blockedBrandsHTML += '<br />';
+
+                } else {
+                    blockedBrandsHTML += '    <span>You have blocked the following brands from appearing in your sidebar. To unblock them again, just click the tick next to the brand name.</span>';
+                    blockedBrandsHTML += '  </div>';
+                    blockedBrandsHTML += '</div>';
+
+                    blockedBrandsHTML += '<div class="row">';
+                    blockedBrandsHTML += '  <div class="large-12 columns end">';
+                    blockedBrandsHTML += '    <ul>';
+                    for (var j = 0; j < userBlockedBrands.length; j++) {
+                        blockedBrandsHTML += '    <li><label>' + userBlockedBrands[j].get('ethicalBrand').get('brandName') + '  <a class="unBlockBrandTick_icons" data-brandid="' + userBlockedBrands[j].get('ethicalBrand').id + '"><i class="fi-check unBlockBrandTickIcon"></i></a></label>';
+                    }
+                    blockedBrandsHTML += '    </ul>';
+
+                    blockedBrandsHTML += '  </div>';
+                    blockedBrandsHTML += '</div>';
+                }
+                // Add to DOM
+                blockedBrandsDiv.innerHTML = blockedBrandsHTML;
+                var unBlockBrandTick_icons = document.getElementsByClassName('unBlockBrandTick_icons');
+                for(x=0; x<unBlockBrandTick_icons.length; x++){
+                    unBlockBrandTick_icons[x].addEventListener('click',unBlockBrandTick_listener);
+                }
+
+            },
+            error: chrome.extension.getBackgroundPage().parseErrorFind
+        });
+
+        // Website list
 
         var websiteListHTML = '';
 
@@ -219,11 +309,8 @@ function createOptionsPage(){
         websiteListHTML += '  </div>';
         websiteListHTML += '</div>';
 
-
         websiteListHTML += '<div class="row">';
         websiteListHTML += '  <div class="large-8 columns end">';
-
-        Parse.initialize('mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu', 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY');
 
         var CategoryWebsiteJoin = Parse.Object.extend("CategoryWebsiteJoin");
         var categoryWebsiteQuery = new Parse.Query(CategoryWebsiteJoin);
@@ -268,9 +355,7 @@ function createOptionsPage(){
 
                 // Add to DOM
 
-                var websiteListDiv = document.createElement('DIV');
-                websiteListDiv.innerHTML = websiteListHTML;
-                contentDiv.appendChild(websiteListDiv);
+                websitesDiv.innerHTML = websiteListHTML;
 
             },
             error: chrome.extension.getBackgroundPage().parseErrorFind
@@ -291,6 +376,13 @@ function logOutButton_listener(){
     });
 }
 
+function resetPasswordButton_listener(){
+    log(gvScriptName_OPMain + '.resetPasswordButton_listener: Start','PROCS');
+    chrome.extension.getBackgroundPage().resetPassword(null,function(){
+        document.getElementById('resetPasswordEmailConfirmation').style.visibility="visible";
+    });
+}
+
 function logInPasswordField_keydown_listener(event) {if (event.keyCode == 13) {logInButton_listener();}}
 function logInButton_listener(){
 
@@ -304,6 +396,26 @@ function logInButton_listener(){
     });
 
 }
+
+function forgotPasswordButton_listener(){
+
+    log(gvScriptName_OPMain + '.forgotPasswordButton_listener: Start','PROCS');
+
+    document.getElementById('forgotPasswordForm').style.display="block";
+}
+
+function submitForgotPasswordButton_listener(){
+
+    log(gvScriptName_OPMain + '.submitForgotPasswordButton_listener: Start','PROCS');
+
+    var email = document.getElementById('fieldForgotPasswordEmail').value;
+
+    chrome.extension.getBackgroundPage().resetPassword(email,function(){
+        document.getElementById('forgotPasswordEmailConfirmation').style.visibility="visible";
+    });
+
+}
+
 
 function signUpPasswordField_keydown_listener(event) {if (event.keyCode == 13) {signUpButton_listener();}}
 function signUpButton_listener(){
@@ -342,6 +454,8 @@ function baluOnOrOff_listener(){
         chrome.extension.getBackgroundPage().gvIsBaluOnOrOff = 'ON';
         chrome.storage.sync.set({'isBaluOnOrOff': 'ON'}, function(){
             chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action.png')});
+            chrome.extension.getBackgroundPage().turnBaluOn();
+            chrome.extension.getBackgroundPage().waitForExtensionInitThenInitialiseTab(null,1);
             log(gvScriptName_OPMain + '.baluOnOrOffListener: baluOn checked, storage.sync.isBaluOnOrOff set to ON','DEBUG');
         });
         userLog('OPTIONS: BALU_TURNED_ON');
@@ -350,12 +464,33 @@ function baluOnOrOff_listener(){
         chrome.extension.getBackgroundPage().gvIsBaluOnOrOff = 'OFF';
         chrome.storage.sync.set({'isBaluOnOrOff': 'OFF'}, function(){
             chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
+            chrome.extension.getBackgroundPage().refreshTab_allTabs();
             log(gvScriptName_OPMain + '.baluOnOrOffListener: baluOff checked, storage.sync.isBaluOnOrOff set to OFF','DEBUG');
         });
         userLog('OPTIONS: BALU_TURNED_OFF');
     }
 }
 
+function reactivateJoyRide_listener(){
+
+    log(gvScriptName_OPMain + '.reactivateJoyRide_listener: Start','PROCS');
+
+    chrome.extension.getBackgroundPage().markJoyrideAsNotDone(function(){
+        document.getElementById('reactivateJoyRide_button').textContent = 'Done!';
+    });
+}
+
+function unBlockBrandTick_listener(){
+
+    log(gvScriptName_OPMain + '.unBlockBrandTickIcon: Start','PROCS');
+
+    var brandId = this.getAttribute('data-brandid');
+
+    chrome.extension.getBackgroundPage().unBlockBrand(brandId,function(){
+        location.reload();
+    });
+
+}
 
 /**************************
  * Error and Log handling *
