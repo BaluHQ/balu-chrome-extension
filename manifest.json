@@ -1,6 +1,6 @@
 {
 
-    "version":          "1.5",
+    "version":          "1.6",
     "manifest_version": 2,
     "name":             "Balu",
     "options_page":     "options.html",
