@@ -25,34 +25,41 @@ var gvScriptName_IFMain = 'IF_main';
  * Functions *
  *************/
 
+/*
 function waitForScriptsThenExecute(counter,callback){
 // To do, this doesn't work - how do I know whether jquery is loaded? Do I need to? The content script
 // waits for the message from the iframe (init func, above). Since that doesn't get sent until IF_MAIN is loaded,
 // and if_main is not injectred until the end of the iframe's body (and jquery goes in to the head), then perhaps
 // it will never send the "im ready" message until jquery is loaded
     var jQueryLoaded = false;
-    try {
-        var blah = $('.qtip_tooltips');
-        log(gvScriptName_IFMain + '.waitForScriptsThenExecute: JQuery laoded, counter === ' + counter,' INFO');
-        jQueryLoaded = true;
-    } catch(error){
-        log(gvScriptName_IFMain + '.waitForScriptsThenExecute: JQuery not laoded, counter === ' + counter,' INFO');
-        jQueryLoaded = false;
+
+    // force it to wait at least once. Why, don't know! Had a lot of trouble getting this working.
+    if(counter > 0) {
+        try {
+            $('.qtip_tooltips').first().qtip({});
+            log(gvScriptName_IFMain + '.waitForScriptsThenExecute: JQuery loaded, counter === ' + counter,' INFO');
+            jQueryLoaded = true;
+        } catch(error){
+            log(gvScriptName_IFMain + '.waitForScriptsThenExecute: JQuery not loaded, counter === ' + counter,' INFO');
+            jQueryLoaded = false;
+        }
     }
-   if(jQueryLoaded || counter > 1){
-       log(gvScriptName_IFMain + '.waitForScriptsThenExecute: Ending wait, counter === ' + counter,'PROCS');
-       callback();
-   } else {
-       counter++;
-       window.setTimeout(function(){return waitForScriptsThenExecute(counter,callback);},10);
-   }
+
+    if(jQueryLoaded || counter > 100){
+        log(gvScriptName_IFMain + '.waitForScriptsThenExecute: Ending wait, counter === ' + counter,'PROCS');
+        callback();
+    } else {
+        counter++;
+        window.setTimeout(function(){return waitForScriptsThenExecute(counter,callback);},100);
+    }
 }
 
+*/
 function activateQTips(){
 
     log(gvScriptName_IFMain + '.activateQTips: Start','PROCS');
 
-    $('.qtip_tooltips').each(function(){
+    $('.qtip_tooltips').each(function(i){
         var brandSpielDiv = $(this).next('div');
         $(this).qtip({
             content: {
@@ -79,7 +86,8 @@ function activateJoyride(){
     $(document).foundation({
         joyride: {
             post_step_callback: postStepJoyride,
-            post_ride_callback: postRideJoyride
+            post_ride_callback: postRideJoyride,
+            scroll_speed: 0
         }
     });
 
@@ -149,12 +157,12 @@ function contentScriptMessage_listener(msg) {
 
         case 'CS_main | pleaseActivateQTips':
             log(logMessage,'MESSG');
-            waitForScriptsThenExecute(0,activateQTips);
+            activateQTips();
         break;
 
         case 'CS_main | pleaseActivateJoyride':
             log(logMessage,'MESSG');
-            waitForScriptsThenExecute(0,activateJoyride);
+            activateJoyride();
         break;
 
         default:

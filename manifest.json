@@ -4,7 +4,7 @@
     "manifest_version": 2,
     "name":             "Balu",
     "options_page":     "options.html",
-    "description":      "Balu recommends ethical alternatives to everyday consumer products",
+    "description":      "Ethical recommendations while you shop",
     "offline_enabled":  false,
 
     "background": {

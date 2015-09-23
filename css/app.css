@@ -28,6 +28,7 @@
 
 .popupBody {
   min-width: 300px;
+  height: 200px;
   position: relative;
   vertical-align: middle;
 }

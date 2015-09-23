@@ -202,7 +202,7 @@ function chromeMessageListener(msg, sender, callback){
 
  function sendMessage(tabId,subject,data,callback){
 
-     log(gvScriptName_BGMessaging + ' >> message -> content_script:    ' + subject, 'MESSG');
+     log(gvScriptName_BGMessaging + ' >> message -> content_script: ' + subject, 'MESSG');
 
      chrome.tabs.sendMessage(tabId,
                              {sender:  'BG_main',

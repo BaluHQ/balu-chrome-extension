@@ -130,7 +130,7 @@ function blockBrand() {
 
     var reason = document.getElementById('fieldReason').value;
     gvParams.reason = reason;
-    sendMessage('pleaseBlockThisBrand',gvParams);
+    sendMessage('BG_main','pleaseBlockThisBrand',gvParams);
 }
 
 /**************************

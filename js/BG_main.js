@@ -347,6 +347,9 @@ function waitForExtensionInitThenInitialiseTab(tab,counter){
             }
 
             hasExtensionInitialisd = true;
+            chrome.storage.local.set({'baluParseErrorMessage': null}, function(){
+                chrome.browserAction.setBadgeText({text: ""});
+            });
         }
     }
 
@@ -389,9 +392,16 @@ function initialiseTab(tab){
 
    // Do we need to show the joyride. To do: might be better for it not to be here. must be a scenario where you can get the joyride to reappear by triggering a refresh tab, without re-init the app.
    Parse.initialize(gvAppId, gvJSKey);
-   var gvJjoyrideStatus = Parse.User.current().get('joyrideStatus');
+
+   var currentUser = Parse.User.current();
+   var joyrideStatus;
+
+   if(currentUser){
+       joyrideStatus = currentUser.get('joyrideStatus');
+   }
+
    gvShowJoyride = false;
-   if(typeof gvJjoyrideStatus === 'undefined' || gvJjoyrideStatus === 'NOT DONE'){
+   if(currentUser && (typeof joyrideStatus === 'undefined' || joyrideStatus === 'NOT DONE')){
        gvShowJoyride = true;
    }
 
@@ -719,7 +729,7 @@ function manualSearch(tabId, searchTerm) {
     var recommendationsArray = [];
 
     if(searchTerm === ''){
-        displayRecommendations(tabId,recommendationsArray, null, searchTerm);
+        displayRecommendations(tabId,recommendationsArray, searchTerm);
         userLog(tabId,'MANUAL_SEARCH_EMPTY_STRING');
     } else{
 
@@ -886,7 +896,7 @@ function manualSearch(tabId, searchTerm) {
                                 }
 
                                 // Note, the content_script will catch no-results and display the empty side bar
-                                displayRecommendations(tabId,recommendationsArray, null, searchTerm);
+                                displayRecommendations(tabId,recommendationsArray,searchTerm);
                                 userLog(tabId,'MANUAL_SEARCH_RECOMMENDATIONS_RETURNED',{searchTerm: searchTerm, recommendationsArray: recommendationsArray});
                             },
                             error: parseErrorFind
@@ -960,25 +970,30 @@ function showProductLinkWindow(tabId,productURL,recommendationId, recProductName
     chrome.tabs.create({'url': productURL}, function(tab){trackNewTab(tab,productURL,recommendationId,pageConfirmationSearch);});
 
     // In parallel, register this click on the recommendation's click count
-    Parse.initialize(gvAppId, gvJSKey);
 
-    var RecommendationClickCount = Parse.Object.extend('RecommendationClickCount');
-    var recommendationClickCountQuery = new Parse.Query(RecommendationClickCount);
-    recommendationClickCountQuery.equalTo('recommendation',{__type: "Pointer",className: "Recommendation",objectId: recommendationId});
-    recommendationClickCountQuery.find({
-        success: function(recommendationClickCounts){
-            if(recommendationClickCounts.length === 1) {
-                recommendationClickCounts[0].increment("clickCount");
-                recommendationClickCounts[0].save();
-            } else {
-                recommendationClickCount = new RecommendationClickCount({ACL: new Parse.ACL(Parse.User.current())});
-                recommendationClickCount.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: recommendationId});
-                recommendationClickCount.set('clickCount',1);
-                recommendationClickCount.save();
-            }
-        },
-        error: parseErrorFind
-    });
+    // don't log for the dev / test user
+    if(user.get('username') !== 'dev.baluhq@gmail.com'){
+
+        Parse.initialize(gvAppId, gvJSKey);
+
+        var RecommendationClickCount = Parse.Object.extend('RecommendationClickCount');
+        var recommendationClickCountQuery = new Parse.Query(RecommendationClickCount);
+        recommendationClickCountQuery.equalTo('recommendation',{__type: "Pointer",className: "Recommendation",objectId: recommendationId});
+        recommendationClickCountQuery.find({
+            success: function(recommendationClickCounts){
+                if(recommendationClickCounts.length === 1) {
+                    recommendationClickCounts[0].increment("clickCount");
+                    recommendationClickCounts[0].save();
+                } else {
+                    recommendationClickCount = new RecommendationClickCount({ACL: new Parse.ACL(Parse.User.current())});
+                    recommendationClickCount.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: recommendationId});
+                    recommendationClickCount.set('clickCount',1);
+                    recommendationClickCount.save();
+                }
+            },
+            error: parseErrorFind
+        });
+    }
 }
 
 function voteProductUpOrDown(tabId,recommendationId,upOrDown){
@@ -1398,10 +1413,39 @@ function reportTrackedTabError(tabId,trackedTab){
  * Error handling *
  ******************/
 
-function parseErrorSave(object,error) {alert("Parse error on .save() request: " + error.code + " " + error.message);}
-function parseErrorFind(error) {alert("Parse error on .find() request: " + error.code + " " + error.message);}
-function parseErrorUser(user,error) {alert("Parse error on authentication request: " + error.code + " " + error.message);}
-function parseErrorGet(user,error) {alert("Parse error on .get() request: " + error.code + " " + error.message);}
-function parseErrorUserSimple(error) {alert("Parse error on user request: " + error.code + " " + error.message);}
+function parseErrorSave(object,error) {
+    var errorMsg = "Parse error on .save() request: " + error.code + " " + error.message;
+    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+        chrome.browserAction.setBadgeText({text: "!"});
+    });
+}
+
+function parseErrorFind(error) {
+    var errorMsg = "Parse error on .find() request: " + error.code + " " + error.message;
+    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+        chrome.browserAction.setBadgeText({text: "!"});
+    });
+}
+
+function parseErrorUser(user,error) {
+    var errorMsg = "Parse error on authentication request: " + error.code + " " + error.message;
+    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+        chrome.browserAction.setBadgeText({text: "!"});
+    });
+}
+
+function parseErrorGet(user,error) {
+    var errorMsg = "Parse error on .get() request: " + error.code + " " + error.message;
+    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+        chrome.browserAction.setBadgeText({text: "!"});
+    });
+}
+
+function parseErrorUserSimple(error) {
+    var errorMsg = "Parse error on user request: " + error.code + " " + error.message;
+    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+        chrome.browserAction.setBadgeText({text: "!"});
+    });
+}
 
 // To do: remove these alerts and replace with a more user-friendly error catch.

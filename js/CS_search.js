@@ -90,6 +90,11 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
     var menFilter = 'NO';
     var womenFilter = 'NO';
 
+    // Logging
+    var logMessage = '\r\rWebsite: ' + websiteURL + '\r';
+
+    logMessage += 'Iteration: ' + attemptCount + '\r\r';
+
     /*****************************************************
      * The Switch statement: one for each active website *
      *****************************************************/
@@ -109,16 +114,22 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             runSexSearch = true;
 
+            // to do: Amazon search changes the URL but not the page, so we probably need listen for URL changes to trigger a re-search
+
             // Breadcrumbs
 
             var amazonInfoBar = document.getElementById('s-result-info-bar-content');
             if(amazonInfoBar !== null) {
                 breadcrumbs = amazonInfoBar.textContent.toLowerCase();
+                logMessage += 'Breadcrumbs: found in id="s-result-info-bar-content"' + '\r';
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in id="s-result-info-bar-content"' + '\r';
             }
 
             // Search results page //
 
-            var amazon_resultsCol = document.getElementById('resultsCol');
+            var amazon_resultsCol;
+            var amazon_searchResults;
 
             // The resultsCol div is the grid that (usually) contains all search results.
             // What's inside it depends on the view, but it seems that all the
@@ -126,62 +137,73 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             // If resultsCol is not there, then try searchResults div
 
-            var amazon_searchResults;
-            if (amazon_resultsCol === null) {
-                amazon_searchResults = document.getElementById('searchResults');
-            }
+            amazon_resultsCol = document.getElementById('resultsCol');
 
-var temp = '';
             if(amazon_resultsCol !== null) {
+                logMessage += 'Search results: found in id="resultsCol"' + '\r';
                 var amazon_links = amazon_resultsCol.querySelectorAll('a.s-access-detail-page');
                 for (i = 0; i < amazon_links.length; i++) {
                     productNames.push(amazon_links[i].textContent.toLowerCase());
-temp += i + ': ' + amazon_links[i].textContent.toLowerCase() + '\r';
                 }
-            } else if(amazon_searchResults !== null) {
-                var amazon_h3s = amazon_searchResults.querySelectorAll('h3.newaps');
-                for (i = 0; i < amazon_h3s.length; i++) {
-                    productNames.push(amazon_h3s[i].textContent.toLowerCase());
-temp += i + ': ' + amazon_h3s[i].textContent.toLowerCase() + '\r';
-                }
-            }
-
-            // product pages
-
-            var amazon_titleSection = document.getElementById('titleSection');
-            if(amazon_titleSection !== null) {
-                productNames.push(amazon_titleSection.textContent.toLowerCase().trim());
-temp += '> ' + amazon_titleSection.textContent.toLowerCase().trim() + '\r';
-            }
-
-if (temp.length > 20) {
-    //alert(temp);
-}
-
-/*
-            // Product page //
-
-            var sainsbury_productTitleDescriptionContainers = [];
-
-            if(sainsbury_productLister === null){
-
-                sainsbury_productTitleDescriptionContainers = document.getElementsByClassName('productTitleDescriptionContainer');
-
-                // The productTitleDescriptionContainer class is the box containing the product. It's a div. Inside it are:
-                   // h1:                  <-- This is our product name!
-                   // div: reviews
-
-                if(sainsbury_productTitleDescriptionContainers.length > 0) {
-                    var sainsbury_header1s = sainsbury_productTitleDescriptionContainers[0].getElementsByTagName('h1');
-                    productNames.push(sainsbury_header1s[0].innerHTML.toLowerCase().trim());
+            } else { // if we didn't find the resultsCol div, then look for the searchResults div
+                amazon_searchResults = document.getElementById('searchResults');
+                if(amazon_searchResults !== null) {
+                    logMessage += 'Search results: found in id="searchResults"' + '\r';
+                    var amazon_h3s = amazon_searchResults.querySelectorAll('h3.newaps');
+                    for (i = 0; i < amazon_h3s.length; i++) {
+                        productNames.push(amazon_h3s[i].textContent.toLowerCase());
+                    }
+                } else {
+                    logMessage += 'Search results: FAILED to find in id="resultsCol" or id="searchResults"' + '\r';
                 }
             }
-*/
-            if(amazon_resultsCol !== null || amazon_searchResults !== null || amazon_titleSection !== null) {
+
+            // There are lots of different types of product page
+
+            var amazon_titleSection; // #1
+            var amazon_productTitle; // #2
+            var amazon_btAsinTitle;  // #3
+
+            // product page, #1
+
+            if(amazon_resultsCol === null && amazon_searchResults === null){
+                amazon_titleSection = document.getElementById('titleSection');
+                if(amazon_titleSection !== null) {
+                    logMessage += 'Product detail: found in id="titleSection"' + '\r';
+                    productNames.push(amazon_titleSection.textContent.toLowerCase().trim());
+                }
+            } else
+
+            // product page, #2
+
+            if(amazon_resultsCol === null && amazon_searchResults === null && amazon_titleSection === null){
+                amazon_productTitle = document.getElementById('productTitle');
+                if(amazon_productTitle !== null) {
+                    logMessage += 'Product detail: found in id="productTitle"' + '\r';
+                    productNames.push(amazon_productTitle.textContent.toLowerCase().trim());
+                }
+            } else
+
+            // product page, #3
+
+            if(amazon_resultsCol === null && amazon_searchResults === null && amazon_titleSection === null && amazon_productTitle === null){
+                amazon_btAsinTitle = document.getElementById('btAsinTitle');
+                if(amazon_btAsinTitle !== null) {
+                    logMessage += 'Product detail: found in id="btAsinTitle"' + '\r';
+                    productNames.push(amazon_btAsinTitle.textContent.toLowerCase().trim());
+                }
+            } else if (amazon_resultsCol === null && amazon_searchResults === null) {
+                logMessage += 'Product detail: FAILED To find in id="titleSection" or id="productTitle" or id="btAsinTitle"' + '\r';
+            }
+
+            // Did we find something?
+            if(amazon_resultsCol !== null || amazon_searchResults !== null ||
+               amazon_titleSection !== null || amazon_productTitle !== null || amazon_btAsinTitle !== null) {
                 didWeFindEverything = true;
             }
 
         break;
+
         /*
          * FASHION
          */
@@ -190,12 +212,17 @@ if (temp.length > 20) {
 
             // Breadcrumbs (same on search result and product page) //
 
+            var breadcrumbLogMessage = 'Breadcrumbs: found in class="breadcrumb"' + '\r';
             var asos_lblBreadCrumbs = document.getElementsByClassName('breadcrumb');
             if(asos_lblBreadCrumbs.length === 0){
+                breadcrumbLogMessage = 'Breadcrumbs: found in class="breadcrumbs"' + '\r';
                 asos_lblBreadCrumbs = document.getElementsByClassName('breadcrumbs');
             }
             if(asos_lblBreadCrumbs.length > 0){
+                logMessage += breadcrumbLogMessage;
                 breadcrumbs = asos_lblBreadCrumbs[0].textContent.toLowerCase();
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in class="breadcrumb" or class="breadcrumbs"' + '\r';
             }
 
             // Men/women filter checkboxes //
@@ -234,6 +261,7 @@ if (temp.length > 20) {
 
 
             if(asos_productList.length > 0) {
+                logMessage += 'Search results: found in class="product-list"' + '\r';
                 var asos_spans = asos_productList[0].getElementsByTagName('span');
                 for (i = 0; i < asos_spans.length; i++) {
                     if(asos_spans[i].className === 'name'){
@@ -247,10 +275,13 @@ if (temp.length > 20) {
                //  ...
 
             } else if(asos_categoryItems.length > 0){
+                logMessage += 'Search results: found in class="category-items"' + '\r';
                 var asos_As = asos_categoryItems[0].querySelectorAll('a.desc');
                 for (var j = 0; j < asos_As.length; j++) {
                     productNames.push(asos_As[j].textContent.toLowerCase());
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in class="product-list" or class="category-items"' + '\r';
             }
 
             // Product page //
@@ -266,7 +297,10 @@ if (temp.length > 20) {
                    //     span           <-- This is our product name!
 
                if(asos_lblProductTitle !== null){
+                   logMessage += 'Product detail: found in id="ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle"' + '\r';
                    productNames.push(asos_lblProductTitle.textContent.toLowerCase());
+               } else {
+                   logMessage += 'Product detail: FAILED To find in id="ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle"' + '\r';
                }
             }
 
@@ -282,7 +316,10 @@ if (temp.length > 20) {
 
             var debenhams_BreadCrumbTrailDisplay = document.getElementById('WC_BreadCrumbTrailDisplay_div_1');
             if(debenhams_BreadCrumbTrailDisplay !== null){
+                logMessage += 'Breadcrumbs: found in id="WC_BreadCrumbTrailDisplay_div_1"' + '\r';
                 breadcrumbs = debenhams_BreadCrumbTrailDisplay.innerHTML.toLowerCase();
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in id="WC_BreadCrumbTrailDisplay_div_1"' + '\r';
             }
 
             // Search results page //
@@ -302,6 +339,8 @@ if (temp.length > 20) {
                 for (i = 0; i < debenham_divs.length; i++) {
                     productNames.push(debenham_divs[i].textContent.toLowerCase().trim());
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in class="description"' + '\r';
             }
 
             // Product page //
@@ -323,7 +362,10 @@ if (temp.length > 20) {
                    //         span: itemprop=name         <-- This is our product name!
 
                if(debenhams_productTopInfo.length > 0){
+                   logMessage += 'Product detail: found in class="product-top-info"' + '\r';
                    productNames.push(debenhams_productTopInfo[0].textContent.toLowerCase());
+               } else {
+                   logMessage += 'Product detail: FAILED To find in class="product-top-info"' + '\r';
                }
             }
 
@@ -339,12 +381,15 @@ if (temp.length > 20) {
 
             var very_breadcrumb = document.getElementById('breadcrumb');
             if(very_breadcrumb !== null){
+                logMessage += 'Breadcrumbs: found in id="breadcrumb"' + '\r';
                 breadcrumbs = very_breadcrumb.innerHTML.toLowerCase();
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in id="breadcrumb"' + '\r';
             }
 
             // Search results page //
 
-            var very_product = document.getElementById('products');
+            var very_products = document.getElementById('products');
 
             // The products div is the grid containing all search results. Inside it are:
                // ul: productList
@@ -355,18 +400,21 @@ if (temp.length > 20) {
                //         a: productTitle
                //           h3:        some text in a span        <-- This is our product name!
 
-            if(very_product !== null) {
+            if(very_products !== null) {
+                logMessage += 'Search results: found in id="products"' + '\r';
                 var very_headers = very_products.getElementsByTagName('h3');
                 for (i = 0; i < very_headers.length; i++) {
                     productNames.push(very_headers[i].textContent.toLowerCase());
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in id="products"' + '\r';
             }
 
             // Product page //
 
             var very_productHeadings = [];
 
-            if(very_product === null) {
+            if(very_products === null) {
 
                 very_productHeadings = document.getElementsByClassName('productHeading');
 
@@ -374,11 +422,14 @@ if (temp.length > 20) {
                 // which is in a span
 
                if(very_productHeadings.length > 0){
+                   logMessage += 'Product detail: found in class="productHeading"' + '\r';
                    productNames.push(very_productHeadings[0].textContent.toLowerCase());
+               } else {
+                   logMessage += 'Product detail: FAILED To find in class="productHeading"' + '\r';
                }
             }
 
-            if(very_breadcrumb !== null && (very_product !== null || very_productHeadings.length > 0)) {
+            if(very_breadcrumb !== null && (very_products !== null || very_productHeadings.length > 0)) {
                 didWeFindEverything = true;
             }
 
@@ -391,11 +442,13 @@ if (temp.length > 20) {
             var next_breadcrumbNavigation = document.getElementsByClassName('BreadcrumbNavigation');
             var next_breadcrumb = [];
             if(next_breadcrumbNavigation.length > 0){
-                // the li elements after the first (home) element take a while to load
+                logMessage += 'Breadcrumbs: found in class="BreadcrumbNavigation"' + '\r';
                 next_breadcrumbs = next_breadcrumbNavigation[0].getElementsByTagName('li');
                 if(next_breadcrumbs.length > 1) {
                     breadcrumbs = next_breadcrumbNavigation[0].innerHTML.toLowerCase();
                 }
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in class="BreadcrumbNavigation"' + '\r';
             }
 
             // Men/women filter checkboxes //
@@ -403,6 +456,7 @@ if (temp.length > 20) {
             var next_gender1 = document.getElementById('gender1');
             var next_gender2 = document.getElementById('gender2');
             if(next_gender1 !== null && next_gender2 !== null) {
+                logMessage += 'Gender: found in id="gender1" or id="gender2"' + '\r';
                 if(next_gender1.value === 'gender:women' && next_gender1.checked === 'checked') {
                     womenFilter = 'WOMEN';
                 } else
@@ -415,6 +469,8 @@ if (temp.length > 20) {
                 if(next_gender2.value === 'gender:men' && next_gender1.checked === 'checked') {
                     menFilter = 'MEN';
                 }
+            } else {
+                logMessage += 'Gender: FAILED to find in id="gender1" or id="gender2"' + '\r';
             }
 
             // Search results page //
@@ -430,10 +486,13 @@ if (temp.length > 20) {
             //           h2: title      <-- This is our product name!
 
             if(next_results.length > 0) { // the div loads empty first and is then populated by ajax, so we need to check length, not existence
+                logMessage += 'Search results: found in class="Results"' + '\r';
                 var next_headers = next_results[0].getElementsByTagName('h2');
                 for (i = 0; i < next_headers.length; i++) {
                     productNames.push(next_headers[i].innerHTML.toLowerCase());
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in class="Results"' + '\r';
             }
 
             // Product page //
@@ -469,8 +528,11 @@ if (temp.length > 20) {
                                (next_styleCopys[i].parentElement.className.indexOf('FirstItem') === -1)){
                                 next_styleHeaders = next_styleCopys[i].getElementsByClassName('StyleHeader');
                                 if(next_styleHeaders.length > 0) {
+                                    logMessage += 'Product detail: found in class="StyleCopy"' + '\r';
                                     productNames.push(next_styleHeaders[0].textContent.toLowerCase().trim());
                                     break;
+                                } else {
+                                    logMessage += 'Product detail: FAILED to find in class="StyleCopy" (nine iterations expected)' + '\r';
                                 }
                             }
                         }
@@ -490,13 +552,17 @@ if (temp.length > 20) {
 
             var newlook_breadcrumbs = document.getElementsByClassName('breadcrumb');
             if(newlook_breadcrumbs.length > 0){
+                logMessage += 'Breadcrumbs: found in class="breadcrumb"' + '\r';
                 breadcrumbs = newlook_breadcrumbs[0].innerHTML.toLowerCase();
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in class="breadcrumb"' + '\r';
             }
 
             // Men/women filter checkboxes //
 
             var newlook_breadcrumbRemoveTexts = document.getElementsByClassName('breadcrumbRemoveText');
             if(newlook_breadcrumbRemoveTexts.length > 0) {
+                logMessage += 'Gender: found in class="breadcrumbRemoveText"' + '\r';
                 for(i = 0; i < newlook_breadcrumbRemoveTexts.length; i++){
                     if(newlook_breadcrumbRemoveTexts[i].innerHTML === 'Mens'){
                         menFilter = 'MEN';
@@ -505,6 +571,8 @@ if (temp.length > 20) {
                         womenFilter = 'WOMEN';
                     }
                 }
+            } else {
+                logMessage += 'Gender: FAILED to find in class="breadcrumbRemoveText"' + '\r';
             }
 
             // Search results page //
@@ -522,12 +590,15 @@ if (temp.length > 20) {
             //       span: price
 
             if(newlook_prodOverviews.length > 0) {
+                logMessage += 'Search results: found in class="prod_overview"' + '\r';
                 for(i = 0; i < newlook_prodOverviews.length; i++){
                     var newlook_descs = newlook_prodOverviews[i].getElementsByClassName('desc');
                     if(newlook_descs.length > 0){
                         productNames.push(newlook_descs[0].textContent.toLowerCase());
                     }
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in class="prod_overview"' + '\r';
             }
 
             // Product page //
@@ -536,12 +607,15 @@ if (temp.length > 20) {
 
             if(newlook_prodOverviews.length === 0) {
 
-                // The titlecontainer class is contains the product title only
+                // The titlecontainer class contains the product title only
                 // h1                 <-- This is our product name!
 
                 newlook_titleContainers = document.getElementsByClassName('title_container');
                 if(newlook_titleContainers.length > 0){
+                    logMessage += 'Product detail: found in class="title_container"' + '\r';
                     productNames.push(newlook_titleContainers[0].textContent.toLowerCase());
+                } else {
+                    logMessage += 'Product detail: FAILED to find in class="title_container"' + '\r';
                 }
             }
 
@@ -558,20 +632,22 @@ if (temp.length > 20) {
 
             var topshop_breadcrumbs = document.getElementsByClassName('breadcrumb');
             if(topshop_breadcrumbs.length > 0){
+                logMessage += 'Breadcrumbs: found in class="breadcrumb"' + '\r';
                 breadcrumbs = topshop_breadcrumbs[0].innerHTML.toLowerCase();
+            } else {
+                logMessage += 'Breadcrumbs: FAILED to find in class="breadcrumb"' + '\r';
             }
 
             // Search results page //
 
-            topshop_wrapperPageContent = document.getElementById('wrapper_page_content');
+            var topshop_wrapperPageContent;
 
             // There's a wrapper_page_conent on the search and product page, but the one on the search page
-            // has a class of
-            if(topshop_wrapperPageContent !== null) {
-                if(topshop_wrapperPageContent.className !== 'category_products') {
-                    topshop_wrapperPageContent = null;
-                }
+            // has a class of category_products
+            if($('#wrapper_page_content').hasClass('category_products')){
+                topshop_wrapperPageContent = document.getElementById('wrapper_page_content');
             }
+
             // wrapper_page_content is a div, containing:
             //   div: wrapper_product_list         [one for each row]
             //     div: sp_5 block_5               [example, obvs these are different for each block]
@@ -581,10 +657,13 @@ if (temp.length > 20) {
             //           a:                          <-- This is our product name!
 
             if(topshop_wrapperPageContent !== null){
+                logMessage += 'Search results: found in id="wrapper_page_content" (inside id="wrapper_page_content" div with class="category_products")' + '\r';
                 var topshop_productDescriptions = topshop_wrapperPageContent.getElementsByClassName('product_description');
                 for(i = 0; i < topshop_productDescriptions.length; i++){
                     productNames.push(topshop_productDescriptions[i].textContent.toLowerCase());
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in id="wrapper_page_content" (inside id="wrapper_page_content" div with class="category_products")' + '\r';
             }
 
             // Product page //
@@ -594,10 +673,13 @@ if (temp.length > 20) {
             if(topshop_wrapperPageContent === null){
                 topshop_productColumn2 = document.getElementsByClassName('product_column_2');
                 if(topshop_productColumn2.length > 0){
+                    logMessage += 'Product detail: found in class="product_column_2"' + '\r';
                     var topshop_headers = topshop_productColumn2[0].getElementsByTagName('h1');
                     if(topshop_headers.length > 0) {
                         productNames.push(topshop_headers[0].innerHTML.toLowerCase());
                     }
+                } else {
+                    logMessage += 'Product detail: FAILED to find in class="product_column_2"' + '\r';
                 }
             }
 
@@ -633,12 +715,15 @@ if (temp.length > 20) {
                //             span data-title="true"                   <-- This is our product name!
 
             if(tesco_allProductsGrid.length > 0) {
+                logMessage += 'Search results: found in class="allProducts"' + '\r';
                 tescoSpans = tesco_allProductsGrid[0].getElementsByTagName('span');
                 for (i = 0; i < tescoSpans.length; i++) {
                     if(tescoSpans[i].getAttribute('data-title') === 'true') {
                         productNames.push(tescoSpans[i].innerHTML.toLowerCase());
                     }
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in class="allProducts"' + '\r';
             }
 
             // Product page //
@@ -658,6 +743,7 @@ if (temp.length > 20) {
                    //           span data-title="true"    <-- This is our product name!
 
                 if(tesco_productDetailsContainer.length > 0) {
+                    logMessage += 'Product detail: found in class="productDetailsContainer"' + '\r';
                     var tesco_Spans = tesco_productDetailsContainer[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
                     // there should only ever be one, but for good measure we'll loop through
                     for (i = 0; i < tesco_Spans.length; i++) {
@@ -665,6 +751,8 @@ if (temp.length > 20) {
                             productNames.push(tesco_Spans[i].innerHTML.toLowerCase());
                         }
                     }
+                } else {
+                    logMessage += 'Product detail: FAILED to find in class="productDetailsContainer"' + '\r';
                 }
             }
 
@@ -697,10 +785,13 @@ if (temp.length > 20) {
                //           div: promotion
 
             if(sainsbury_productLister !== null) {
+                logMessage += 'Search results: found in id="productLister"' + '\r';
                 var sainsbury_header3s = sainsbury_productLister.getElementsByTagName('h3');
                 for (i = 0; i < sainsbury_header3s.length; i++) {
-                    productNames.push(sainsbury_header3s[i].innerHTML.toLowerCase());
+                    productNames.push(sainsbury_header3s[i].textContent.toLowerCase());
                 }
+            } else {
+                logMessage += 'Search results: FAILED to find in id="productLister"' + '\r';
             }
 
             // Product page //
@@ -716,8 +807,11 @@ if (temp.length > 20) {
                    // div: reviews
 
                 if(sainsbury_productTitleDescriptionContainers.length > 0) {
+                    logMessage += 'Product detail: found in class="productTitleDescriptionContainer"' + '\r';
                     var sainsbury_header1s = sainsbury_productTitleDescriptionContainers[0].getElementsByTagName('h1');
                     productNames.push(sainsbury_header1s[0].innerHTML.toLowerCase().trim());
+                } else {
+                    logMessage += 'Product detail: FAILED to find in class="productTitleDescriptionContainer"' + '\r';
                 }
             }
 
@@ -732,8 +826,15 @@ if (temp.length > 20) {
         //break;
 
         default:
+            logMessage += 'NO SWITCH STATEMENT EXISTS FOR THIS WEBSITE' + '\r';
             log(gvScriptName_CSSearch + '.getElements: no switch statement written for active website: ' + websiteURL,'ERROR');
 
+    }
+
+    if(didWeFindEverything){
+        logMessage += '\r' + 'Found necessary DOM elements to run search...' + '\r';
+    } else {
+        logMessage += '\r' + 'FAILED to find necessary DOM elements to run search...' + '\r';
     }
 
     /**************************************
@@ -742,8 +843,13 @@ if (temp.length > 20) {
 
     if(!didWeFindEverything && attemptCount < 10) {
         // If we don't have any productNames yet then we try the page a few times, in case it has any fancy ajax-esque loading of the search results
-        window.setTimeout(function(){attemptCount++; return getElements(tabURL,websiteURL,sexSearch,productSearch,searchData,attemptCount);},100);
+        var delayMS = 100;
+        logMessage += '...attempt count (' + attemptCount + ') < 10, waiting ' + delayMS + 'ms and retrying' + '\r';
+        log(gvScriptName_CSSearch + logMessage,'SERCH');
+        logMessage = '';
+        window.setTimeout(function(){attemptCount++; return getElements(tabURL,websiteURL,sexSearch,productSearch,searchData,attemptCount);},delayMS);
     } else if (productNames.length > 0) {
+
         var pageElements = {productNames: productNames,
                             breadcrumbs:  breadcrumbs,
                             URLText:      URLText,
@@ -752,13 +858,16 @@ if (temp.length > 20) {
                             sexOverride:  sexOverride};
 
         if(runSexSearch) {
-            sexSearchCallback(pageElements,websiteURL,productSearchCallback,searchData);
+            logMessage += '...and successfully pulled ' + productNames.length + ' productNames from DOM elements, executing sex search' + '\r\r';
+            sexSearchCallback(pageElements,websiteURL,productSearchCallback,searchData,logMessage);
         } else {
-            productSearchCallback(pageElements,websiteURL,searchData);
+            logMessage += '...and successfully pulled ' + productNames.length + ' productNames from DOM elements, executing product search' + '\r\r';
+            productSearchCallback(pageElements,websiteURL,searchData,logMessage);
         }
     } else {
         log(gvScriptName_CSSearch + '.getElements: Failed to pull expected elements from the DOM on websiteURL == ' + websiteURL,'ERROR');
         // No need to call our search functions, just return no search results
+        logMessage += '\r' + 'FAILED to pull any productNames from DOM elements, skipping search and returning no results' + '\r';
         processSearchResults(null,null,false);
     }
 }
@@ -766,7 +875,7 @@ if (temp.length > 20) {
 /*
  * Search the various page elements for the searchProduct sex
  */
-function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) {
+function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, logMessage) {
 
     log(gvScriptName_CSSearch + '.sexSearch: Start','PROCS');
 
@@ -774,26 +883,33 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) 
     var foundWomen = false;
 
     if (pageElements.sexOverride === 'women'){
+        logMessage += '\r' + 'sexOverride === "women"' + '\r';
         foundWomen = true;
     } else if (pageElements.sexOverride === 'men'){
+        logMessage += '\r' + 'sexOverride === "men"' + '\r';
         foundMen = true;
     } else {
+        logMessage += '\r' + 'sexOverride not set' + '\r';
 
 
          // Some of the searchProducts will be sex-specific, so we need to see if we can identify
          // a sex-specific category/search on the current page
 
          // The first thing to do is see if we have search filters for sex
-         if(pageElements.menFilter === 'WOMEN') {
+         if(pageElements.womenFilter === 'WOMEN') {
+             logMessage += 'identified a women filter on page' + '\r';
              foundWomen = true;
          }
-         if(pageElements.womenFilter === 'MEN') {
+         if(pageElements.menFilter === 'MEN') {
+             logMessage += 'identified a men filter on page' + '\r';
              foundMen = true;
          }
          // Next, check the URL for a sex
          if (pageElements.URLText.indexOf('women') > -1 || pageElements.URLText.indexOf('female') > -1) {
+             logMessage += 'identified a women filter in URL' + '\r';
              foundWomen = true;
          } else if (pageElements.URLText.indexOf('men') > -1 || pageElements.URLText.indexOf('male') > -1) {
+             logMessage += 'identified a men filter in URL' + '\r';
              foundMen = true;
          }
 
@@ -804,12 +920,15 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) 
                      pageElements.breadcrumbs.indexOf('woman') > -1 ||
                      pageElements.breadcrumbs.indexOf('lady') > -1 ||
                      pageElements.breadcrumbs.indexOf('female') > -1) {
+
+                     logMessage += 'identified a women filter in breadcrumbs' + '\r';
                      foundWomen = true;
 
                  } else if (pageElements.breadcrumbs.indexOf('men') > -1 ||
                             pageElements.breadcrumbs.indexOf('man') > -1 ||
                             pageElements.breadcrumbs.indexOf('male') > -1) {
 
+                     logMessage += 'identified a men filter in breadcrumbs' + '\r';
                      foundMen = true;
                  }
              }
@@ -824,12 +943,18 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) 
                          pageElements.productNames[i].indexOf('woman') > -1 ||
                          pageElements.productNames[i].indexOf('lady') > -1 ||
                          pageElements.productNames[i].indexOf('female') > -1) {
+
+                         logMessage += 'identified a women indicator in the product name' + '\r';
                          foundWomen = true;
+
                          break;
-                     } else if (pageElements.productNames[i].indexOf('men') > -1 ||
-                                pageElements.productNames[i].indexOf('man') > -1 ||
+                     } else if (pageElements.productNames[i].indexOf(' men ') > -1 ||
+                                pageElements.productNames[i].indexOf(' man ') > -1 ||
                                 pageElements.productNames[i].indexOf('male') > -1) {
+
+                         logMessage += 'identified a men indicator in the product name' + '\r';
                          foundMen = true;
+
                          break;
                      }
                  }
@@ -840,6 +965,7 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) 
 
          // If we've found nothing, let's just ignore sex to ensure results come back - even if we return both men and women results
          if(!foundMen && !foundWomen){
+             logMessage += 'Did not identify a gender filter, so will return all genders from searchProducts' + '\r';
              foundMen = true;
              foundWomen = true;
          }
@@ -849,17 +975,17 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData) 
      pageElements.foundMen = foundMen;
      pageElements.foundWomen = foundWomen;
 
-     productSearchCallback(pageElements,websiteURL,searchData);
+     logMessage += '\r' + 'Executing product search' + '\r\r';
+
+     productSearchCallback(pageElements,websiteURL,searchData,logMessage);
 }
 
 /*
  * Search the various page elements for the searchProduct product search terms
  */
-function productSearch(pageElements,websiteURL,searchData) {
+function productSearch(pageElements,websiteURL,searchData,logMessage) {
 
     log(gvScriptName_CSSearch + '.productSearch: Start','PROCS');
-
-    var functionName = 'productSearch';
 
     var searchResults = [];
     var productGroupNamesArray = [];
@@ -913,7 +1039,6 @@ function productSearch(pageElements,websiteURL,searchData) {
                 }
 
                 if(searchData[i].searchTerm1 !== '') {
-//                    alert(pageElements.productNames[j] + ' - index of - ' + searchData[i].searchTerm1_LC);
                     position_searchTerm1 = pageElements.productNames[j].indexOf(searchData[i].searchTerm1_LC);
                 } else {
                     position_searchTerm1 = -2;
@@ -982,6 +1107,7 @@ function productSearch(pageElements,websiteURL,searchData) {
                 // If we're doing a search that requires a match on sex then pageElements.useSex will have been set by the sexSearch function
                 // Otherwise, skip sex entirely and call it a pass
                 if (pageElements.useSex) {
+
                     // if this SearchProduct has no sex specified, then we want to set this to a successful match and move on
                     if (searchData[i].sex === ''){
                         matchedSex = true;
@@ -1048,26 +1174,6 @@ function productSearch(pageElements,websiteURL,searchData) {
                 }
 
                 if(searchData[i].andOr === 'OR') {
-/*
-                    if(searchData[i].productName === 'Cheese'){
-
-                        alert('searchData.brand == ' + searchData[i].brand + ', pageElements.productNames == ' + pageElements.productNames[j] + ', position_brand == ' + position_brand);
-                        alert('searchData[i].searchTerm1 == ' + searchData[i].searchTerm1 + ' (searchTerm1_LC == ' + searchData[i].searchTerm1_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm1 == ' + position_searchTerm1);
-                        alert('searchData[i].searchTerm2 == ' + searchData[i].searchTerm2 + ' (searchTerm2_LC == ' + searchData[i].searchTerm2_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm2 == ' + position_searchTerm2);
-                        alert('searchData[i].searchTerm3 == ' + searchData[i].searchTerm3 + ' (searchTerm3_LC == ' + searchData[i].searchTerm3_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm3 == ' + position_searchTerm3);
-                        alert('searchData[i].searchTerm4 == ' + searchData[i].searchTerm4 + ' (searchTerm4_LC == ' + searchData[i].searchTerm4_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm4 == ' + position_searchTerm4);
-                        alert('searchData[i].searchTerm5 == ' + searchData[i].searchTerm5 + ' (searchTerm5_LC == ' + searchData[i].searchTerm5_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm5 == ' + position_searchTerm5);
-                        alert('searchData[i].searchTerm6 == ' + searchData[i].searchTerm6 + ' (searchTerm6_LC == ' + searchData[i].searchTerm6_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm6 == ' + position_searchTerm6);
-                        alert('searchData[i].searchTerm7 == ' + searchData[i].searchTerm7 + ' (searchTerm7_LC == ' + searchData[i].searchTerm7_LC + '), pageElements.productNames == ' + pageElements.productNames[j] + ', position_searchTerm7 == ' + position_searchTerm7);
-
-                        alert(position_brand);
-                        alert(position_searchTerm1);
-                        alert(matchedSex);
-
-                    }
-
-                    */
-
 
                     if ((position_brand > -1 || position_brand === -2) &&
                         (position_searchTerm1 > -1 ||
@@ -1097,11 +1203,20 @@ function productSearch(pageElements,websiteURL,searchData) {
                     howManyTimesHaveWeMatchedSearchProduct++;
                 }
 
+                if(foundThisItemInThisElement) {
+                    if(excludeThisItemInThisElement){
+                        logMessage += 'Found but excluding item "' + searchData[i].productName + '" in element "' + pageElements.productNames[j].substring(0,10) + '...' + '" (+' + searchData[i].andOr + ', - ' + searchData[i].negativeAndOr + ', useSex == ' + pageElements.useSex + ', matchedSex === ' + matchedSex + ')' + '\r';
+                    } else {
+                        logMessage += 'Found item "' + searchData[i].productName + '" in element "' + pageElements.productNames[j].substring(0,10) + '...' + '" (+' + searchData[i].andOr + ', - ' + searchData[i].negativeAndOr + ', useSex == ' + pageElements.useSex + ', matchedSex === ' + matchedSex + ')' + '\r';
+                    }
+                }
+
             } // This is the end of the loop that cycles through the page elements
 
             searchData[i].numberOfSearchHits = howManyTimesHaveWeMatchedSearchProduct;
 
             if (howManyTimesHaveWeMatchedSearchProduct > 0) {
+                logMessage += '\r' + 'Total of ' + howManyTimesHaveWeMatchedSearchProduct + ' matches for "' + searchData[i].productName + '" on this page (product group: ' + searchData[i].productGroupName + ')\r\r\r';
                 searchResults.push(searchData[i]);
                 foundSomething = true;
             }
@@ -1110,9 +1225,11 @@ function productSearch(pageElements,websiteURL,searchData) {
 
     } // This is the end of the loop that cycles through the searchData array (i.e. a blown out list of searchProducts)
 
-    userLog('SEARCH',{searchWebsite: websiteURL, searchAlgorithmFunction: functionName, searchProductsFound: searchResults.length});
+    userLog('SEARCH',{searchWebsite: websiteURL, searchProductsFound: searchResults.length, searchResults: searchResults});
 
     log(gvScriptName_CSSearch + '.productSearch: results >>> searchResults.length == ' + searchResults.length,'DEBUG');
+    log(gvScriptName_CSSearch + logMessage,'SERCH');
+    logMessage = '';
     // This is usually going to be content_script.receiveSearchResults
     processSearchResults(searchResults,foundSomething);
 

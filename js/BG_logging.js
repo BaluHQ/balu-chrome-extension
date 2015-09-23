@@ -11,6 +11,7 @@ gvScriptName_BGLogging = 'BG_logging';
 // Logging control
 var gvLogErrors = true;
 var gvLogProcs  = true;
+var gvLogSearch = true;
 var gvLogMessg  = true;
 var gvLogDebugs = false;
 var gvLogInfos  = true;
@@ -34,17 +35,23 @@ var gvLogTemps  = true;
  */
 function userLog(tabId, eventName, data) {
 
-    log(gvScriptName_BGLogging + '.userLog: Start >>> eventName == ' + eventName,' INFO');
+    log(gvScriptName_BGLogging + '.userLog: Start >>> eventName == ' + eventName + ', tabId == ' + tabId,' INFO');
 
     Parse.initialize(gvAppId, gvJSKey);
 
     var tabURL;
+    var tabURL_anonymised;
     if(gvTabs[tabId]){
         tabURL = gvTabs[tabId].tab.url;
+        tabURL_anonymised = tabURL.substring(0,tabURL.indexOf('/',tabURL.indexOf('/')+2));
     }
 
     var user = Parse.User.current();
 
+    // don't log for the dev / test user
+    if(user.get('username') === 'dev.baluhq@gmail.com'){
+        return;
+    }
     // For the UserLog events that require no bespoke code...
     if(eventName === 'USER_LOG_IN' ||
        eventName === 'USER_LOG_OUT' ||
@@ -67,7 +74,7 @@ function userLog(tabId, eventName, data) {
            var userLogOb = new UserLogOb({ACL: new Parse.ACL(user)});
 
            userLogOb.set('eventName',eventName);
-           userLogOb.set('tabURL',tabURL);
+           userLogOb.set('tabURL',tabURL_anonymised);
            userLogOb.set('user',user);
 
            userLogOb.save({
@@ -86,38 +93,26 @@ function userLog(tabId, eventName, data) {
         var productURLs = [];
         var twitterHandles = [];
 
+        // for SEARCH
+        var searchProductIds = [];
+
         switch (eventName) {
             case ('SEARCH'):
 
+
+                for (i = 0; i < data.searchResults.length; i++){
+                    searchProductIds.push(data.searchResults[i].searchProductId);
+                }
+
                 var UserLog_Search = Parse.Object.extend("UserLog_Search");
-                var userLog_Search = new UserLog_Search({ACL: new Parse.ACL(user)});
+                var userLog_Search = new UserLog_Search();
 
                 userLog_Search.set('eventName',eventName);
-                userLog_Search.set('tabURL',tabURL);
-                userLog_Search.set('user',user);
+                userLog_Search.set('tabURL',tabURL_anonymised);
                 userLog_Search.set('websiteURL',data.websiteURL);
-                userLog_Search.set('searchAlgorithmFunction',data.searchAlgorithmFunction);
                 userLog_Search.set('searchProductsFound',data.searchProductsFound);
-
-                userLog_Search.save({
-                    success: function(){
-                    },
-                    error: parseErrorSave
-                });
-
-            break;
-
-            case ('SEARCH_FAIL'):
-
-                var UserLog_SearchFail = Parse.Object.extend("UserLog_Search");
-                var userLog_SearchFail = new UserLog_SearchFail({ACL: new Parse.ACL(user)});
-
-                userLog_SearchFail.set('eventName',eventName);
-                userLog_SearchFail.set('tabURL',tabURL);
-                userLog_SearchFail.set('user',user);
-                userLog_SearchFail.set('websiteURL',data.websiteURL);
-                userLog_SearchFail.set('searchAlgorithmFunction',data.searchAlgorithmFunction);
-                userLog_SearchFail.set('message',data.message);
+                userLog_Search.set('searchProductIds',searchProductIds);
+                userLog_Search.set('user',user);
 
                 userLog_Search.save({
                     success: function(){
@@ -129,6 +124,7 @@ function userLog(tabId, eventName, data) {
 
             case 'RECOMMENDATIONS_FOUND':
 
+                // Build up our arrays
                 for (i = 0; i < data.recommendationsArray.length; i++){
                     productGroupIds.push(data.recommendationsArray[i].productGroupId);
                     productGroupNames.push(data.recommendationsArray[i].productGroupName);
@@ -138,11 +134,13 @@ function userLog(tabId, eventName, data) {
                     twitterHandles.push(data.recommendationsArray[i].twitterHandle);
                 }
 
+                // Save the user log, with anonymisd tabURL
+
                 var UserLog_Recommendations = Parse.Object.extend("UserLog_Recommendations");
                 var userLog_Recommendations = new UserLog_Recommendations({ACL: new Parse.ACL(user)});
 
                 userLog_Recommendations.set('eventName',eventName);
-                userLog_Recommendations.set('tabURL',tabURL);
+                userLog_Recommendations.set('tabURL',tabURL_anonymised);
                 userLog_Recommendations.set('user',user);
                 userLog_Recommendations.set('productGroupIds',productGroupIds);
                 userLog_Recommendations.set('productGroupNames',productGroupNames);
@@ -157,6 +155,26 @@ function userLog(tabId, eventName, data) {
                     error: parseErrorSave
                 });
 
+                // Save a full record of the recommendation results, without the user
+
+                var Stats_Recommendations = Parse.Object.extend("Stats_Recommendations");
+                var stats_Recommendations = new Stats_Recommendations();
+
+                stats_Recommendations.set('eventName',eventName);
+                stats_Recommendations.set('tabURL',tabURL);
+                stats_Recommendations.set('productGroupIds',productGroupIds);
+                stats_Recommendations.set('productGroupNames',productGroupNames);
+                stats_Recommendations.set('recommendationIds',recommendationIds);
+                stats_Recommendations.set('productNames',productNames);
+                stats_Recommendations.set('productURLs',productURLs);
+                stats_Recommendations.set('twitterHandles',twitterHandles);
+
+                stats_Recommendations.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
             break;
 
             case 'RECOMMENDATIONS_NOT_FOUND':
@@ -165,7 +183,7 @@ function userLog(tabId, eventName, data) {
                 var userLog_NoRecommendations = new UserLog_NoRecommendations({ACL: new Parse.ACL(user)});
 
                 userLog_NoRecommendations.set('eventName',eventName);
-                userLog_NoRecommendations.set('tabURL',tabURL);
+                userLog_NoRecommendations.set('tabURL',tabURL_anonymised);
                 userLog_NoRecommendations.set('user',user);
 
                 userLog_NoRecommendations.save({
@@ -183,7 +201,7 @@ function userLog(tabId, eventName, data) {
                 var userLog_ManualSearch = new UserLog_ManualSearch({ACL: new Parse.ACL(user)});
 
                 userLog_ManualSearch.set('eventName',eventName);
-                userLog_ManualSearch.set('tabURL',tabURL);
+                // We don't log tabURL for manual search, because they could be on any website
                 userLog_ManualSearch.set('user',user);
                 userLog_ManualSearch.set('searchTerm',data.searchTerm);
 
@@ -210,7 +228,7 @@ function userLog(tabId, eventName, data) {
                 var userLog_ManualSearch_Results = new UserLog_ManualSearch_Results({ACL: new Parse.ACL(user)});
 
                 userLog_ManualSearch_Results.set('eventName',eventName);
-                userLog_ManualSearch_Results.set('tabURL',tabURL);
+                // We don't log tabURL for manual search, because they could be on any website
                 userLog_ManualSearch_Results.set('user',user);
                 userLog_ManualSearch_Results.set('searchTerm',data.searchTerm);
                 userLog_ManualSearch_Results.set('productGroupIds',productGroupIds);
@@ -230,16 +248,32 @@ function userLog(tabId, eventName, data) {
 
             case 'REC_CLICK_THROUGH':
 
+                // Save the user log, with anonymisd tabURL
                 var UserLog_RecClickThrough = Parse.Object.extend("UserLog_RecClickThrough");
                 var userLog_RecClickThrough = new UserLog_RecClickThrough({ACL: new Parse.ACL(user)});
                 userLog_RecClickThrough.set('eventName',eventName);
-                userLog_RecClickThrough.set('tabURL',tabURL);
+                userLog_RecClickThrough.set('tabURL',tabURL_anonymised);
                 userLog_RecClickThrough.set('user',user);
                 userLog_RecClickThrough.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_RecClickThrough.set('hyperlinkURL',data.productURL);
                 userLog_RecClickThrough.set('recProductName',data.recProductName);
 
                 userLog_RecClickThrough.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
+                // Save a full record of the click through, without the user
+                var Stats_RecClickThrough = Parse.Object.extend("Stats_RecClickThrough");
+                var stats_RecClickThrough = new Stats_RecClickThrough();
+                stats_RecClickThrough.set('eventName',eventName);
+                stats_RecClickThrough.set('tabURL',tabURL);
+                stats_RecClickThrough.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
+                stats_RecClickThrough.set('hyperlinkURL',data.productURL);
+                stats_RecClickThrough.set('recProductName',data.recProductName);
+
+                stats_RecClickThrough.save({
                     success: function(){
                     },
                     error: parseErrorSave
@@ -253,9 +287,9 @@ function userLog(tabId, eventName, data) {
                 var userLog_TrackedTabError = new UserLog_TrackedTabError({ACL: new Parse.ACL(user)});
 
                 userLog_TrackedTabError.set('eventName',eventName);
-                userLog_TrackedTabError.set('tabURL_current',tabURL);
+                userLog_TrackedTabError.set('tabURL_current',tabURL); // This is ok non-anonymised, because this is the URL they've ended up on having clicked through from the app, not the one they were browsing
                 userLog_TrackedTabError.set('user',user);
-                userLog_TrackedTabError.set('originalURL',data.originalURL);
+                userLog_TrackedTabError.set('originalURL',data.originalURL); // As above, except this is what they originally clicked on (i.e. they should be the same, but both are stored to pick up auto redirects on the target website)
                 userLog_TrackedTabError.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_TrackedTabError.set('productName',data.productName);
                 userLog_TrackedTabError.set('pageConfirmationSearch',data.pageConfirmationSearch);
@@ -274,7 +308,7 @@ function userLog(tabId, eventName, data) {
                 var userLog_RecRatings = new UserLog_RecRatings({ACL: new Parse.ACL(user)});
 
                 userLog_RecRatings.set('eventName',eventName);
-                userLog_RecRatings.set('tabURL',tabURL);
+                userLog_RecRatings.set('tabURL',tabURL_anonymised);
                 userLog_RecRatings.set('user',user);
                 userLog_RecRatings.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_RecRatings.set('upOrDownOrNull',data.upOrDownOrNull);
@@ -293,7 +327,7 @@ function userLog(tabId, eventName, data) {
                 var userLog_WhyCare = new UserLog_WhyCare({ACL: new Parse.ACL(user)});
 
                 userLog_WhyCare.set('eventName',eventName);
-                userLog_WhyCare.set('tabURL',tabURL);
+                userLog_WhyCare.set('tabURL',tabURL_anonymised);
                 userLog_WhyCare.set('user',user);
                 userLog_WhyCare.set('whyDoWeCareURLName',data.whyDoWeCareURLName);
 
@@ -311,7 +345,7 @@ function userLog(tabId, eventName, data) {
                 var userLog_TweetWindow = new UserLog_TweetWindow({ACL: new Parse.ACL(user)});
 
                 userLog_TweetWindow.set('eventName',eventName);
-                userLog_TweetWindow.set('tabURL',tabURL);
+                userLog_TweetWindow.set('tabURL',tabURL_anonymised);
                 userLog_TweetWindow.set('user',user);
                 userLog_TweetWindow.set('tweetContent',data.tweetContent);
 
@@ -329,7 +363,6 @@ function userLog(tabId, eventName, data) {
                 var userLog_BlockBrand = new UserLog_BlockBrand({ACL: new Parse.ACL(user)});
 
                 userLog_BlockBrand.set('eventName',eventName);
-                userLog_BlockBrand.set('tabURL',tabURL);
                 userLog_BlockBrand.set('user',user);
                 userLog_BlockBrand.set('ethicalBrand',{__type: "Pointer",className: "EthicalBrand",objectId: data.brandId});
                 userLog_BlockBrand.set('brandName',data.brandName);
@@ -351,7 +384,7 @@ function userLog(tabId, eventName, data) {
                 userLog_BlockBrand = new UserLog_BlockBrand({ACL: new Parse.ACL(user)});
 
                 userLog_BlockBrand.set('eventName',eventName);
-                userLog_BlockBrand.set('tabURL',data.tabURL);
+                userLog_BlockBrand.set('tabURL',tabURL_anonymised);
                 userLog_BlockBrand.set('user',user);
                 userLog_BlockBrand.set('ethicalBrand',{__type: "Pointer",className: "EthicalBrand",objectId: data.brandId});
                 userLog_BlockBrand.set('brandName','');
@@ -375,8 +408,9 @@ function userLog(tabId, eventName, data) {
                 userLog_Joyride = new UserLog_Joyride({ACL: new Parse.ACL(user)});
 
                 userLog_Joyride.set('eventName',eventName);
-                userLog_Joyride.set('tabURL',tabURL);
+                userLog_Joyride.set('tabURL',tabURL_anonymised);
                 userLog_Joyride.set('joyrideIndex',data.joyrideIndex);
+                userLog_Joyride.set('user',user);
 
                 userLog_Joyride.save({
                     success: function(){
@@ -426,6 +460,10 @@ function logError(eventName,data){
 
         case 'PROCS':
             if (gvLogProcs)  console.log(level + ': ' + message);
+        break;
+
+        case 'SERCH':
+            if (gvLogSearch)  console.log(level + ': ' + message);
         break;
 
         case 'MESSG':

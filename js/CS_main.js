@@ -97,7 +97,7 @@ function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, 
         }
 
         // If there are any fixed elements on the page (usually headers and footers, e.g. Next.co.uk)
-        // then find them an change them to relative. Otherwise we can't push them over.
+        // then find them and change them to relative. Otherwise we can't push them over.
         /*
         var fixedElements = document.querySelectorAll("div, header, [style]");
         var style;
@@ -180,13 +180,6 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     docHead.lang = 'en';
     docHead.innerHTML = docHeadHTML;
 
-    // Inject qtip CSS script
-    var qtipCSS  = document.createElement('link');
-    qtipCSS.type = "text/css";
-    qtipCSS.rel  = "stylesheet";
-    qtipCSS.href = chrome.extension.getURL('css/jquery.qtip.min.css');
-    docHead.appendChild(qtipCSS);
-
     // Inject modernizr script into page
     var modernizrScript = document.createElement('script');
     modernizrScript.type="text/javascript";
@@ -199,6 +192,13 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     jqueryScript.src = chrome.extension.getURL('js/externalJS/jquery-2.1.4.min.js');
     docHead.appendChild(jqueryScript);
 
+    // Inject qtip CSS script
+    var qtipCSS  = document.createElement('link');
+    qtipCSS.type = "text/css";
+    qtipCSS.rel  = "stylesheet";
+    qtipCSS.href = chrome.extension.getURL('css/jquery.qtip.min.css');
+    docHead.appendChild(qtipCSS);
+
     var topRow = '';
 
     topRow += '<form>';
@@ -209,7 +209,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     if(searchTerm){
         topRow += '        <input type="text" id="fieldManualSearch" value="' + searchTerm + '" placeholder="Search" class="radius">';
     } else{
-        topRow += '        <input type="text" id="fieldManualSearch" placeholder="Search" onkeydown="if (event.keyCode == 13) document.getElementById(\'manualSearchSubmit_icon\').click()" class="radius">';
+        topRow += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius">';
     }
     topRow += '      </div>';
     topRow += '      <div class="small-2 column text-center">';
@@ -315,6 +315,28 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
 
     gvIframe.contentWindow.document.body = docBody;
 
+    // Rest of scripts need to go on after content has been added to DOM
+
+    // All listeners for clickable items in the template. These listeners all call back to CS_main
+
+    gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
+    gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
+    gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
+    gvIframe.contentWindow.document.getElementById('hideSidebarUntilRefresh_icon').addEventListener('click',hideSidebar_untilRefresh_listener);
+    gvIframe.contentWindow.document.getElementById('hideSidebarUntilRestart_icon').addEventListener('click',hideSidebar_untilRestart_listener);
+    gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
+    gvIframe.contentWindow.document.getElementById('showFAQWindow_link').addEventListener('click',showFAQWindow_listener);
+    gvIframe.contentWindow.document.getElementById('showPrivacyWindow_link').addEventListener('click',showPrivacyWindow_listener);
+
+    thenCreateSidebarContent(recommendationData, showJoyride, addFinalScriptsToDOM);
+}
+
+function addFinalScriptsToDOM(showJoyride) {
+
+    log(gvScriptName_CSMain + '.addFinalScriptsToDOM: Start','PROCS');
+
+    var docBody = gvIframe.contentWindow.document.body;
+
     // Append fastclick script to body
     var fastclickScript = document.createElement('script');
     fastclickScript.type="text/javascript";
@@ -339,21 +361,18 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     iframeScript.src = chrome.extension.getURL('js/IF_main.js');
     docBody.appendChild(iframeScript);
 
-    // All listeners for clickable items in the template. These listeners all call back to CS_main
+    // Tell the iframe script to activate the QTips (tooltips)
+    waitForIframeThenExecute(0,function(){
+        sendMessage('IF_main','pleaseActivateQTips',{});
+    });
 
-    gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
-    gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
-    gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
-    gvIframe.contentWindow.document.getElementById('hideSidebarUntilRefresh_icon').addEventListener('click',hideSidebar_untilRefresh_listener);
-    gvIframe.contentWindow.document.getElementById('hideSidebarUntilRestart_icon').addEventListener('click',hideSidebar_untilRestart_listener);
-    gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
-    gvIframe.contentWindow.document.getElementById('showFAQWindow_link').addEventListener('click',showFAQWindow_listener);
-    gvIframe.contentWindow.document.getElementById('showPrivacyWindow_link').addEventListener('click',showPrivacyWindow_listener);
-
-    thenCreateSidebarContent(recommendationData, showJoyride);
+    // Tell the iframe script to activate the joyride
+    if(showJoyride){
+        waitForIframeThenExecute(0,function(){
+            sendMessage('IF_main','pleaseActivateJoyride',{});
+        });
+    }
 }
-
-
 /*
  * Create the content for the search result sidebar
  *
@@ -367,7 +386,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
  *
  * See background.getRecommendations() for the data structure of @recommendations
  */
-function createResultsSidebarContent(recommendations,showJoyride) {
+function createResultsSidebarContent(recommendations,showJoyride,callback) {
 
     log(gvScriptName_CSMain + '.createResultsSidebarContent: Start', 'PROCS');
 
@@ -561,17 +580,8 @@ function createResultsSidebarContent(recommendations,showJoyride) {
         userSubRecLinks[w].addEventListener('click',showUserSubmittedRecWindow_listener);
     }
 
-    // Tell the iframe script to activate the QTips (tooltips)
-    waitForIframeThenExecute(0,function(){
-        sendMessage('IF_main','pleaseActivateQTips',{});
-    });
+    callback(showJoyride); // will add the final scripts to the bottom of the body.
 
-    // Tell the iframe script to activate the joyride
-    if(showJoyride){
-        waitForIframeThenExecute(0,function(){
-            sendMessage('IF_main','pleaseActivateJoyride',{});
-        });
-    }
 }
 
 /*
@@ -684,6 +694,8 @@ function hideSidebar() {
 function manualSearchSubmit_keydown_listener(event) {if (event.keyCode == 13) {manualSearchSubmit_listener();}}
 function manualSearchSubmit_listener() {
     log(gvScriptName_CSMain + '.manualSearchSubmit_listener: Start','PROCS');
+    // we're about to refresh the iframe, so set the iFrame ready variable back to false
+    gvIsIframeReady = false;
     var searchTerm = gvIframe.contentWindow.document.getElementById('fieldManualSearch').value;
     sendMessage('BG_main','pleaseRunManualSearch',{searchTerm: searchTerm});
 }

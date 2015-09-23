@@ -24,7 +24,6 @@ function DOMContentLoadedListener(event){
     log(gvScriptName_OPMain + '.DOMContentLoadedListener: Start','LSTNR');
     createOptionsPage();
     userLog('OPTIONS: SHOW_OPTIONS');
-
 }
 
 /**************************
@@ -312,6 +311,23 @@ function createOptionsPage(){
         websiteListHTML += '<div class="row">';
         websiteListHTML += '  <div class="large-8 columns end">';
 
+        var Website = Parse.Object.extend("Website");
+        var websiteQuery = new Parse.Query(Website);
+
+        websiteQuery.ascending('websiteURL');
+        websiteQuery.notEqualTo('websiteURL',gvTestWebsiteURL);
+        websiteQuery.find({
+            success: function(websites){
+                websiteListHTML += '<ul>';
+
+                for (var i = 0; i < websites.length; i++) {
+                    if(websites[i].get('isWebsiteOnOrOff') === 'ON') {
+                        websiteListHTML += '  <li><label><a href="http://' + websites[i].get('websiteURL') + '">' + websites[i].get('websiteURL') + '</a></label></li>';
+                    }
+                }
+                websiteListHTML += '</ul>';
+
+/*
         var CategoryWebsiteJoin = Parse.Object.extend("CategoryWebsiteJoin");
         var categoryWebsiteQuery = new Parse.Query(CategoryWebsiteJoin);
 
@@ -349,6 +365,8 @@ function createOptionsPage(){
                     previousSearchCategory = currentSearchCategory;
                 }
                 websiteListHTML += '</ul></ul>';
+
+*/
 
                 websiteListHTML += '  </div>';
                 websiteListHTML += '</div>';

@@ -131,7 +131,7 @@ function addNewWebsiteRec() {
 
     var formFieldValues = {fieldWebsiteRec:  fieldWebsiteRec.value};
 
-    sendMessage('pleaseSaveUserSubmittedWebsiteRec',{formFieldValues: formFieldValues});
+    sendMessage('BG_main','pleaseSaveUserSubmittedWebsiteRec',{formFieldValues: formFieldValues});
 }
 
 /**************************

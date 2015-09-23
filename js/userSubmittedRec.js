@@ -154,7 +154,7 @@ function addNewRec() {
                            URLOrTwitter: fieldURLOrTwitter.value,
                            why:          fieldWhy.value};
 
-    sendMessage('pleaseSaveUserSubmittedRec',{formFieldValues: formFieldValues});
+    sendMessage('BG_main','pleaseSaveUserSubmittedRec',{formFieldValues: formFieldValues});
 }
 
 /**************************
