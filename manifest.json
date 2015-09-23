@@ -2,7 +2,7 @@
 
     "version":          "1.6",
     "manifest_version": 2,
-    "name":             "Balu",
+    "name":             "Balu (Beta)",
     "options_page":     "options.html",
     "description":      "Ethical recommendations while you shop",
     "offline_enabled":  false,
