@@ -39,6 +39,9 @@ function userLog(tabId, eventName, data) {
 
     Parse.initialize(gvAppId, gvJSKey);
 
+    acl = new Parse.ACL();
+    acl.setRoleReadAccess("Analytics",true);
+
     var tabURL;
     var tabURL_anonymised;
     if(gvTabs[tabId]){
@@ -49,8 +52,10 @@ function userLog(tabId, eventName, data) {
     var user = Parse.User.current();
 
     // don't log for the dev / test user
-    if(user.get('username') === 'dev.baluhq@gmail.com'){
-        return;
+    if(user){
+        if(user.get('username') === 'dev.baluhq@gmail.com'){
+            return;
+        }
     }
     // For the UserLog events that require no bespoke code...
     if(eventName === 'USER_LOG_IN' ||
@@ -69,19 +74,21 @@ function userLog(tabId, eventName, data) {
        eventName === 'OPTIONS: BALU_TURNED_ON' ||
        eventName === 'OPTIONS: BALU_TURNED_OFF') {
 
-           var UserLogOb = Parse.Object.extend("UserLog");
-           // to do: test, could user ever be null here?
-           var userLogOb = new UserLogOb({ACL: new Parse.ACL(user)});
+        var UserLogOb = Parse.Object.extend("UserLog");
+        // to do: test, could user ever be null here?
+        var userLogOb = new UserLogOb();
 
-           userLogOb.set('eventName',eventName);
-           userLogOb.set('tabURL',tabURL_anonymised);
-           userLogOb.set('user',user);
+        userLogOb.set('eventName',eventName);
+        userLogOb.set('tabURL',tabURL_anonymised);
+        userLogOb.set('user',user);
 
-           userLogOb.save({
-               success: function(){
-               },
-               error: parseErrorSave
-           });
+        userLogOb.setACL(acl);
+
+        userLogOb.save({
+            success: function(){
+            },
+            error: parseErrorSave
+        });
 
     } else {
 
@@ -114,6 +121,8 @@ function userLog(tabId, eventName, data) {
                 userLog_Search.set('searchProductIds',searchProductIds);
                 userLog_Search.set('user',user);
 
+                userLog_Search.setACL(acl);
+
                 userLog_Search.save({
                     success: function(){
                     },
@@ -137,7 +146,7 @@ function userLog(tabId, eventName, data) {
                 // Save the user log, with anonymisd tabURL
 
                 var UserLog_Recommendations = Parse.Object.extend("UserLog_Recommendations");
-                var userLog_Recommendations = new UserLog_Recommendations({ACL: new Parse.ACL(user)});
+                var userLog_Recommendations = new UserLog_Recommendations();
 
                 userLog_Recommendations.set('eventName',eventName);
                 userLog_Recommendations.set('tabURL',tabURL_anonymised);
@@ -148,6 +157,8 @@ function userLog(tabId, eventName, data) {
                 userLog_Recommendations.set('productNames',productNames);
                 userLog_Recommendations.set('productURLs',productURLs);
                 userLog_Recommendations.set('twitterHandles',twitterHandles);
+
+                userLog_Recommendations.setACL(acl);
 
                 userLog_Recommendations.save({
                     success: function(){
@@ -169,6 +180,8 @@ function userLog(tabId, eventName, data) {
                 stats_Recommendations.set('productURLs',productURLs);
                 stats_Recommendations.set('twitterHandles',twitterHandles);
 
+                stats_Recommendations.setACL(acl);
+
                 stats_Recommendations.save({
                     success: function(){
                     },
@@ -180,11 +193,13 @@ function userLog(tabId, eventName, data) {
             case 'RECOMMENDATIONS_NOT_FOUND':
 
                 var UserLog_NoRecommendations = Parse.Object.extend("UserLog_Recommendations");
-                var userLog_NoRecommendations = new UserLog_NoRecommendations({ACL: new Parse.ACL(user)});
+                var userLog_NoRecommendations = new UserLog_NoRecommendations();
 
                 userLog_NoRecommendations.set('eventName',eventName);
                 userLog_NoRecommendations.set('tabURL',tabURL_anonymised);
                 userLog_NoRecommendations.set('user',user);
+
+                userLog_NoRecommendations.setACL(acl);
 
                 userLog_NoRecommendations.save({
                     success: function(){
@@ -198,12 +213,14 @@ function userLog(tabId, eventName, data) {
             case ('MANUAL_SEARCH' || 'MANUAL_SEARCH_EMPTY_STRING'):
 
                 var UserLog_ManualSearch = Parse.Object.extend("UserLog_ManualSearch");
-                var userLog_ManualSearch = new UserLog_ManualSearch({ACL: new Parse.ACL(user)});
+                var userLog_ManualSearch = new UserLog_ManualSearch();
 
                 userLog_ManualSearch.set('eventName',eventName);
                 // We don't log tabURL for manual search, because they could be on any website
                 userLog_ManualSearch.set('user',user);
                 userLog_ManualSearch.set('searchTerm',data.searchTerm);
+
+                userLog_ManualSearch.setACL(acl);
 
                 userLog_ManualSearch.save({
                     success: function(){
@@ -225,7 +242,7 @@ function userLog(tabId, eventName, data) {
                 }
 
                 var UserLog_ManualSearch_Results = Parse.Object.extend("UserLog_ManualSearch_Results");
-                var userLog_ManualSearch_Results = new UserLog_ManualSearch_Results({ACL: new Parse.ACL(user)});
+                var userLog_ManualSearch_Results = new UserLog_ManualSearch_Results();
 
                 userLog_ManualSearch_Results.set('eventName',eventName);
                 // We don't log tabURL for manual search, because they could be on any website
@@ -237,6 +254,8 @@ function userLog(tabId, eventName, data) {
                 userLog_ManualSearch_Results.set('productNames',productNames);
                 userLog_ManualSearch_Results.set('productURLs',productURLs);
                 userLog_ManualSearch_Results.set('twitterHandles',twitterHandles);
+
+                userLog_ManualSearch_Results.setACL(acl);
 
                 userLog_ManualSearch_Results.save({
                     success: function(){
@@ -250,13 +269,15 @@ function userLog(tabId, eventName, data) {
 
                 // Save the user log, with anonymisd tabURL
                 var UserLog_RecClickThrough = Parse.Object.extend("UserLog_RecClickThrough");
-                var userLog_RecClickThrough = new UserLog_RecClickThrough({ACL: new Parse.ACL(user)});
+                var userLog_RecClickThrough = new UserLog_RecClickThrough();
                 userLog_RecClickThrough.set('eventName',eventName);
                 userLog_RecClickThrough.set('tabURL',tabURL_anonymised);
                 userLog_RecClickThrough.set('user',user);
                 userLog_RecClickThrough.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_RecClickThrough.set('hyperlinkURL',data.productURL);
                 userLog_RecClickThrough.set('recProductName',data.recProductName);
+
+                userLog_RecClickThrough.setACL(acl);
 
                 userLog_RecClickThrough.save({
                     success: function(){
@@ -273,6 +294,8 @@ function userLog(tabId, eventName, data) {
                 stats_RecClickThrough.set('hyperlinkURL',data.productURL);
                 stats_RecClickThrough.set('recProductName',data.recProductName);
 
+                stats_RecClickThrough.setACL(acl);
+
                 stats_RecClickThrough.save({
                     success: function(){
                     },
@@ -284,7 +307,7 @@ function userLog(tabId, eventName, data) {
             case 'TRACKED_TAB_ERROR':
 
                 var UserLog_TrackedTabError = Parse.Object.extend("UserLog_TrackedTabError");
-                var userLog_TrackedTabError = new UserLog_TrackedTabError({ACL: new Parse.ACL(user)});
+                var userLog_TrackedTabError = new UserLog_TrackedTabError();
 
                 userLog_TrackedTabError.set('eventName',eventName);
                 userLog_TrackedTabError.set('tabURL_current',tabURL); // This is ok non-anonymised, because this is the URL they've ended up on having clicked through from the app, not the one they were browsing
@@ -293,6 +316,8 @@ function userLog(tabId, eventName, data) {
                 userLog_TrackedTabError.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_TrackedTabError.set('productName',data.productName);
                 userLog_TrackedTabError.set('pageConfirmationSearch',data.pageConfirmationSearch);
+
+                userLog_TrackedTabError.setACL(acl);
 
                 userLog_TrackedTabError.save({
                     success: function(){
@@ -305,13 +330,15 @@ function userLog(tabId, eventName, data) {
             case 'RECOMMENDATION_RATING':
 
                 var UserLog_RecRatings = Parse.Object.extend("UserLog_RecRatings");
-                var userLog_RecRatings = new UserLog_RecRatings({ACL: new Parse.ACL(user)});
+                var userLog_RecRatings = new UserLog_RecRatings();
 
                 userLog_RecRatings.set('eventName',eventName);
                 userLog_RecRatings.set('tabURL',tabURL_anonymised);
                 userLog_RecRatings.set('user',user);
                 userLog_RecRatings.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_RecRatings.set('upOrDownOrNull',data.upOrDownOrNull);
+
+                userLog_RecRatings.setACL(acl);
 
                 userLog_RecRatings.save({
                     success: function(){
@@ -324,12 +351,14 @@ function userLog(tabId, eventName, data) {
             case 'WHY_CARE_CLICK':
 
                 var UserLog_WhyCare = Parse.Object.extend("UserLog_WhyCare");
-                var userLog_WhyCare = new UserLog_WhyCare({ACL: new Parse.ACL(user)});
+                var userLog_WhyCare = new UserLog_WhyCare();
 
                 userLog_WhyCare.set('eventName',eventName);
                 userLog_WhyCare.set('tabURL',tabURL_anonymised);
                 userLog_WhyCare.set('user',user);
                 userLog_WhyCare.set('whyDoWeCareURLName',data.whyDoWeCareURLName);
+
+                userLog_WhyCare.setACL(acl);
 
                 userLog_WhyCare.save({
                     success: function(){
@@ -342,12 +371,14 @@ function userLog(tabId, eventName, data) {
             case 'SHOW_TWEET_WINDOW':
 
                 var UserLog_TweetWindow = Parse.Object.extend("UserLog_TweetWindow");
-                var userLog_TweetWindow = new UserLog_TweetWindow({ACL: new Parse.ACL(user)});
+                var userLog_TweetWindow = new UserLog_TweetWindow();
 
                 userLog_TweetWindow.set('eventName',eventName);
                 userLog_TweetWindow.set('tabURL',tabURL_anonymised);
                 userLog_TweetWindow.set('user',user);
                 userLog_TweetWindow.set('tweetContent',data.tweetContent);
+
+                userLog_TweetWindow.setACL(acl);
 
                 userLog_TweetWindow.save({
                     success: function(){
@@ -360,7 +391,7 @@ function userLog(tabId, eventName, data) {
             case 'USER_BLOCK_BRAND':
 
                 var UserLog_BlockBrand = Parse.Object.extend("UserLog_BlockBrand");
-                var userLog_BlockBrand = new UserLog_BlockBrand({ACL: new Parse.ACL(user)});
+                var userLog_BlockBrand = new UserLog_BlockBrand();
 
                 userLog_BlockBrand.set('eventName',eventName);
                 userLog_BlockBrand.set('user',user);
@@ -369,6 +400,8 @@ function userLog(tabId, eventName, data) {
                 userLog_BlockBrand.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_BlockBrand.set('productName',data.productName);
                 userLog_BlockBrand.set('reason',data.reason);
+
+                userLog_BlockBrand.setACL(acl);
 
                 userLog_BlockBrand.save({
                     success: function(){
@@ -381,7 +414,7 @@ function userLog(tabId, eventName, data) {
             case 'USER_UNBLOCK_BRAND':
 
                 UserLog_BlockBrand = Parse.Object.extend("UserLog_BlockBrand");
-                userLog_BlockBrand = new UserLog_BlockBrand({ACL: new Parse.ACL(user)});
+                userLog_BlockBrand = new UserLog_BlockBrand();
 
                 userLog_BlockBrand.set('eventName',eventName);
                 userLog_BlockBrand.set('tabURL',tabURL_anonymised);
@@ -391,6 +424,8 @@ function userLog(tabId, eventName, data) {
                 userLog_BlockBrand.set('recommendation',null);
                 userLog_BlockBrand.set('productName',data.productName);
                 userLog_BlockBrand.set('reason',data.reason);
+
+                userLog_BlockBrand.setACL(acl);
 
                 userLog_BlockBrand.save({
                     success: function(){
@@ -405,12 +440,14 @@ function userLog(tabId, eventName, data) {
             case 'JOYRIDE_REACTIVATE':
 
                 UserLog_Joyride = Parse.Object.extend("UserLog_Joyride");
-                userLog_Joyride = new UserLog_Joyride({ACL: new Parse.ACL(user)});
+                userLog_Joyride = new UserLog_Joyride();
 
                 userLog_Joyride.set('eventName',eventName);
                 userLog_Joyride.set('tabURL',tabURL_anonymised);
                 userLog_Joyride.set('joyrideIndex',data.joyrideIndex);
                 userLog_Joyride.set('user',user);
+
+                userLog_Joyride.setACL(acl);
 
                 userLog_Joyride.save({
                     success: function(){
@@ -435,6 +472,8 @@ function logError(eventName,data){
 
     errorLog.set('eventName',eventName);
     errorLog.set('message',data.message);
+
+    errorLog.setACL(acl);
 
     errorLog.save({
         success: function(){

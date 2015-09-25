@@ -972,7 +972,7 @@ function showProductLinkWindow(tabId,productURL,recommendationId, recProductName
     // In parallel, register this click on the recommendation's click count
 
     // don't log for the dev / test user
-    if(user.get('username') !== 'dev.baluhq@gmail.com'){
+    if(Parse.User.current().get('email') !== 'dev.baluhq@gmail.com'){
 
         Parse.initialize(gvAppId, gvJSKey);
 
@@ -985,9 +985,16 @@ function showProductLinkWindow(tabId,productURL,recommendationId, recProductName
                     recommendationClickCounts[0].increment("clickCount");
                     recommendationClickCounts[0].save();
                 } else {
-                    recommendationClickCount = new RecommendationClickCount({ACL: new Parse.ACL(Parse.User.current())});
+                    recommendationClickCount = new RecommendationClickCount();
                     recommendationClickCount.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: recommendationId});
                     recommendationClickCount.set('clickCount',1);
+
+                    var acl = new Parse.ACL();
+                    acl.setRoleReadAccess("Analytics",true);
+                    acl.setReadAccess(Parse.User.current(),true);
+                    acl.setWriteAccess(Parse.User.current(),true);
+                    recommendationClickCount.setACL(acl);
+
                     recommendationClickCount.save();
                 }
             },
@@ -998,7 +1005,7 @@ function showProductLinkWindow(tabId,productURL,recommendationId, recProductName
 
 function voteProductUpOrDown(tabId,recommendationId,upOrDown){
 
-    log(gvScriptName_BGMain + '.userRecommendationRating_createOrUpdate: start','PROCS');
+    log(gvScriptName_BGMain + '.voteProductUpOrDown: start','PROCS');
 
     var ratingScore = 0;
 
@@ -1044,11 +1051,18 @@ function voteProductUpOrDown(tabId,recommendationId,upOrDown){
                         });
                     } else {
                         var user = Parse.User.current();
-                        userRecommendationRating = new UserRecommendationRating({ACL: new Parse.ACL(user)});
+                        userRecommendationRating = new UserRecommendationRating();
                         userRecommendationRating.set('recommendation',recommendation);
                         userRecommendationRating.set('user',user);
                         userRecommendationRating.set('upOrDownOrNull',upOrDown);
                         userRecommendationRating.set('ratingScore',ratingScore);
+
+                        var acl = new Parse.ACL();
+                        acl.setRoleReadAccess("Analytics",true);
+                        acl.setReadAccess(user,true);
+                        acl.setWriteAccess(user,true);
+                        userRecommendationRating.setACL(acl);
+
                         userRecommendationRating.save(null, {
                             success: function(userRecommendationRatings){
                                 userLog(tabId,'RECOMMENDATION_RATING',{recommendationId: recommendation.id,
@@ -1093,10 +1107,16 @@ function blockBrand(tabId,data){
     Parse.initialize(gvAppId, gvJSKey);
 
     var UserBlockedBrand = Parse.Object.extend("UserBlockedBrand");
-    var userBlockedBrand = new UserBlockedBrand({ACL: new Parse.ACL(Parse.User.current())});
+    var userBlockedBrand = new UserBlockedBrand();
 
     userBlockedBrand.set('user',Parse.User.current());
     userBlockedBrand.set('ethicalBrand',{__type: "Pointer",className: "EthicalBrand",objectId: data.brandId});
+
+    var acl = new Parse.ACL();
+    acl.setRoleReadAccess("Analytics",true);
+    acl.setReadAccess(Parse.User.current(),true);
+    acl.setWriteAccess(Parse.User.current(),true);
+    userBlockedBrand.setACL(acl);
 
     userBlockedBrand.save(null,{
         success: function(userBlockedBrand){
@@ -1155,12 +1175,18 @@ function saveUserSubmittedRec(tabId,formFieldValues){
     Parse.initialize(gvAppId, gvJSKey);
 
     var UserSubmittedRec = Parse.Object.extend("UserSubmittedRec");
-    var userSubmittedRec = new UserSubmittedRec({ACL: new Parse.ACL(Parse.User.current())});
+    var userSubmittedRec = new UserSubmittedRec();
 
     userSubmittedRec.set('user',Parse.User.current());
     userSubmittedRec.set('productName',formFieldValues.productName);
     userSubmittedRec.set('URLOrTwitter',formFieldValues.URLOrTwitter);
     userSubmittedRec.set('why',formFieldValues.why);
+
+    var acl = new Parse.ACL();
+    acl.setRoleReadAccess("Analytics",true);
+    acl.setReadAccess(Parse.User.current(),true);
+    acl.setWriteAccess(Parse.User.current(),true);
+    userSubmittedRec.setACL(acl);
 
     userSubmittedRec.save(null,{
         success: function(userSubmittedRec){
@@ -1193,6 +1219,12 @@ function saveUserSubmittedWebsiteRec(tabId,formFieldValues){
 
     userSubmittedWebsiteRec.set('user',Parse.User.current());
     userSubmittedWebsiteRec.set('websiteRec',formFieldValues.fieldWebsiteRec);
+
+    var acl = new Parse.ACL();
+    acl.setRoleReadAccess("Analytics",true);
+    acl.setReadAccess(Parse.User.current(),true);
+    acl.setWriteAccess(Parse.User.current(),true);
+    userSubmittedWebsiteRec.setACL(acl);
 
     userSubmittedWebsiteRec.save(null,{
         success: function(userSubmittedRec){

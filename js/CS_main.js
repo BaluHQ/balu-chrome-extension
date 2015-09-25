@@ -445,13 +445,13 @@ function createResultsSidebarContent(recommendations,showJoyride,callback) {
         }
 
         // Before starting the recommendation block, let's build our twitter content for this recommendation
-        var tweetContent =  'Just%20seen%20these%20' + recommendations[i].productName + '%20from%20';
+        var tweetContent =  'Just%20discovered%20' + recommendations[i].productName + '%20from%20';
         if(recommendations[i].twitterHandle){
             tweetContent += recommendations[i].twitterHandle;
         } else {
             tweetContent += recommendations[i].brandName;
         }
-        tweetContent += '%20-%20found%20them%20with%20%40BaluHQ%27s%20amazing%20new%20app. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects%20';
+        tweetContent += '%20-%20found%20with%20%40BaluHQ%27s%20amazing%20new%20app. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects';
 
 
 
