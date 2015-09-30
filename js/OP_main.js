@@ -43,13 +43,14 @@ function createOptionsPage(){
     var userFormHTML = '';
     var settingsHTML = '';
 
-    var userLoggedIn = chrome.extension.getBackgroundPage().isUserLoggedIn();
+    var userDetails = chrome.extension.getBackgroundPage().isUserLoggedIn();
 
-    if(userLoggedIn) {
+    if(userDetails.isUserLoggedIn) {
 
         userFormHTML += '<br />';
         userFormHTML += '<div class="row">';
         userFormHTML += '  <div class="large-8 columns">';
+        userFormHTML += '    <span style="font-size: 12px">' + userDetails.email + '</span><br />';
         userFormHTML += '    <a id="logOutButton" class="button radius tiny">Log Out</a>';
         userFormHTML += '    <a id="resetPasswordButton" class="button radius tiny">Reset Password</a>';
         userFormHTML += '   <span style="visibility: hidden" id="resetPasswordEmailConfirmation">Password reset email sent.</span>';
@@ -196,7 +197,7 @@ function createOptionsPage(){
 
     // Now that it's all added to the DOM we can do the last few tasks:
 
-    if(userLoggedIn) {
+    if(userDetails.isUserLoggedIn) {
 
         // Create listeners
 
@@ -241,7 +242,7 @@ function createOptionsPage(){
         document.getElementById("fieldSignUpPassword").addEventListener('keydown', signUpPasswordField_keydown_listener);
     }
 
-    if(userLoggedIn) {
+    if(userDetails.isUserLoggedIn) {
 
         Parse.initialize(chrome.extension.getBackgroundPage().gvAppId, chrome.extension.getBackgroundPage().gvJSKey);
 
@@ -304,7 +305,10 @@ function createOptionsPage(){
 
         websiteListHTML += '<div class="row">';
         websiteListHTML += '  <div class="large-4 columns end">';
-        websiteListHTML += '    <h4>Websites</h4>';
+        websiteListHTML += '    <h4>Active Websites</h4>';
+        websiteListHTML += '    <i style="font-size: 12px">Websites that Balu is currently "turned on" for (we are adding more just as quickly as we can!)</i>';
+        websiteListHTML += '    <br />';
+        websiteListHTML += '    <br />';
         websiteListHTML += '  </div>';
         websiteListHTML += '</div>';
 

@@ -75,7 +75,7 @@ function getAddNewWebsiteRecFormHTML(thankYouText) {
 
     if(thankYouText) {
         htmlString += '<div class="row">';
-        htmlString += '  <div class="small-10 small-offset-1 columns end">';
+        htmlString += '  <div class="small-12 columns">';
         htmlString += '    <h6>' + thankYouText + '</h6>';
         htmlString += '  </div>';
         htmlString += '</div>';

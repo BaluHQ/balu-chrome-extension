@@ -79,7 +79,7 @@ function buildPopupHTML(){
         if(chrome.storage.local.get('baluParseErrorMessage',function(obj){
             if(obj.baluParseErrorMessage){
                 isThereAnErrorMessage = true;
-                errorMessage = 'Not good!<br /><br />Something\'s gone wrong. It\'s probably got something to do with accessing the Balu database.<br /><br />Can you check your internet connection and restart Chrome? If it keeps happening, we\'d be really grateful if you could email the error message below to <a href="mailto:support@getbalu.org" target="_blank">support@getbalu.org</a><br /><br />' + obj.parseErrorMessage;
+                errorMessage = 'Not good!<br /><br />Something\'s gone wrong. It\'s probably got something to do with accessing the Balu database.<br /><br />Can you check your internet connection and restart Chrome? If it keeps happening, we\'d be really grateful if you could email the error message below to <a href="mailto:support@getbalu.org" target="_blank">support@getbalu.org</a><br /><br />' + obj.baluParseErrorMessage;
             }
 
             var isBaluOn = false;
@@ -187,6 +187,10 @@ function buildPopupHTML(){
             if(isThereAnErrorMessage){
                 lvHtmlString += errorMessage;
             } else
+            if(!isLoggedIn) {
+                lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the account button above and log in or create a new account.';
+            //        lvHtmlString += '<br />';
+            } else
             if(isInvalidTab) {
                 lvHtmlString += 'To search Balu, navigate to a real website (like <a href="http://www.google.com" target="_blank">Google.com</a>) and open this popup again.';
             //    lvHtmlString += '<br />';
@@ -199,21 +203,16 @@ function buildPopupHTML(){
                 lvHtmlString += 'Something\'s wrong! Can you try refreshing your page and clicking the Balu icon again? If that doesn\'t work, try restarting Chrome.<br /><br />If you\'re still having problems <a href="mailto:support@getbalu.org" target="_blank">contact us</a>.';
             } else
             if(!isWebsiteOn){
-                lvHtmlString += 'You can search Balu manually using the search box above.<br /><br /><span style="font-size: 12px">Your current website is not an active Balu website. If this is a site you think we should "turn on", please <a id="showUserSubmittedWebsiteRecWindow_link">tell us</a>.<br /><br />We are "turning on" more websites as quickly as we can; click on the account button above to see a list of current active websites.</span>';
+                lvHtmlString += 'You can search Balu using the search box above.<br /><br /><span style="font-size: 12px">Your current website is not an active Balu website. If this is a site you think we should "turn on", please <a id="showUserSubmittedWebsiteRecWindow_link">tell us</a>.<br /><br />We are "turning on" more websites as quickly as we can; click on the account button above to see a list of current active websites.</span>';
         //        lvHtmlString += '<br />';
             } else
-            if(!isLoggedIn) {
-                lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the account button above and log in or create a new account.';
-        //        lvHtmlString += '<br />';
-            } else
-
             // If we have forced the sidebar on because of a temp hide, then close the popup - we've done what we need to do with it.
             if((!isSidebarVisibleForAllTabs_untilRestart || !isSidebarVisibleOnThisTab) && isSidebarVisibleForAllTabs && isThereAnyRecommendationsForThisTab) {
                 window.close();
             } else
 
-            // If we are permanent hidden, regarldess of whether we have any recs
-            if(!isSidebarVisibleForAllTabs){
+            // If we are permanent hidden, and we don't have recs
+            if(!isSidebarVisibleForAllTabs && !isThereAnyRecommendationsForThisTab){
                     lvHtmlString += 'Balu is not set to automatically display the sidebar. You\'ll see a number on the Balu icon instead.<br /><br />To change this setting, click the account icon above.';
         //            lvHtmlString += '<br />';
             } else
@@ -226,7 +225,7 @@ function buildPopupHTML(){
 
             // If sidebar is set to visible and we have recommendations (i.e. the sidebar is actually displayed without being forced!)
             if((isSidebarVisibleForAllTabs && isSidebarVisibleForAllTabs_untilRestart && isSidebarVisibleOnThisTab) && isThereAnyRecommendationsForThisTab) {
-                lvHtmlString += 'Ethical recommendations are being displayed in the Balu sidebar. If you are having issues seeing them contact us at <a href="mailto:support@getbalu.org" target="_blank">support@getbalu.org</a>.<br /><br />If you have own ethical recommendations to share with the Balu community, click on the plus icon above.';
+                lvHtmlString += 'Ethical recommendations are being displayed in the Balu sidebar. If you are having issues seeing them contact us at <a href="mailto:support@getbalu.org" target="_blank">support@getbalu.org</a>.<br /><br />If you have own ethical recommendations to add to Balu, click on the plus icon above.';
         //        lvHtmlString += '<br />';
             }
 

@@ -66,6 +66,7 @@ function userLog(tabId, eventName, data) {
        eventName === 'HIDE_SIDEBAR_RESTART' ||
        eventName === 'SHOW_USER_SUB_REC_WINDOW' ||
        eventName === 'SHOW_USER_SUB_WEB_REC_WINDOW' ||
+       eventName === 'SHOW_INFO_WINDOW' ||
        eventName === 'SHOW_FAQ_WINDOW' ||
        eventName === 'SHOW_PRIVACY_WINDOW' ||
        eventName === 'OPTIONS: SHOW_OPTIONS' ||

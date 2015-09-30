@@ -640,7 +640,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             // Search results page //
 
-            var topshop_wrapperPageContent;
+            var topshop_wrapperPageContent = null;
 
             // There's a wrapper_page_conent on the search and product page, but the one on the search page
             // has a class of category_products

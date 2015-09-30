@@ -130,6 +130,11 @@ function chromeMessageListener(msg, sender, callback){
             hideSidebar_untilRestart(sender.tab.id);
         break;
 
+        case 'CS_main | pleaseShowInfoWindow':
+            log(logMessage,'MESSG');
+            showInfoWindow(sender.tab.id);
+        break;
+
         case 'CS_main | pleaseShowFAQWindow':
             log(logMessage,'MESSG');
             showFAQWindow(sender.tab.id);

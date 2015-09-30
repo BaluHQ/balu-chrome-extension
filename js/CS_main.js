@@ -205,7 +205,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     topRow += '<div class="row" style="margin-top: 2px;">';
     topRow += '  <div class="small-12 columns header">';
     topRow += '    <div class="row collapse">';
-    topRow += '      <div class="small-6 columns">';
+    topRow += '      <div id="joyrideStop4" class="small-6 columns">';
     if(searchTerm){
         topRow += '        <input type="text" id="fieldManualSearch" value="' + searchTerm + '" placeholder="Search" class="radius">';
     } else{
@@ -265,10 +265,10 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     bottomRow += '          </div>';
     bottomRow += '        </div>';
     bottomRow += '      </div>';
-    bottomRow += '      <div class="small-6 columns text-center footerDivs">';
+    bottomRow += '      <div class="small-4 columns text-center footerDivs">';
     bottomRow += '      </div>';
-    bottomRow += '      <div class="small-3 columns text-right footerDivs">';
-    bottomRow += '        <span class="footerText"><a id="showFAQWindow_link">FAQs</a>&nbsp;|&nbsp;<a id="showPrivacyWindow_link">PRIVACY</a></span>';
+    bottomRow += '      <div class="small-5 columns text-right footerDivs">';
+    bottomRow += '        <span class="footerText"><a id="showInfoWindow_link">Info</a>&nbsp;|&nbsp;<a id="showFAQWindow_link">FAQs</a>&nbsp;|&nbsp;<a id="showPrivacyWindow_link">Privacy</a></span>';
     bottomRow += '      </div>';
     bottomRow += '    </div>';
     bottomRow += '  </div>';
@@ -300,12 +300,12 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         joyrideHTML += '    <p>Hide the side bar until refresh <i class="fi-play joyrideIcon"></i>, or until restart <i class="fi-fast-forward joyrideIcon"></i></p>';
         joyrideHTML += '  </li>';
         joyrideHTML += '  <li data-id="joyrideStop4" data-text="Next (4 of 5)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
-        joyrideHTML += '    <h4>Like what you see?</h4>';
-        joyrideHTML += '    <p>Vote products up or down <i class="fi-arrow-up joyrideIcon"></i>&nbsp;<i class="fi-arrow-down joyrideIcon"></i></p>';
+        joyrideHTML += '    <h4>Search</h4>';
+        joyrideHTML += '    <p>Search Balu from the sidebar or from the icon on the toolbar above</i></p>';
         joyrideHTML += '  </li>';
         joyrideHTML += '  <li data-id="joyrideStop5" data-button="End" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
         joyrideHTML += '    <h4>Spread the word</h4>';
-        joyrideHTML += '    <p>Not seeing your favourite ethical brands on Balu? Click the <i class="fi-plus joyrideIcon"></i> icon to share them with the Balu community</p>';
+        joyrideHTML += '    <p>Not seeing your favourite ethical brands on Balu? Click the <i class="fi-plus joyrideIcon"></i> icon to get them added.</p>';
         joyrideHTML += '  </li>';
         joyrideHTML += '</ol>';
         docBody.innerHTML += joyrideHTML;
@@ -325,6 +325,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRefresh_icon').addEventListener('click',hideSidebar_untilRefresh_listener);
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRestart_icon').addEventListener('click',hideSidebar_untilRestart_listener);
     gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
+    gvIframe.contentWindow.document.getElementById('showInfoWindow_link').addEventListener('click',showInfoWindow_listener);
     gvIframe.contentWindow.document.getElementById('showFAQWindow_link').addEventListener('click',showFAQWindow_listener);
     gvIframe.contentWindow.document.getElementById('showPrivacyWindow_link').addEventListener('click',showPrivacyWindow_listener);
 
@@ -451,7 +452,7 @@ function createResultsSidebarContent(recommendations,showJoyride,callback) {
         } else {
             tweetContent += recommendations[i].brandName;
         }
-        tweetContent += '%20-%20found%20with%20%40BaluHQ%27s%20amazing%20new%20app. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects';
+        tweetContent += '%20-%20found%20with%20%40BaluHQ. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects';
 
 
 
@@ -503,8 +504,8 @@ function createResultsSidebarContent(recommendations,showJoyride,callback) {
         var left = (screen.width/4)*3;
         var top = (screen.height/4)*1;
 
-        recBlock += '      <a class="voteUp_icons" id="voteUp_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Vote up this recommendation"><i id="joyrideStop4" class="fi-arrow-up ' + voteUpClass + '" id="voteUpRec_upArrow_' + recommendations[i].recommendationId + '"></i></a>';
-        recBlock += '      <a class="voteDown_icons" id="voteDown_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Vote down this recommendation"><i class="fi-arrow-down ' + voteDownClass + '" id="voteDownRec_downArrow_' + recommendations[i].recommendationId + '"></i></a>';
+        recBlock += '      <a class="voteUp_icons" id="voteUp_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Like this recommendation"><i class="fi-like ' + voteUpClass + '" id="voteUpRec_upArrow_' + recommendations[i].recommendationId + '"></i></a>';
+        recBlock += '      <a class="voteDown_icons" id="voteDown_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Dislike this recommendation"><i class="fi-dislike ' + voteDownClass + '" id="voteDownRec_downArrow_' + recommendations[i].recommendationId + '"></i></a>';
         recBlock += '      <a class="twitterShareIcons" data-tweetcontent="' + tweetContent + '" title="Share on Twitter"><i class="fi-social-twitter twitterIcon"></i></a>';
         recBlock += '      <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '" title="I don\'t want to see this brand again"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
         //recBlock += '      <a href="#" title="Share..."><i class="fi-share altProdIcon"></i></a>';
@@ -609,25 +610,25 @@ function createLogInSidebarContent() {
 
     // Log in form
 
-    userForm += '<div class="row">';
+    userForm += '<div class="row" style="margin-left: 10px">';
     userForm += '  <div class="small-8 columns end">';
     userForm += '    <h4>Sign In to Balu</h4>';
     userForm += '  </div>';
     userForm += '</div>';
     userForm += '<form id="logInUserForm">';
-    userForm += '  <div class="row">';
+    userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-4 columns">';
     userForm += '      <label>Email';
     userForm += '        <input type="text" id="fieldLogInEmail" placeholder="Email" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
-    userForm += '    <div class="small-4 columns end">';
+    userForm += '    <div class="small-4 columns end" style="margin-left: 10px">';
     userForm += '      <label>Password';
     userForm += '        <input type="password" id="fieldLogInPassword" placeholder="Password" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
     userForm += '  </div>';
-    userForm += '  <div class="row">';
+    userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-12 columns end">';
     userForm += '      <input id="logInUserButton" class="button radius" type="submit" value="Log In">';
     userForm += '      <input id="passwordResetButton" class="button radius" type="submit" value="Reset password">';
@@ -638,13 +639,13 @@ function createLogInSidebarContent() {
     // Sign up form
 
     userForm += '<br />';
-    userForm += '<div class="row">';
+    userForm += '<div class="row" style="margin-left: 10px">';
     userForm += '  <div class="small-8 columns end">';
     userForm += '    <h4>Create a New Account</h4>';
     userForm += '  </div>';
     userForm += '</div>';
     userForm += '<form id="signUserUpForm">';
-    userForm += '  <div class="row">';
+    userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-4 columns">';
     userForm += '      <label>Email';
     userForm += '        <input type="text" id="fieldSignUpUsername" placeholder="Email" required="yes">';
@@ -656,7 +657,7 @@ function createLogInSidebarContent() {
     userForm += '      </label>';
     userForm += '    </div>';
     userForm += '  </div>';
-    userForm += '  <div class="row">';
+    userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-4 columns end">';
     userForm += '      <input id="signUserUpButton" class="button radius" type="submit" value="Sign Up">';
     userForm += '    </div>';
@@ -735,12 +736,12 @@ function voteUp_listener() {
     var voteDownArrow = voteDownArrow_container.childNodes[0];
     var voteUpArrow_container = gvIframe.contentWindow.document.getElementById('voteUp_icon_' + recommendationId);
     var voteUpArrow = voteUpArrow_container.childNodes[0];
-    if(voteUpArrow.className === 'fi-arrow-up voteClass_voted') {
-        voteDownArrow.className = 'fi-arrow-down voteClass_nothing';
-        voteUpArrow.className = 'fi-arrow-up voteClass_nothing';
+    if(voteUpArrow.className === 'fi-like voteClass_voted') {
+        voteDownArrow.className = 'fi-dislike voteClass_nothing';
+        voteUpArrow.className = 'fi-like voteClass_nothing';
     } else {
-        voteDownArrow.className = 'fi-arrow-down voteClass_notVoted';
-        voteUpArrow.className = 'fi-arrow-up voteClass_voted';
+        voteDownArrow.className = 'fi-dislike voteClass_notVoted';
+        voteUpArrow.className = 'fi-like voteClass_voted';
     }
 
     // Message extension to update DB
@@ -758,12 +759,12 @@ function voteDown_listener() {
     var voteDownArrow = voteDownArrow_container.childNodes[0];
     var voteUpArrow_container = gvIframe.contentWindow.document.getElementById('voteUp_icon_' + recommendationId);
     var voteUpArrow = voteUpArrow_container.childNodes[0];
-    if(voteDownArrow.className === 'fi-arrow-down voteClass_voted') {
-        voteDownArrow.className = 'fi-arrow-down voteClass_nothing';
-        voteUpArrow.className = 'fi-arrow-up voteClass_nothing';
+    if(voteDownArrow.className === 'fi-dislike voteClass_voted') {
+        voteDownArrow.className = 'fi-dislike voteClass_nothing';
+        voteUpArrow.className = 'fi-like voteClass_nothing';
     } else {
-        voteDownArrow.className = 'fi-arrow-down voteClass_voted';
-        voteUpArrow.className = 'fi-arrow-up voteClass_notVoted';
+        voteDownArrow.className = 'fi-dislike voteClass_voted';
+        voteUpArrow.className = 'fi-like voteClass_notVoted';
     }
 
     // Message extension to update DB
@@ -812,6 +813,11 @@ function hideSidebar_untilRefresh_listener() {
 function hideSidebar_untilRestart_listener() {
     log(gvScriptName_CSMain + '.hideSidebar_untilRestart_listener: Start','PROCS');
     sendMessage('BG_main','pleaseHideSidebar_untilRestart');
+}
+
+function showInfoWindow_listener() {
+    log(gvScriptName_CSMain + '.showInfoWindow_listener: Start','PROCS');
+    sendMessage('BG_main','pleaseShowInfoWindow');
 }
 
 function showFAQWindow_listener() {

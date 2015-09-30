@@ -51,7 +51,8 @@ var gvBlockBrandParams;
     chrome.tabs.onRemoved.addListener(chromeRemovedTabListener);
     // Listen for tab change
     chrome.tabs.onActivated.addListener(chromeActivatedTabListener);
-
+    // Listen for the install event, to display a welcome page
+    chrome.runtime.onInstalled.addListener(chromeInstalledExtensionListener);
     // Initalise extension //
 
     getBaluSettings(function(settings){
@@ -107,6 +108,17 @@ function chromeActivatedTabListener(activeInfo){
     }
 }
 
+/*
+ * When the extension is first installed, display a welcome screen
+ * Note, this can be used for updates to the extension and to Chrome too
+ * Apparently there's no way to programatically display the popup though :(
+ */
+function chromeInstalledExtensionListener(details){
+
+    if (details.reason == "install") { //reason ( enum of "install", "update", or "chrome_update" )
+        chrome.tabs.create({url: "http://www.getbalu.org/welcome"});
+    }
+}
 
 /*******************************
  * Setup Functions             *
@@ -814,11 +826,10 @@ function manualSearch(tabId, searchTerm) {
 
                 var EthicalBrand = Parse.Object.extend('EthicalBrand');
                 var ethicalBrandQuery_brandName = new Parse.Query(EthicalBrand);
-                var ethicalBrandQuery_twitterHandle = new Parse.Query(EthicalBrand);
+                //var ethicalBrandQuery_twitterHandle = new Parse.Query(EthicalBrand); // can't do this, search for shirt and you get @allriot_tshirts, which do hoodies too!
                 ethicalBrandQuery_brandName.contains('brandName_LC',searchTerm_LC);
-                ethicalBrandQuery_twitterHandle.contains('twitterHandle_LC',searchTerm_LC);
-                var ethicalBrandCompoundQuery = Parse.Query.or(ethicalBrandQuery_brandName,
-                                                               ethicalBrandQuery_twitterHandle);
+                //ethicalBrandQuery_twitterHandle.contains('twitterHandle_LC',searchTerm_LC);
+                var ethicalBrandCompoundQuery = Parse.Query.or(ethicalBrandQuery_brandName);
                 // Assuming we don't want to search the brand spiel too
                 //
 
@@ -1266,6 +1277,15 @@ function hideSidebar(tabId) {
     sendMessage(tabId,'pleaseHideSidebar');
 }
 
+function showInfoWindow(tabId){
+
+    log(gvScriptName_BGMain + '.showInfoWindow: start','PROCS');
+
+    userLog(tabId,'SHOW_INFO_WINDOW');
+
+    chrome.tabs.create({'url': 'http://www.getbalu.org/'});
+}
+
 function showFAQWindow(tabId){
 
     log(gvScriptName_BGMain + '.showFAQWindow: start','PROCS');
@@ -1313,6 +1333,7 @@ function signUserUp(tabId,username,password,callback){
     user.set("username", username.toLowerCase());
     user.set("password", password);
     user.set("email",    username.toLowerCase());
+    user.set("joyrideStatus", 'NOT DONE');
 
     user.signUp(null, {
         success: function(user) {
@@ -1388,9 +1409,11 @@ function resetPassword(email,callback){
 function isUserLoggedIn(){
     Parse.initialize(gvAppId, gvJSKey);
     if(Parse.User.current()){
-        return true;
+        return {email: Parse.User.current().get('email'),
+                isUserLoggedIn: true};
     } else{
-        return false;
+        return {email: null,
+                isUserLoggedIn: false};
     }
 }
 

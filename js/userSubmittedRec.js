@@ -75,7 +75,7 @@ function getAddNewRecFormHTML(thankYouText) {
 
     if(thankYouText) {
         htmlString += '<div class="row">';
-        htmlString += '  <div class="small-10 small-offset-1 columns end">';
+        htmlString += '  <div class="small-12 columns">';
         htmlString += '    <h6>' + thankYouText + '</h6>';
         htmlString += '  </div>';
         htmlString += '</div>';
@@ -128,9 +128,9 @@ function showUserSubmittedRecSuccess() {
 
     var successMessage = '';
     successMessage += 'Thank You! <br /><br />';
-    successMessage += 'Balu relies on everybody helping each other. So we really appreciate your contribution. Keep them coming!<br /><br />';
+    successMessage += 'Balu relies on people spreading the word about great ethical brands. So we really appreciate your contribution. Keep them coming!<br /><br />';
     successMessage += 'You\'ll see your recommendation in the Balu sidebar just as soon as we can add it to the database.<br /><br />';
-    successMessage += 'Got any more great products you want to share with the world...?';
+    successMessage += 'Got any more great products you want to share with the world...? Add them below.';
 
     displayPage(getAddNewRecFormHTML(successMessage));
 }
