@@ -184,6 +184,15 @@ function buildPopupHTML(){
              * build the HTML for the bottom section of the popup window *
              *************************************************************/
 
+            var amazonTipsString = '';
+            if(gvActiveTab.website.websiteURL === 'www.amazon.co.uk'){
+                amazonTipsString += '<br />';
+                amazonTipsString += '<br />';
+                amazonTipsString += '<b><u>Tips for using Balu with Amazon</u></b><br />';
+                amazonTipsString += 'Balu needs to know which Amazon department you\'re in, so try to choose a department when you search and you should get better results.<br /><br />';
+                amazonTipsString += 'Also, Amazon doesn\'t always do a full refresh of the page when you search, which means this Beta version of Balu doesn\'t know to rerun its search. We\'re working to fix this, but in the meantime just hit the refresh button on your browser if you\'re not seeing the Balu results you expect.';
+            }
+
             if(isThereAnErrorMessage){
                 lvHtmlString += errorMessage;
             } else
@@ -213,14 +222,15 @@ function buildPopupHTML(){
 
             // If we are permanent hidden, and we don't have recs
             if(!isSidebarVisibleForAllTabs && !isThereAnyRecommendationsForThisTab){
-                    lvHtmlString += 'Balu is not set to automatically display the sidebar. You\'ll see a number on the Balu icon instead.<br /><br />To change this setting, click the account icon above.';
-        //            lvHtmlString += '<br />';
+                lvHtmlString += 'Balu is not set to automatically display the sidebar. You\'ll see a number on the Balu icon instead.<br /><br /><b>To change this setting, click the account icon above.</b>';
+                lvHtmlString += amazonTipsString;
+
             } else
 
             // If we are not permanently hidden and we don't have any recs
             if(isSidebarVisibleForAllTabs && !isThereAnyRecommendationsForThisTab) {
-                lvHtmlString += 'Balu does not have any ethical alternatives for products on this page. If you know of any, please tell us about them by <b>clicking on the plus icon above.';
-        //        lvHtmlString += '<br />';
+                lvHtmlString += 'Balu does not have any ethical alternatives for products on this page. If you know of any, please tell us about them by <b>clicking on the plus icon above.</b>';
+                lvHtmlString += amazonTipsString;
             } else
 
             // If sidebar is set to visible and we have recommendations (i.e. the sidebar is actually displayed without being forced!)

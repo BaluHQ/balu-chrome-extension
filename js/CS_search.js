@@ -85,6 +85,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
     // pageElements to be searched
     var productNames = [];
+    var department;
     var breadcrumbs;
     var URLText = tabURL.substring(tabURL.indexOf('/')).toLowerCase(); // we want the text after the first forward slash, for searching.
     var menFilter = 'NO';
@@ -116,11 +117,27 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             // to do: Amazon search changes the URL but not the page, so we probably need listen for URL changes to trigger a re-search
 
+            // Department
+
+            var amazon_navBar = document.getElementById('nav-subnav');
+
+            if(amazon_navBar !== null){
+                var amazon_navBar_firstElement = amazon_navBar.firstElementChild;
+                if(amazon_navBar_firstElement !== null) {
+                    department = amazon_navBar_firstElement.textContent.toLowerCase();
+                    logMessage += 'Department: found in id="nav-subnav"' + '\r';
+                } else {
+                    logMessage += 'Department: FAILED to find first element in id="nav-subnav"' + '\r';
+                }
+            } else {
+                logMessage += 'Department: FAILED to find in id="nav-subnav"' + '\r';
+            }
+
             // Breadcrumbs
 
-            var amazonInfoBar = document.getElementById('s-result-info-bar-content');
-            if(amazonInfoBar !== null) {
-                breadcrumbs = amazonInfoBar.textContent.toLowerCase();
+            var amazon_infoBar = document.getElementById('s-result-info-bar-content');
+            if(amazon_infoBar !== null) {
+                breadcrumbs = amazon_infoBar.textContent.toLowerCase();
                 logMessage += 'Breadcrumbs: found in id="s-result-info-bar-content"' + '\r';
             } else {
                 logMessage += 'Breadcrumbs: FAILED to find in id="s-result-info-bar-content"' + '\r';
@@ -197,8 +214,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             }
 
             // Did we find something?
-            if(amazon_resultsCol !== null || amazon_searchResults !== null ||
-               amazon_titleSection !== null || amazon_productTitle !== null || amazon_btAsinTitle !== null) {
+            if((amazon_resultsCol !== null || amazon_searchResults !== null ||
+               amazon_titleSection !== null || amazon_productTitle !== null || amazon_btAsinTitle !== null) &&
+               amazon_navBar !== null) {
                 didWeFindEverything = true;
             }
 
@@ -851,6 +869,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
     } else if (productNames.length > 0) {
 
         var pageElements = {productNames: productNames,
+                            department:   department,
                             breadcrumbs:  breadcrumbs,
                             URLText:      URLText,
                             menFilter:    menFilter,
@@ -1022,8 +1041,25 @@ function productSearch(pageElements,websiteURL,searchData,logMessage) {
         position_negativeSearchTerm4 = -1;
         matchedSex = false;
 
+        // Match the Amazon (only Amazon at the moment) department to a searchCategory
+        var departmentMatch;
+        if(websiteURL !== 'www.amazon.co.uk'){
+            departmentMatch = true;
+        } else {
+            if(searchData[i].amazonDepartments.indexOf(pageElements.department) !== -1){
+                departmentMatch = true;
+                logMessage += 'Matched department: pageElements.department == ' + pageElements.department + ', and searchData[i].amazonDepartments == ' + searchData[i].amazonDepartments + '\r';
+            } else {
+                departmentMatch = false;
+                logMessage += 'FAILED to match department: pageElements.department == ' + pageElements.department + ', and searchData[i].amazonDepartments == ' + searchData[i].amazonDepartments + '\r';
+            }
+        }
+
         // Only search for this searchProduct if it belongs to a searchCategory that is valid for the user's current website
-        if(searchData[i].websiteURL === websiteURL) {
+        // AND, for websites which we take note of the webpage's department (e.g. Amazon), make sure the searchCategory
+        // is active for this department
+        if(searchData[i].websiteURL === websiteURL && departmentMatch) {
+
 
             // for each product on the users web page (may be single product screen; may be multi product search results etc)
             // Go through all of them and tally a score of how many hits we get. This will help us order our results.

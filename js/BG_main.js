@@ -268,6 +268,7 @@ function getSearchProductData() {
                                 gvSearchProducts.push({// Search Category
                                                        searchCategoryId:       categoryWebsiteJoins[j].get('searchCategory').id,
                                                        categoryName:           categoryWebsiteJoins[j].get('searchCategory').get('categoryName'),
+                                                       amazonDepartments:      categoryWebsiteJoins[j].get('searchCategory').get('amazonDepartments_LC'),
                                                        whyDoWeCare:            categoryWebsiteJoins[j].get('searchCategory').get('whyDoWeCare'),
                                                        // Website
                                                        websiteId:              categoryWebsiteJoins[j].get('website').id,
