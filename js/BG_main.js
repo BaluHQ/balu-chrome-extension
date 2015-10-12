@@ -254,6 +254,7 @@ function getSearchProductData() {
             // Then get all SearchCategory-Website pairs
             var CategoryWebsiteJoin = Parse.Object.extend('CategoryWebsiteJoin');
             var categoryWebsiteJoinQuery = new Parse.Query( CategoryWebsiteJoin);
+            categoryWebsiteJoinQuery.limit(1000);
             categoryWebsiteJoinQuery.include('searchCategory');
             categoryWebsiteJoinQuery.include('website');
             categoryWebsiteJoinQuery.find({
@@ -264,7 +265,6 @@ function getSearchProductData() {
                         for (var j = 0; j < categoryWebsiteJoins.length; j++) {
 
                             if(searchProducts[i].get('searchCategories').id === categoryWebsiteJoins[j].get('searchCategory').id) {
-
                                 gvSearchProducts.push({// Search Category
                                                        searchCategoryId:       categoryWebsiteJoins[j].get('searchCategory').id,
                                                        categoryName:           categoryWebsiteJoins[j].get('searchCategory').get('categoryName'),
@@ -429,7 +429,7 @@ function initialiseTab(tab){
    log(gvScriptName_BGMain + '.initialiseTab: ' + gvTabs[tab.id].tab.id + ' saved; ' + logText + '; isWebsiteOnOrOff == ' + isWebsiteOnOrOff,' INFO');
 
    if (gvIsBaluOnOrOff === 'ON' && isWebsiteOnOrOff === 'ON') {
-       refreshTab(tab.id);
+       hideSidebar(tab.id,function(){refreshTab(tab.id);});
    } else {
        log(gvScriptName_BGMessaging + '.onMessage: gvIsBaluOnOrOff == ' + gvIsBaluOnOrOff + ' and isWebsiteOnOrOff == ' + isWebsiteOnOrOff + ', so doing nothing',' INFO');
    }
@@ -1273,9 +1273,10 @@ function hideSidebar_allTabs(){
     log(gvScriptName_BGMain + '.hideSidebar_allTabs: start','PROCS');
     for(var tab in gvTabs) {hideSidebar(gvTabs[tab].tab.id);}
 }
-function hideSidebar(tabId) {
+function hideSidebar(tabId,callback) {
     log(gvScriptName_BGMain + '.hideSidebar: start','PROCS');
-    sendMessage(tabId,'pleaseHideSidebar');
+    sendMessage(tabId,'pleaseHideSidebar',null,callback);
+
 }
 
 function showInfoWindow(tabId){

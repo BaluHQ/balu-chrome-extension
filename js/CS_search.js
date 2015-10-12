@@ -1048,18 +1048,17 @@ function productSearch(pageElements,websiteURL,searchData,logMessage) {
         } else {
             if(searchData[i].amazonDepartments.indexOf(pageElements.department) !== -1){
                 departmentMatch = true;
-                logMessage += 'Matched department: pageElements.department == ' + pageElements.department + ', and searchData[i].amazonDepartments == ' + searchData[i].amazonDepartments + '\r';
+                logMessage += 'Matched department for ' + searchData[i].productName + ': pageElements.department == ' + pageElements.department + ', and searchData[i].amazonDepartments == ' + searchData[i].amazonDepartments + '\r';
             } else {
                 departmentMatch = false;
-                logMessage += 'FAILED to match department: pageElements.department == ' + pageElements.department + ', and searchData[i].amazonDepartments == ' + searchData[i].amazonDepartments + '\r';
             }
         }
-
+//if(searchData[i].productName === 'Pencil Cases') { alert("0 - " + pageElements.department + ' . ' + searchData[i].amazonDepartments);}
         // Only search for this searchProduct if it belongs to a searchCategory that is valid for the user's current website
         // AND, for websites which we take note of the webpage's department (e.g. Amazon), make sure the searchCategory
         // is active for this department
-        if(searchData[i].websiteURL === websiteURL && departmentMatch) {
 
+        if(searchData[i].websiteURL === websiteURL && departmentMatch) {
 
             // for each product on the users web page (may be single product screen; may be multi product search results etc)
             // Go through all of them and tally a score of how many hits we get. This will help us order our results.
@@ -1210,7 +1209,7 @@ function productSearch(pageElements,websiteURL,searchData,logMessage) {
                 }
 
                 if(searchData[i].andOr === 'OR') {
-
+//if(searchData[i].productName === 'Pencil Cases') { alert("1");}
                     if ((position_brand > -1 || position_brand === -2) &&
                         (position_searchTerm1 > -1 ||
                          position_searchTerm2 > -1 ||
@@ -1219,18 +1218,15 @@ function productSearch(pageElements,websiteURL,searchData,logMessage) {
                          position_searchTerm5 > -1 ||
                          position_searchTerm6 > -1 ||
                          position_searchTerm7 > -1) && matchedSex) {
-
                         foundThisItemInThisElement = true;
                     }
                 }
 
                 if(searchData[i].negativeAndOr === 'OR') {
-
                     if((position_negativeSearchTerm1 > -1 ||
                         position_negativeSearchTerm2 > -1 ||
                         position_negativeSearchTerm3 > -1 ||
                         position_negativeSearchTerm4 > -1)) {
-
                             excludeThisItemInThisElement = true;
                     }
                 }

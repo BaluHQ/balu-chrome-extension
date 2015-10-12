@@ -62,7 +62,7 @@ function searchTrackedTabForRecommendation(trackedTab){
 /*
  * Force a sidebar with the given content onto the web page
  */
-function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride) {
+function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, showTopRow) {
 
     log(gvScriptName_CSMain + '.createSidebar: Start','PROCS');
 
@@ -153,14 +153,14 @@ function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, 
 
     }
 
-    createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride);
+    createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, showTopRow);
 
 }
 
 /*
  * @searchTerm: optional, passed through from manual search so we can re-populate the search field
  */
-function createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride){
+function createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, showTopRow){
 
     log(gvScriptName_CSMain + '.createSidebarTemplate: Start','PROCS');
 
@@ -201,33 +201,35 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
 
     var topRow = '';
 
-    topRow += '<form>';
-    topRow += '<div class="row" style="margin-top: 2px;">';
-    topRow += '  <div class="small-12 columns header">';
-    topRow += '    <div class="row collapse">';
-    topRow += '      <div id="joyrideStop4" class="small-6 columns">';
-    if(searchTerm){
-        topRow += '        <input type="text" id="fieldManualSearch" value="' + searchTerm + '" placeholder="Search" class="radius">';
-    } else{
-        topRow += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius">';
+    if(showTopRow) {
+        topRow += '<form>';
+        topRow += '<div class="row" style="margin-top: 2px;">';
+        topRow += '  <div class="small-12 columns header">';
+        topRow += '    <div class="row collapse">';
+        topRow += '      <div id="joyrideStop4" class="small-6 columns">';
+        if(searchTerm){
+            topRow += '        <input type="text" id="fieldManualSearch" value="' + searchTerm + '" placeholder="Search" class="radius">';
+        } else{
+            topRow += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius">';
+        }
+        topRow += '      </div>';
+        topRow += '      <div class="small-2 column text-center">';
+        topRow += '        <a id="manualSearchSubmit_icon" class="button postfix searchLinkIcon radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
+        topRow += '      </div>';
+        topRow += '      <div class="small-2 column text-center">';
+        topRow += '        <span title="Account settings">';
+        topRow += '        <a id="showOptionsPageWindow_icon" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
+        topRow += '      </div>';
+        topRow += '      <div class="small-2 columns text-center">';
+        topRow += '        <span title="Add your favourite ethical retailers to Balu">';
+        topRow += '          <a id="showUserSubmittedRecWindow_icon"><i class="fi-plus addNewIcon" id="joyrideStop5"></i></a>';
+        topRow += '        </span>';
+        topRow += '      </div>';
+        topRow += '    </div>';
+        topRow += '  </div>';
+        topRow += '</div>';
+        topRow += '</form>';
     }
-    topRow += '      </div>';
-    topRow += '      <div class="small-2 column text-center">';
-    topRow += '        <a id="manualSearchSubmit_icon" class="button postfix searchLinkIcon radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
-    topRow += '      </div>';
-    topRow += '      <div class="small-2 column text-center">';
-    topRow += '        <span title="Account settings">';
-    topRow += '        <a id="showOptionsPageWindow_icon" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
-    topRow += '      </div>';
-    topRow += '      <div class="small-2 columns text-center">';
-    topRow += '        <span title="Add your favourite ethical retailers to Balu">';
-    topRow += '          <a id="showUserSubmittedRecWindow_icon"><i class="fi-plus addNewIcon" id="joyrideStop5"></i></a>';
-    topRow += '        </span>';
-    topRow += '      </div>';
-    topRow += '    </div>';
-    topRow += '  </div>';
-    topRow += '</div>';
-    topRow += '</form>';
 
     var content = '<div id="contentDiv" class="contentDiv"></div>';
 
@@ -319,12 +321,14 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
 
     // All listeners for clickable items in the template. These listeners all call back to CS_main
 
-    gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
-    gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
-    gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
+    if(showTopRow){
+        gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
+        gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
+        gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
+        gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
+    }
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRefresh_icon').addEventListener('click',hideSidebar_untilRefresh_listener);
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRestart_icon').addEventListener('click',hideSidebar_untilRestart_listener);
-    gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
     gvIframe.contentWindow.document.getElementById('showInfoWindow_link').addEventListener('click',showInfoWindow_listener);
     gvIframe.contentWindow.document.getElementById('showFAQWindow_link').addEventListener('click',showFAQWindow_listener);
     gvIframe.contentWindow.document.getElementById('showPrivacyWindow_link').addEventListener('click',showPrivacyWindow_listener);
@@ -617,12 +621,14 @@ function createLogInSidebarContent() {
     userForm += '</div>';
     userForm += '<form id="logInUserForm">';
     userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-4 columns">';
+    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
     userForm += '      <label>Email';
     userForm += '        <input type="text" id="fieldLogInEmail" placeholder="Email" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
-    userForm += '    <div class="small-4 columns end" style="margin-left: 10px">';
+    userForm += '  </div>';
+    userForm += '  <div class="row" style="margin-left: 10px">';
+    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
     userForm += '      <label>Password';
     userForm += '        <input type="password" id="fieldLogInPassword" placeholder="Password" required="yes">';
     userForm += '      </label>';
@@ -646,12 +652,14 @@ function createLogInSidebarContent() {
     userForm += '</div>';
     userForm += '<form id="signUserUpForm">';
     userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-4 columns">';
+    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
     userForm += '      <label>Email';
     userForm += '        <input type="text" id="fieldSignUpUsername" placeholder="Email" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
-    userForm += '    <div class="small-4 columns end">';
+    userForm += '  </div>';
+    userForm += '  <div class="row" style="margin-left: 10px">';
+    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
     userForm += '      <label>Password';
     userForm += '        <input type="password" id="fieldSignUpPassword" placeholder="Password" required="yes">';
     userForm += '      </label>';
@@ -672,17 +680,20 @@ function createLogInSidebarContent() {
     gvIframe.contentWindow.document.getElementById('signUserUpButton').addEventListener('click',signUserUp_listener);
 }
 
-function hideSidebar() {
+function hideSidebar(callback) {
     log(gvScriptName_CSMain + '.hideSidebar: Start','PROCS');
 
     // Move the user's webpage back to equal width on screen
     var html = document.getElementsByTagName('html')[0];
     html.style.marginRight = '0px';
 
-    // remove the iframe
+    // remove the iframe, if it exists (we could have called this function as a precautionary measure, regardless of whether sidebar is displayed)
     if(window.frames.iFrameBaluSidebar) {
         var iframe = window.frames.iFrameBaluSidebar;
         iframe.parentNode.removeChild(iframe);
+    }
+    if(callback){
+        callback();
     }
 }
 

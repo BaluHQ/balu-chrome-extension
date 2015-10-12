@@ -184,13 +184,16 @@ function buildPopupHTML(){
              * build the HTML for the bottom section of the popup window *
              *************************************************************/
 
+            // Is the active tab amazon? We only have a website object in gvTabs if it's an active website
             var amazonTipsString = '';
-            if(gvActiveTab.website.websiteURL === 'www.amazon.co.uk'){
-                amazonTipsString += '<br />';
-                amazonTipsString += '<br />';
-                amazonTipsString += '<b><u>Tips for using Balu with Amazon</u></b><br />';
-                amazonTipsString += 'Balu needs to know which Amazon department you\'re in, so try to choose a department when you search and you should get better results.<br /><br />';
-                amazonTipsString += 'Also, Amazon doesn\'t always do a full refresh of the page when you search, which means this Beta version of Balu doesn\'t know to rerun its search. We\'re working to fix this, but in the meantime just hit the refresh button on your browser if you\'re not seeing the Balu results you expect.';
+            if(gvActiveTab.website) {
+                if(gvActiveTab.website.websiteURL === 'www.amazon.co.uk'){
+                    amazonTipsString += '<br />';
+                    amazonTipsString += '<br />';
+                    amazonTipsString += '<b><u>Tips for using Balu with Amazon</u></b><br />';
+                    amazonTipsString += 'Balu needs to know which Amazon department you\'re in, so try to choose a department when you search and you should get better results.<br /><br />';
+                    amazonTipsString += 'Also, Amazon doesn\'t always do a full refresh of the page when you search, which means this Beta version of Balu doesn\'t know to rerun its search. We\'re working to fix this, but in the meantime just hit the refresh button on your browser if you\'re not seeing the Balu results you expect.';
+                }
             }
 
             if(isThereAnErrorMessage){

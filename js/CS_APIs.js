@@ -39,21 +39,21 @@ function chromeMessageListener(msg, sender, callback) {
 
         case 'BG_main | pleaseDisplayRecommendations':
             log(logMessage,'MESSG');
-            createSidebar(createResultsSidebarContent,msg.data.recommendationData, msg.data.searchTerm, msg.data.showJoyride);
+            createSidebar(createResultsSidebarContent,msg.data.recommendationData, msg.data.searchTerm, msg.data.showJoyride,true);
         break;
 
         // Logging in and out
 
         case 'BG_main | pleaseDisplayLogInSidebar':
             log(logMessage,'MESSG');
-            createSidebar(createLogInSidebarContent);
+            createSidebar(createLogInSidebarContent,null,null,false,false);
         break;
 
         // Sidebar visibility
 
         case 'BG_main | pleaseHideSidebar':
             log(logMessage,'MESSG');
-            hideSidebar();
+            hideSidebar(callback); // call back can be the main sidebar refresh. We do it like this so we get the sidebar to hide before re-showing (or not)
         break;
 
         // Comms from BG_main to popup windows
