@@ -13,6 +13,7 @@ var gvJSKey = 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY';
 /*
  * Global variables
  */
+var gvHaveWeAlreadyTriedToReconnectSinceLastTabRefresh = false;
 var gvIsBaluOnOrOff;
 var gvIsBaluShowOrHide;
 var gvIsBaluShowOrHide_untilRestart = 'SHOW';
@@ -73,6 +74,7 @@ function turnBaluOn(){
 
     // Set the browser icon to the active version
     chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action.png')});
+    chrome.browserAction.setBadgeText({text: ""});
 
     // Load the website and search data from Parse. After these functions the background script
     // stops until a content script requests a tab initialisation. There are wait functions on
@@ -268,7 +270,7 @@ function getSearchProductData() {
                                 gvSearchProducts.push({// Search Category
                                                        searchCategoryId:       categoryWebsiteJoins[j].get('searchCategory').id,
                                                        categoryName:           categoryWebsiteJoins[j].get('searchCategory').get('categoryName'),
-                                                       amazonDepartments:      categoryWebsiteJoins[j].get('searchCategory').get('amazonDepartments_LC'),
+                                                       departments:            categoryWebsiteJoins[j].get('departments_LC'),
                                                        whyDoWeCare:            categoryWebsiteJoins[j].get('searchCategory').get('whyDoWeCare'),
                                                        // Website
                                                        websiteId:              categoryWebsiteJoins[j].get('website').id,
@@ -341,6 +343,8 @@ function getSearchProductData() {
  *
  * We can't call initialiseTab directly, because we need to be sure
  * the background script has finished initialising. So we call a recursive wait function instead.
+ * If we reach the recursion limit without having detected a successful init, we call a complete
+ * app init. But we only do this once! It will happen again the next time a tab is loaded/refreshed.
  *
  * if @tab is null, init all tabs
  */
@@ -367,8 +371,16 @@ function waitForExtensionInitThenInitialiseTab(tab,counter){
     }
 
     if(!hasExtensionInitialisd) {
-        if (counter > 400) { // time out after twenty seconds
-            log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Ending wait: counter reached ' + counter + ' before gvWebsites, gvSearchProducts and/or gvIsBaluOnOrOff were set','ERROR');
+        if (counter > 200) { // time out after ten seconds
+            log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Ending wait: counter reached ' + counter + ' before gvWebsites, gvSearchProducts and/or gvIsBaluOnOrOff were set',' INFO');
+            if(!gvHaveWeAlreadyTriedToReconnectSinceLastTabRefresh){
+                log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Attmepting to reconnect app and init tab again','PROCS');
+                gvHaveWeAlreadyTriedToReconnectSinceLastTabRefresh = true;
+                turnBaluOn();
+                waitForExtensionInitThenInitialiseTab(tab,1);
+            } else {
+                log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: First attempt to reconnect and reinit failed - giving up','ERROR');
+            }
             return;
         } else {
             log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Waiting...',' INFO');
@@ -446,7 +458,7 @@ function refreshTab_allTabs(){
     log(gvScriptName_BGMain + '.refreshTab_allTabs: Start','PROCS');
     for(var tab in gvTabs) {refreshTab(gvTabs[tab].tab.id);}
 }
-function refreshTab(tabId){
+function refreshTab(tabId,authMessage){
 
     log(gvScriptName_BGMain + '.refreshTab: Start','PROCS');
 
@@ -463,7 +475,7 @@ function refreshTab(tabId){
                                                      tabURL:      gvTabs[tabId].tab.url,
                                                      websiteURL:  gvTabs[tabId].website.websiteURL});
         } else {
-            sendMessage(tabId,'pleaseDisplayLogInSidebar');
+            sendMessage(tabId,'pleaseDisplayLogInSidebar',{authMessage: authMessage});
         }
     }
 
@@ -494,7 +506,7 @@ function refreshTab(tabId){
 /*
  *
  */
-function displayRecommendations(tabId,recommendationData,searchTerm){
+function displayRecommendations(tabId,recommendationData,searchTerm,displayChristmasBanner){
 
     log(gvScriptName_BGMain + '.displayRecommendations: start','PROCS');
 
@@ -530,9 +542,10 @@ function displayRecommendations(tabId,recommendationData,searchTerm){
        gvIsBaluShowOrHide_tempOverride === 'SHOW') {
         gvIsBaluShowOrHide_tempOverride = 'HIDE';
 
-        sendMessage(tabId,'pleaseDisplayRecommendations',{recommendationData:  recommendationData,
-                                                          searchTerm:          searchTerm,
-                                                          showJoyride:         gvShowJoyride});
+        sendMessage(tabId,'pleaseDisplayRecommendations',{recommendationData:     recommendationData,
+                                                          searchTerm:             searchTerm,
+                                                          showJoyride:            gvShowJoyride,
+                                                          displayChristmasBanner: displayChristmasBanner});
     }
 }
 
@@ -571,6 +584,7 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
     var productGroups = {};
     var maxHitCount = 0;
     var productGroupIdsArray = [];
+    var displayChristmasBanner = false;
     for (var i = 0; i < searchResults.length; i++) {
         if(!productGroups[searchResults[i].productGroupId]) {
             productGroups[searchResults[i].productGroupId] = {productGroupId: searchResults[i].productGroupId,
@@ -693,19 +707,25 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
                                                            productURL:             recommendations[j].get('productURL'),
                                                            brandName:              recommendations[j].get('ethicalBrand').get('brandName'),
                                                            brandId:                recommendations[j].get('ethicalBrand').id,
+                                                           baluFavourite:          recommendations[j].get('ethicalBrand').get('baluFavourite'),
                                                            imageURL:               imageURL,
                                                            twitterHandle:          recommendations[j].get('ethicalBrand').get('twitterHandle'),
                                                            brandSpiel:             recommendations[j].get('ethicalBrand').get('brandSpiel').replace(/(\r\n|\n|\r)/g,"<br />"),
                                                            upOrDownOrNull:         userRecommendationRating,
                                                            whyDoWeCare:            productGroups[currentProductGroupId].whyDoWeCare,
                                                            sortOrder:              sortOrder});
+
+                                // If the recommendaiton we've just added is flagged to display the Christmas banner, then set the variable
+                                if(recommendations[j].get('productGroups').get('christmasBanner') === true){
+                                    displayChristmasBanner = true;
+                                }
                             }
 
                             if (recommendationsArray.length > 0){
                                 recommendationsArray = recommendationsArray.sort(function(a,b){
                                     return a.sortOrder.localeCompare(b.sortOrder);
                                 });
-                                callback_displayRecommendations(tabId,recommendationsArray);
+                                callback_displayRecommendations(tabId,recommendationsArray,null,displayChristmasBanner);
                                 userLog(tabId,'RECOMMENDATIONS_FOUND',{recommendationsArray: recommendationsArray});
                             } else {
                                 // Because there should be a recommendation for every productGroup of every searchProduct,
@@ -740,6 +760,7 @@ function manualSearch(tabId, searchTerm) {
     log(gvScriptName_BGMain + '.manualSearch: Start >>> tabId == ' + tabId + ', searchTerm == ' + searchTerm,'PROCS');
 
     var recommendationsArray = [];
+    var displayChristmasBanner = false;
 
     if(searchTerm === ''){
         displayRecommendations(tabId,recommendationsArray, searchTerm);
@@ -905,10 +926,14 @@ function manualSearch(tabId, searchTerm) {
                                                                brandSpiel:             recommendations[j].get('ethicalBrand').get('brandSpiel').replace(/(\r\n|\n|\r)/g,"<br />"),
                                                                upOrDownOrNull:         userRecommendationRatingsArray[recommendations[j].id],
                                                                whyDoWeCare:            whyDoWeCare});
+                                   // If the recommendation we've just added is flagged to display the Christmas banner, then set the variable
+                                   if(recommendations[j].get('productGroups').get('christmasBanner') === true){
+                                       displayChristmasBanner = true;
+                                   }
                                 }
 
                                 // Note, the content_script will catch no-results and display the empty side bar
-                                displayRecommendations(tabId,recommendationsArray,searchTerm);
+                                displayRecommendations(tabId,recommendationsArray,searchTerm,displayChristmasBanner);
                                 userLog(tabId,'MANUAL_SEARCH_RECOMMENDATIONS_RETURNED',{searchTerm: searchTerm, recommendationsArray: recommendationsArray});
                             },
                             error: parseErrorFind
@@ -970,14 +995,15 @@ function showWhyDoWeCareWindow(tabId,whyDoWeCareURLName){
         trackNewTab(tab,lvURL,null,whyDoWeCareURLName);});
 }
 
-function showProductLinkWindow(tabId,productURL,recommendationId, recProductName, pageConfirmationSearch){
+function showProductLinkWindow(tabId,productURL,recommendationId, recProductName, pageConfirmationSearch, isManualSearch){
 
     log(gvScriptName_BGMain + '.showProductLinkWindow: start','PROCS');
 
     userLog(tabId,'REC_CLICK_THROUGH',{recommendationId:       recommendationId,
                                        productURL:             productURL,
                                        pageConfirmationSearch: pageConfirmationSearch,
-                                       recProductName:         recProductName});
+                                       recProductName:         recProductName,
+                                       isManualSearch:         isManualSearch});
 
     chrome.tabs.create({'url': productURL}, function(tab){trackNewTab(tab,productURL,recommendationId,pageConfirmationSearch);});
 
@@ -1323,7 +1349,13 @@ function logUserIn(tabId,username,password,callback){
                 callback();
             }
         },
-        error: parseErrorUser
+        error: function(user,error){
+            if(callback){
+                alert(error.message);
+            } else {
+                refreshTab(tabId,error.message);
+            }
+        }
     });
 }
 
@@ -1342,7 +1374,13 @@ function signUserUp(tabId,username,password,callback){
             logUserIn(tabId,username,password,callback);
             userLog(tabId,'USER_SIGNED_UP',{user: user});
         },
-        error: parseErrorUser
+        error: function(user,error){
+            if(callback){
+                alert(error.message);
+            } else {
+                refreshTab(tabId,error.message);
+            }
+        }
     });
 }
 

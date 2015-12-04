@@ -62,7 +62,7 @@ function searchTrackedTabForRecommendation(trackedTab){
 /*
  * Force a sidebar with the given content onto the web page
  */
-function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, showTopRow) {
+function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow, authMessage) {
 
     log(gvScriptName_CSMain + '.createSidebar: Start','PROCS');
 
@@ -153,14 +153,14 @@ function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, 
 
     }
 
-    createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, showTopRow);
+    createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow,authMessage);
 
 }
 
 /*
  * @searchTerm: optional, passed through from manual search so we can re-populate the search field
  */
-function createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, showTopRow){
+function createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow, authMessage){
 
     log(gvScriptName_CSMain + '.createSidebarTemplate: Start','PROCS');
 
@@ -229,6 +229,18 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         topRow += '  </div>';
         topRow += '</div>';
         topRow += '</form>';
+
+        // If our search reesults have triggered a banner, display it here
+
+        if(displayChristmasBanner){
+            topRow += '<div id="banner_container" class="banner_container">';
+            topRow += '  <div class="row">';
+            topRow += '    <div class="small-12 columns banner">';
+            topRow += '      <a target="_blank" class="banner_link" href="http://www.getbalu.org/christmas">Balu\'s Guide to Christmas!</a>';
+            topRow += '    </div>';
+            topRow += '  </div>';
+            topRow += '</div>';
+        }
     }
 
     var content = '<div id="contentDiv" class="contentDiv"></div>';
@@ -333,7 +345,13 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     gvIframe.contentWindow.document.getElementById('showFAQWindow_link').addEventListener('click',showFAQWindow_listener);
     gvIframe.contentWindow.document.getElementById('showPrivacyWindow_link').addEventListener('click',showPrivacyWindow_listener);
 
-    thenCreateSidebarContent(recommendationData, showJoyride, addFinalScriptsToDOM);
+    // set the christmas banner background image
+    if(displayChristmasBanner) {
+        var imgURL = chrome.extension.getURL("images/christmas_banner2.png");
+        gvIframe.contentWindow.document.getElementById("banner_container").style.backgroundImage = "url("+imgURL+")";
+    }
+
+    thenCreateSidebarContent(recommendationData, showJoyride, addFinalScriptsToDOM, searchTerm, authMessage);
 }
 
 function addFinalScriptsToDOM(showJoyride) {
@@ -391,7 +409,7 @@ function addFinalScriptsToDOM(showJoyride) {
  *
  * See background.getRecommendations() for the data structure of @recommendations
  */
-function createResultsSidebarContent(recommendations,showJoyride,callback) {
+function createResultsSidebarContent(recommendations,showJoyride,callback,searchTerm) {
 
     log(gvScriptName_CSMain + '.createResultsSidebarContent: Start', 'PROCS');
 
@@ -406,7 +424,6 @@ function createResultsSidebarContent(recommendations,showJoyride,callback) {
     var lastInProductGroup = false;
     var prevProductGroupId = "";
     var thisProductGroupId = "";
-
 
     if(!recommendations || recommendations.length === 0) {
         sidebarContentHTML += '<div class="origProductBlock">';
@@ -458,28 +475,37 @@ function createResultsSidebarContent(recommendations,showJoyride,callback) {
         }
         tweetContent += '%20-%20found%20with%20%40BaluHQ. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects';
 
-
-
         // build the rec itself into a variable that is then assigned to either the top set of responses or the bottom, the bottom
         // being the ones voted down by this user
         var recBlock = '';
+
+        // If we're in manual search, make it clear in the products links so we can log it
+
+        var searchTermHTML = '';
+        if(searchTerm){
+            searchTermHTML = 'data-fromsearch="true"';
+        }
 
         recBlock += '<div class="altProductsBlock">';
         recBlock += '  <div class="row collapse altProductBlock">';
         recBlock += '    <div class="small-5 columns">';
         recBlock += '      <div class="row text-center">';
-        recBlock += '        <a class="productLinks" target="_blank" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '">';
+        recBlock += '        <a class="productLinks" target="_blank" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
         recBlock += '          <img class="altImage" src="' + recommendations[i].imageURL + '" />';
         recBlock += '        </a>';
         recBlock += '      </div>';
         recBlock += '    </div>';
         recBlock += '    <div class="small-7 columns altText">';
         recBlock += '      <div class="altText-top">';
-        recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '">';
+        if(recommendations[i].baluFavourite){
+            recBlock += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
+        }
+        recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
         recBlock += '          <b>' + recommendations[i].brandName + '</b>';
         recBlock += '        </a>';
+        //recBlock += '        <a class="morePlus" id="showBrand_' + recommendations[i].brandId + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '">+</a>';
         recBlock += '        <br />';
-        recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '">';
+        recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
         recBlock += '          ' + recommendations[i].productName;
         recBlock += '        </a>';
         recBlock += '      </div>';
@@ -606,7 +632,7 @@ function waitForIframeThenExecute(counter,callback){
 /*
  * Create the content for the sign in / sign up sidebar
  */
-function createLogInSidebarContent() {
+function createLogInSidebarContent(a,b,c,d,authMessage) {
 
     log(gvScriptName_CSMain + '.createLogInSidebarContent: Start','PROCS');
 
@@ -616,6 +642,9 @@ function createLogInSidebarContent() {
 
     userForm += '<div class="row" style="margin-left: 10px">';
     userForm += '  <div class="small-8 columns end">';
+    if(typeof authMessage !== 'undefined'){
+        userForm += '<p style="color:red">' + authMessage + '</p>';
+    }
     userForm += '    <h4>Sign In to Balu</h4>';
     userForm += '  </div>';
     userForm += '</div>';
@@ -723,11 +752,13 @@ function showProductLinkWindow_listener() {
     var recommendationId = this.getAttribute('data-recid');
     var productName = this.getAttribute('data-productname');
     var pageConfirmationSearch = this.getAttribute('data-pageconfirmationsearch');
+    var isManualSearch = this.getAttribute('data-fromsearch');
 
     sendMessage('BG_main','pleaseShowProductLinkWindow',{productURL:             productURL,
                                                          recommendationId:       recommendationId,
                                                          pageConfirmationSearch: pageConfirmationSearch,
-                                                         recProductName:         productName});
+                                                         recProductName:         productName,
+                                                         isManualSearch:         isManualSearch});
 }
 
 function showWhyDoWeCareWindow_listener() {

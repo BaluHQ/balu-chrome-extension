@@ -41,6 +41,7 @@ function chromeMessageListener(msg, sender, callback){
             if (gvIsBaluOnOrOff === 'OFF') {
                 log(gvScriptName_BGMessaging + '.onMessage: gvIsBaluOnOrOff == ' + gvIsBaluOnOrOff + ', so doing nothing',' INFO');
             } else {
+                gvHaveWeAlreadyTriedToReconnectSinceLastTabRefresh = false;
                 waitForExtensionInitThenInitialiseTab(sender.tab,1);
             }
         break;
@@ -76,7 +77,7 @@ function chromeMessageListener(msg, sender, callback){
 
         case 'CS_main | pleaseShowProductLinkWindow':
             log(logMessage,'MESSG');
-            showProductLinkWindow(sender.tab.id,msg.data.productURL,msg.data.recommendationId,msg.data.recProductName,msg.data.pageConfirmationSearch);
+            showProductLinkWindow(sender.tab.id,msg.data.productURL,msg.data.recommendationId,msg.data.recProductName,msg.data.pageConfirmationSearch,msg.data.isManualSearch);
         break;
 
         case 'CS_main | pleaseVoteProductUp':

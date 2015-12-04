@@ -35,13 +35,13 @@ function DOMContentLoadedListener(){
  * I've been finding that the popup often displays blank until you click on it a second time because this JS script can't
  * call gvBackground.log. I think this is because getBackgroundPage hasn't returned yet, but it doesn't seem to have a callback
  * So this is a wait function to ensure we don't try to build the popup until we have the background page
- *
  */
 function waitForBackgroundPageThenBuildPopupHTML(counter){
 
     // Every 50 miliseconds, recheck to see whether we have retrieved data
 
-    if(gvBackground !== null){
+    // Some users are still getting a blank popup, so let's enforce at least a .25 second delay
+    if(gvBackground !== null && counter > 5){
         log(gvScriptName_BAMain + '.waitForBackgroundPageThenBuildPopupHTML: Ending wait: gvBackground is set','PROCS');
         buildPopupHTML();
     } else {
@@ -118,6 +118,8 @@ function buildPopupHTML(){
                 if(gvActiveTab.recommendationCount > 0) {
                     isThereAnyRecommendationsForThisTab = true;
                 }
+            } else {
+
             }
 
             // For all chrome:// and chrome-extension:// tabs, treat them as website off but in addition do not allow the search
@@ -131,7 +133,10 @@ function buildPopupHTML(){
              * If the sidebar is currently set to hidden but we have recommendations, then overide and display sidebar *
              ***********************************************************************************************************/
 
-             if((!isSidebarVisibleForAllTabs || !isSidebarVisibleForAllTabs_untilRestart || !isSidebarVisibleOnThisTab) && isThereAnyRecommendationsForThisTab) {
+            if((!isSidebarVisibleForAllTabs || !isSidebarVisibleForAllTabs_untilRestart || !isSidebarVisibleOnThisTab) && isThereAnyRecommendationsForThisTab) {
+
+                 // Get rid of the popup
+                 window.close();
 
                  // temporarily override our show/hide variables
                  gvBackground.gvIsBaluShowOrHide_tempOverride = 'SHOW';
@@ -139,6 +144,7 @@ function buildPopupHTML(){
 
                  // reactivate sidebar
                  gvBackground.refreshTab(gvActiveTab.tab.id);
+
              }
 
             /******************************************************
@@ -186,13 +192,15 @@ function buildPopupHTML(){
 
             // Is the active tab amazon? We only have a website object in gvTabs if it's an active website
             var amazonTipsString = '';
-            if(gvActiveTab.website) {
-                if(gvActiveTab.website.websiteURL === 'www.amazon.co.uk'){
-                    amazonTipsString += '<br />';
-                    amazonTipsString += '<br />';
-                    amazonTipsString += '<b><u>Tips for using Balu with Amazon</u></b><br />';
-                    amazonTipsString += 'Balu needs to know which Amazon department you\'re in, so try to choose a department when you search and you should get better results.<br /><br />';
-                    amazonTipsString += 'Also, Amazon doesn\'t always do a full refresh of the page when you search, which means this Beta version of Balu doesn\'t know to rerun its search. We\'re working to fix this, but in the meantime just hit the refresh button on your browser if you\'re not seeing the Balu results you expect.';
+
+            if(gvActiveTab) {
+                if(gvActiveTab.website) {
+                    if(gvActiveTab.website.websiteURL === 'www.amazon.co.uk'){
+                        amazonTipsString += '<br />';
+                        amazonTipsString += '<br />';
+                        amazonTipsString += '<b><u>Tips for using Balu with Amazon</u></b><br />';
+                        amazonTipsString += 'Amazon doesn\'t always do a full refresh of the page when you search, which means this Beta version of Balu doesn\'t know to refresh. We\'re working to fix this, but in the meantime just hit the refresh button on your browser if you\'re not seeing the Balu results you expect.';
+                    }
                 }
             }
 

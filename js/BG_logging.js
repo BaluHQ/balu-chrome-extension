@@ -13,10 +13,10 @@ var gvLogErrors = true;
 var gvLogProcs  = true;
 var gvLogSearch = true;
 var gvLogMessg  = true;
-var gvLogDebugs = false;
+var gvLogDebugs = true;
 var gvLogInfos  = true;
 var gvLogInits  = true;
-var gvLogLstnrs = false;
+var gvLogLstnrs = true;
 var gvLogTemps  = true;
 
 /*
@@ -277,6 +277,9 @@ function userLog(tabId, eventName, data) {
                 userLog_RecClickThrough.set('recommendation',{__type: "Pointer",className: "Recommendation",objectId: data.recommendationId});
                 userLog_RecClickThrough.set('hyperlinkURL',data.productURL);
                 userLog_RecClickThrough.set('recProductName',data.recProductName);
+                if(data.isManualSearch === 'true'){
+                    userLog_RecClickThrough.set('isManualSearch',true);
+                }
 
                 userLog_RecClickThrough.setACL(acl);
 

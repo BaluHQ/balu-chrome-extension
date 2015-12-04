@@ -39,14 +39,14 @@ function chromeMessageListener(msg, sender, callback) {
 
         case 'BG_main | pleaseDisplayRecommendations':
             log(logMessage,'MESSG');
-            createSidebar(createResultsSidebarContent,msg.data.recommendationData, msg.data.searchTerm, msg.data.showJoyride,true);
+            createSidebar(createResultsSidebarContent,msg.data.recommendationData, msg.data.searchTerm, msg.data.showJoyride, msg.data.displayChristmasBanner, true);
         break;
 
         // Logging in and out
 
         case 'BG_main | pleaseDisplayLogInSidebar':
             log(logMessage,'MESSG');
-            createSidebar(createLogInSidebarContent,null,null,false,false);
+            createSidebar(createLogInSidebarContent,null,null,false,false,true,msg.data.authMessage);
         break;
 
         // Sidebar visibility
