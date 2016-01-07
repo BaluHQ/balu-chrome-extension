@@ -33,8 +33,8 @@ function chromeMessageListener(msg, sender, callback) {
         case 'BG_main | pleaseSearchThePage':
             log(logMessage,'MESSG');
             // We handover to the search JS script to handle the search, and when done it will
-            // call our callback function: processSearchResults
-            searchPage_master(msg.data.searchData,msg.data.tabURL,msg.data.websiteURL);
+            // request pleaseRetrieveRecommendations from BG_main
+            searchPage_master(msg.data.tabURL,msg.data.websiteURL,document,msg.data.searchData);
         break;
 
         case 'BG_main | pleaseDisplayRecommendations':
@@ -71,6 +71,18 @@ function chromeMessageListener(msg, sender, callback) {
         case 'BG_main | pleaseShowUserBlockBrandSuccessWindow':
             log(logMessage,'MESSG');
             showUserBlockBrandSuccess(); // this is in userBlockBrand.js script
+        break;
+
+        // Misc
+
+        case 'BG_main | pleaseGetThePageDOM':
+            log(logMessage,'MESSG');
+            // Callback is the BTS_test.addFeedbackPage function
+            callback({
+                tabId:       msg.data.tabId,
+                pageHTML:  document.all[0].outerHTML,
+                feedback:  msg.data.feedback
+            });
         break;
 
         // Default

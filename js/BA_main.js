@@ -190,6 +190,17 @@ function buildPopupHTML(){
              * build the HTML for the bottom section of the popup window *
              *************************************************************/
 
+            var testFeedbackText = '';
+            testFeedbackText += '<div id="testFeedbackContainer" class="testFeedbackContainer">';
+            testFeedbackText += '  <div id="testFeedback" class="testFeedbackText"><b>Balu not getting its recommendations right? <a id="bts_letUsKnow">Let us know</a></b></div><br />';
+            testFeedbackText += '  <div id="testFeedbackLinks" class="testFeedbackText" hidden>';
+            testFeedbackText +=     '- <a id="bts_missingRecs">I\'m not seeing the recommendations I expect</a><br />';
+            testFeedbackText +=     '- <a id="bts_falsePositives">I\'m seeing products that don\'t make sense</a><br />';
+            testFeedbackText +=     '- <a id="bts_bangOn">Nope, looks all good to me!</a>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '  <div id="testFeedbackThanks" class="testFeedbackText" hidden>Thanks!</div>';
+            testFeedbackText += '</div>';
+
             // Is the active tab amazon? We only have a website object in gvTabs if it's an active website
             var amazonTipsString = '';
 
@@ -227,6 +238,7 @@ function buildPopupHTML(){
         //        lvHtmlString += '<br />';
             } else
             // If we have forced the sidebar on because of a temp hide, then close the popup - we've done what we need to do with it.
+            // To do: I don't like this. It means you can't get at the popup. How would I make it so that the second time you click the popup, it appears and stays?
             if((!isSidebarVisibleForAllTabs_untilRestart || !isSidebarVisibleOnThisTab) && isSidebarVisibleForAllTabs && isThereAnyRecommendationsForThisTab) {
                 window.close();
             } else
@@ -235,6 +247,7 @@ function buildPopupHTML(){
             if(!isSidebarVisibleForAllTabs && !isThereAnyRecommendationsForThisTab){
                 lvHtmlString += 'Balu is not set to automatically display the sidebar. You\'ll see a number on the Balu icon instead.<br /><br /><b>To change this setting, click the account icon above.</b>';
                 lvHtmlString += amazonTipsString;
+                lvHtmlString += testFeedbackText;
 
             } else
 
@@ -242,12 +255,13 @@ function buildPopupHTML(){
             if(isSidebarVisibleForAllTabs && !isThereAnyRecommendationsForThisTab) {
                 lvHtmlString += 'Balu does not have any ethical alternatives for products on this page. If you know of any, please tell us about them by <b>clicking on the plus icon above.</b>';
                 lvHtmlString += amazonTipsString;
+                lvHtmlString += testFeedbackText;
             } else
 
             // If sidebar is set to visible and we have recommendations (i.e. the sidebar is actually displayed without being forced!)
             if((isSidebarVisibleForAllTabs && isSidebarVisibleForAllTabs_untilRestart && isSidebarVisibleOnThisTab) && isThereAnyRecommendationsForThisTab) {
                 lvHtmlString += 'Ethical recommendations are being displayed in the Balu sidebar. If you are having issues seeing them contact us at <a href="mailto:support@getbalu.org" target="_blank">support@getbalu.org</a>.<br /><br />If you have own ethical recommendations to add to Balu, click on the plus icon above.';
-        //        lvHtmlString += '<br />';
+                lvHtmlString += testFeedbackText;
             }
 
             var lvContentDiv = document.getElementById("contentDiv");
@@ -258,6 +272,11 @@ function buildPopupHTML(){
                 document.getElementById("fieldManualSearch").addEventListener('keydown', manualSearch_keydown_listener);
                 document.getElementById("showOptionsPageWindow_icon").addEventListener('click',showOptionsPageWindow_listener);
                 document.getElementById("showUserSubmittedRecWindow_icon").addEventListener('click',showUserSubmittedRecWindow_listener);
+                document.getElementById("bts_letUsKnow").addEventListener('click',showBTSfeedbackLinks_listener);
+                document.getElementById("bts_missingRecs").addEventListener('click',btsMissingRecs_listener);
+                document.getElementById("bts_falsePositives").addEventListener('click',btsFalsePositives_listener);
+                document.getElementById("bts_bangOn").addEventListener('click',btsBangOn_listener);
+
             }
             if (!isWebsiteOn){
                 document.getElementById('showUserSubmittedWebsiteRecWindow_link').addEventListener('click',showUserSubmittedWebsiteRecWindow_listener);
@@ -306,6 +325,40 @@ function showUserSubmittedWebsiteRecWindow_listener(){
     log(gvScriptName_BAMain + '.showUserSubmittedWebsiteRecWindow_listener: Start','PROCS');
 
     gvBackground.showUserSubmittedWebsiteRecWindow(gvActiveTab.tab.id);
+}
+
+function showBTSfeedbackLinks_listener(){
+
+    log(gvScriptName_BAMain + '.showBTSfeedbackLinks_listener: Start','PROCS');
+    document.getElementById('testFeedbackLinks').style.display = 'block';
+    document.getElementById('testFeedback').style.display = 'none';
+
+}
+
+function btsMissingRecs_listener(){
+
+    log(gvScriptName_BAMain + '.btsMissingRecs_listener: Start','PROCS');
+    document.getElementById('testFeedbackLinks').style.display = 'none';
+    document.getElementById('testFeedbackThanks').style.display = 'block';
+    gvBackground._addFeedbackPage('MISSING',gvActiveTab.tab.id);
+}
+
+function btsFalsePositives_listener(){
+
+    log(gvScriptName_BAMain + '.btsFalsePositives_listener: Start','PROCS');
+    document.getElementById('testFeedbackLinks').style.display = 'none';
+    document.getElementById('testFeedbackThanks').style.display = 'block';
+    gvBackground._addFeedbackPage('FALSE +VE',gvActiveTab.tab.id);
+
+}
+
+function btsBangOn_listener(){
+
+    log(gvScriptName_BAMain + '.btsBangOn_listener: Start','PROCS');
+    document.getElementById('testFeedbackLinks').style.display = 'none';
+    document.getElementById('testFeedbackThanks').style.display = 'block';
+    gvBackground._addFeedbackPage('BANG ON',gvActiveTab.tab.id);
+
 }
 
 /**************************

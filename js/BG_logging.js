@@ -16,7 +16,7 @@ var gvLogMessg  = true;
 var gvLogDebugs = true;
 var gvLogInfos  = true;
 var gvLogInits  = true;
-var gvLogLstnrs = true;
+var gvLogLstnrs = false;
 var gvLogTemps  = true;
 
 /*
@@ -39,7 +39,7 @@ function userLog(tabId, eventName, data) {
 
     Parse.initialize(gvAppId, gvJSKey);
 
-    acl = new Parse.ACL();
+    var acl = new Parse.ACL();
     acl.setRoleReadAccess("Analytics",true);
 
     var tabURL;
@@ -454,6 +454,22 @@ function userLog(tabId, eventName, data) {
                 userLog_Joyride.setACL(acl);
 
                 userLog_Joyride.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+            break;
+
+            case  'BTS: PAGE_FEEDBACK':
+                UserLog_PageFeedback = Parse.Object.extend("UserLog_PageFeedback");
+                userLog_PageFeedback = new UserLog_PageFeedback();
+                userLog_PageFeedback.set('eventName',eventName);
+                userLog_PageFeedback.set('tabURL',tabURL_anonymised);
+                userLog_PageFeedback.set('feedback',data.feedback);
+                userLog_PageFeedback.set('user',user);
+
+                userLog_PageFeedback.setACL(acl);
+                userLog_PageFeedback.save({
                     success: function(){
                     },
                     error: parseErrorSave

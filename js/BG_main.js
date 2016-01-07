@@ -46,26 +46,37 @@ var gvBlockBrandParams;
 
     // Listeners //
 
-    // Listen for messages from the content scripts
-    chrome.runtime.onMessage.addListener(chromeMessageListener);
-    // Listen for tab closures
-    chrome.tabs.onRemoved.addListener(chromeRemovedTabListener);
-    // Listen for tab change
-    chrome.tabs.onActivated.addListener(chromeActivatedTabListener);
-    // Listen for the install event, to display a welcome page
-    chrome.runtime.onInstalled.addListener(chromeInstalledExtensionListener);
+
+    try {
+        // Listen for messages from the content scripts
+        chrome.runtime.onMessage.addListener(chromeMessageListener);
+        // Listen for tab closures
+        chrome.tabs.onRemoved.addListener(chromeRemovedTabListener);
+        // Listen for tab change
+        chrome.tabs.onActivated.addListener(chromeActivatedTabListener);
+        // Listen for the install event, to display a welcome page
+        chrome.runtime.onInstalled.addListener(chromeInstalledExtensionListener);
+    } catch(err){
+        log(gvScriptName_BGMain + '.initialise: Extension background script failed to create all necessary listeners. Error: ' + err.message,'ERROR');
+    }
+
     // Initalise extension //
 
-    getBaluSettings(function(settings){
+    try {
+        getBaluSettings(function(settings){
 
-        if(settings.isBaluOnOrOff === 'ON') {
-            turnBaluOn(); // Split this out so we can call it separately (e.g. from options screen when turning Balu on)
-        } else {
-            // Set the browser icon to the inactive version
-            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
+            if(settings.isBaluOnOrOff === 'ON') {
+                turnBaluOn(); // Split this out so we can call it separately (e.g. from options screen when turning Balu on)
+            } else {
+                // Set the browser icon to the inactive version
+                chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
 
-        }
-    });
+            }
+        });
+    } catch(err){
+        log(gvScriptName_BGMain + '.initialise: failed to initalise extension (getBaluSettings/turnBaluOn/etc). Error: ' + err.message,'ERROR');
+    }
+
 })();
 
 function turnBaluOn(){
@@ -435,7 +446,8 @@ function initialiseTab(tab){
                      isWebsiteOnOrOff:              isWebsiteOnOrOff,
                      website:                       website,
                      recommendationCount:           0,
-                     recommendationCount_manual:    0};
+                     recommendationCount_manual:    0,
+                     productGroupIdsArray:          []};
 
    var logText =  website ? 'website valid' : 'website not valid';
    log(gvScriptName_BGMain + '.initialiseTab: ' + gvTabs[tab.id].tab.id + ' saved; ' + logText + '; isWebsiteOnOrOff == ' + isWebsiteOnOrOff,' INFO');
@@ -506,11 +518,12 @@ function refreshTab(tabId,authMessage){
 /*
  *
  */
-function displayRecommendations(tabId,recommendationData,searchTerm,displayChristmasBanner){
+function displayRecommendations(tabId,recommendationData,searchTerm,displayChristmasBanner,productGroupIdsArray){
 
     log(gvScriptName_BGMain + '.displayRecommendations: start','PROCS');
 
     // Get the rec count and display it on the browser action
+
     if(searchTerm){
         gvTabs[tabId].recommendationCount_manual = recommendationData.length;
     } else {
@@ -525,6 +538,11 @@ function displayRecommendations(tabId,recommendationData,searchTerm,displayChris
     }
 
     chrome.browserAction.setBadgeText({text: badgeText,tabId: tabId});
+
+    // Save the productGroupIdsArray into the gvTab record
+    // We do this because the Feedback Page feature needs to know the IDs.
+    // Arguably, though, we should be storing the entire rec set on the tab - would probably help many features. Too late though; too much of a rewrite to make the most of it
+    gvTabs[tabId].productGroupIdsArray = productGroupIdsArray;
 
     // We only want to display the sidebar if:
     //   1) Balu is set to SHOW (gvIsBaluShowOrHide)
@@ -725,7 +743,7 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
                                 recommendationsArray = recommendationsArray.sort(function(a,b){
                                     return a.sortOrder.localeCompare(b.sortOrder);
                                 });
-                                callback_displayRecommendations(tabId,recommendationsArray,null,displayChristmasBanner);
+                                callback_displayRecommendations(tabId,recommendationsArray,null,displayChristmasBanner,productGroupIdsArray);
                                 userLog(tabId,'RECOMMENDATIONS_FOUND',{recommendationsArray: recommendationsArray});
                             } else {
                                 // Because there should be a recommendation for every productGroup of every searchProduct,
@@ -763,7 +781,7 @@ function manualSearch(tabId, searchTerm) {
     var displayChristmasBanner = false;
 
     if(searchTerm === ''){
-        displayRecommendations(tabId,recommendationsArray, searchTerm);
+        displayRecommendations(tabId,recommendationsArray, searchTerm,displayChristmasBanner,[]);
         userLog(tabId,'MANUAL_SEARCH_EMPTY_STRING');
     } else{
 
@@ -933,7 +951,7 @@ function manualSearch(tabId, searchTerm) {
                                 }
 
                                 // Note, the content_script will catch no-results and display the empty side bar
-                                displayRecommendations(tabId,recommendationsArray,searchTerm,displayChristmasBanner);
+                                displayRecommendations(tabId,recommendationsArray,searchTerm,displayChristmasBanner,productGroupIDsArray);
                                 userLog(tabId,'MANUAL_SEARCH_RECOMMENDATIONS_RETURNED',{searchTerm: searchTerm, recommendationsArray: recommendationsArray});
                             },
                             error: parseErrorFind
@@ -1502,6 +1520,140 @@ function reportTrackedTabError(tabId,trackedTab){
                                        recommendationId:       trackedTab.recommendationId,
                                        productName:            trackedTab.productName,
                                        pageConfirmationSearch: trackedTab.pageConfirmationSearch});
+}
+
+
+/*******************************************
+ * Balu Test System Functions              *
+ *    These pick up test feedback commands *
+ *    from the Browser Action & process    *
+ *******************************************/
+
+/*
+ * @userFeedback one of 'MISSING' | 'FALSE +VE' | 'BANG ON'
+ */
+function _addFeedbackPage(userFeedback,tabId) {
+    log(gvScriptName_BGMain + '._addFeedbackPage, userFeedback === ' + userFeedback,'PROCS');
+    userLog(tabId,'BTS: PAGE_FEEDBACK',{feedback: userFeedback});
+    sendMessage(tabId,'pleaseGetThePageDOM',{tabId:   tabId,
+                                             feedback: userFeedback},addFeedbackPage);
+}
+
+
+/*
+ * args = {tabId, pageHTML, feedback}
+ *
+ */
+
+function addFeedbackPage(args) {
+
+    log(gvScriptName_BGMain + '.addFeedbackPage: Start','PROCS');
+
+    Parse.initialize(gvAppId,gvJSKey);
+
+    var acl = new Parse.ACL();
+    acl.setRoleReadAccess("Balu Test System",true);
+    acl.setRoleWriteAccess("Balu Test System",true);
+
+    // Files cannot be read by test system, so store as four string parts
+
+    var pageHTML = args.pageHTML; //LZString.compress(args.pageHTML); // this would do compression, if we wanted it
+    var break01 = Math.ceil(pageHTML.length/8);
+    var break02 = break01 + break01;
+    var break03 = break02 + break01;
+    var break04 = break03 + break01;
+    var break05 = break04 + break01;
+    var break06 = break05 + break01;
+    var break07 = break06 + break01;
+
+    var bts_CE_FilePart_01 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_02 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_03 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_04 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_05 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_06 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_07 = new Parse.Object("BTS_CE_FilePart");
+    var bts_CE_FilePart_08 = new Parse.Object("BTS_CE_FilePart");
+
+    bts_CE_FilePart_01.set('filePart',pageHTML.substring(0,break01));
+    bts_CE_FilePart_02.set('filePart',pageHTML.substring(break01,break02));
+    bts_CE_FilePart_03.set('filePart',pageHTML.substring(break02,break03));
+    bts_CE_FilePart_04.set('filePart',pageHTML.substring(break03,break04));
+    bts_CE_FilePart_05.set('filePart',pageHTML.substring(break04,break05));
+    bts_CE_FilePart_06.set('filePart',pageHTML.substring(break05,break06));
+    bts_CE_FilePart_07.set('filePart',pageHTML.substring(break06,break07));
+    bts_CE_FilePart_08.set('filePart',pageHTML.substring(break07,pageHTML.length));
+
+    var filePart01;
+    var filePart02;
+    var filePart03;
+    var filePart04;
+    var filePart05;
+    var filePart06;
+    var filePart07;
+    var filePart08;
+
+    bts_CE_FilePart_01.setACL(acl);
+    bts_CE_FilePart_01.save().then(function(_filePart01){
+        filePart01 = _filePart01;
+        bts_CE_FilePart_02.setACL(acl);
+        return bts_CE_FilePart_02.save();
+    }).then(function(_filePart02){
+        filePart02 = _filePart02;
+        bts_CE_FilePart_03.setACL(acl);
+        return bts_CE_FilePart_03.save();
+    }).then(function(_filePart03){
+        filePart03 = _filePart03;
+        bts_CE_FilePart_04.setACL(acl);
+        return bts_CE_FilePart_04.save();
+    }).then(function(_filePart04){
+        filePart04 = _filePart04;
+        bts_CE_FilePart_05.setACL(acl);
+        return bts_CE_FilePart_05.save();
+    }).then(function(_filePart05){
+        filePart05 = _filePart05;
+        bts_CE_FilePart_06.setACL(acl);
+        return bts_CE_FilePart_06.save();
+    }).then(function(_filePart06){
+        filePart06 = _filePart06;
+        bts_CE_FilePart_07.setACL(acl);
+        return bts_CE_FilePart_07.save();
+    }).then(function(_filePart07){
+        filePart07 = _filePart07;
+        bts_CE_FilePart_08.setACL(acl);
+        return bts_CE_FilePart_08.save();
+    }).then(function(_filePart08){
+        filePart08 = _filePart08;
+        var bts_CE_FeedbackPage = new Parse.Object("BTS_CE_FeedbackPage");
+        bts_CE_FeedbackPage.set('url', gvTabs[args.tabId].tab.url);
+        bts_CE_FeedbackPage.set('websiteURL', gvTabs[args.tabId].website.websiteURL);
+
+        // bts_CE_FeedbackPage.set('pageHTML_string', pageHTML_compressed);
+
+        bts_CE_FeedbackPage.set('feedback', args.feedback);
+        bts_CE_FeedbackPage.set('user', Parse.User.current());
+        bts_CE_FeedbackPage.set('productGroupIds', gvTabs[args.tabId].productGroupIdsArray);
+
+        bts_CE_FeedbackPage.set('filePart01',filePart01);
+        bts_CE_FeedbackPage.set('filePart02',filePart02);
+        bts_CE_FeedbackPage.set('filePart03',filePart03);
+        bts_CE_FeedbackPage.set('filePart04',filePart04);
+        bts_CE_FeedbackPage.set('filePart05',filePart05);
+        bts_CE_FeedbackPage.set('filePart06',filePart06);
+        bts_CE_FeedbackPage.set('filePart07',filePart07);
+        bts_CE_FeedbackPage.set('filePart08',filePart08);
+
+        bts_CE_FeedbackPage.setACL(acl);
+
+        bts_CE_FeedbackPage.save({
+            success: function() {
+                log(gvScriptName_BGMain + '.addFeedbackPage: Saved Feedback Page to DB','PROCS');
+            },
+            error: parseErrorSave
+        });
+
+    });
+
 }
 
 /******************

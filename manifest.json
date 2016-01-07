@@ -9,6 +9,7 @@
 
     "background": {
         "scripts":     ["js/externalJS/parse-1.4.2.min.js",
+                        "js/externalJS/lz-string.js",
                         "js/BG_logging.js",
                         "js/BG_APIs.js",
                         "js/BG_main.js"],

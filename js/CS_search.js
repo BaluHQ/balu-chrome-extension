@@ -7,7 +7,7 @@
  */
 
 var gvScriptName_CSSearch = 'CS_search';
-
+var gvIsTestExecution = false;
 /*
  *
  */
@@ -32,7 +32,16 @@ function processSearchResults(searchResults,foundSomething){
     }
 
     if (foundSomething) {
-        sendMessage('BG_main','pleaseRetrieveRecommendations',{searchResults: searchResults});
+        if(!gvIsTestExecution) {
+            sendMessage('BG_main','pleaseRetrieveRecommendations',{searchResults: searchResults});
+        }
+        else {
+            gvBTSconfig.callback(searchResults,gvBTSconfig);
+        }
+    } else {
+        if(gvIsTestExecution) {
+            gvBTSconfig.callback(searchResults,gvBTSconfig);
+        }
     }
 }
 
@@ -53,15 +62,21 @@ function processSearchResults(searchResults,foundSomething){
  * and Balu will not get this far for an inactive website.
  *
  */
-function searchPage_master(searchData,tabURL,websiteURL){
+function searchPage_master(tabURL,websiteURL,pvDOM,searchData,bts_config){
 
     log(gvScriptName_CSSearch + '.searchPage_master: Start','PROCS');
 
+    // To avoid too much disruption to extension code, use global vars to store objects passed through
+    // from Balu Test System (BTS). We pick these up again right at the end, in processSearchResults
+    if(typeof bts_config !== 'undefined') {
+        gvIsTestExecution = bts_config.isTestExecution;
+        gvBTSconfig = bts_config;
+    }
     // Call getElements, which switches on the websiteURL and pulls the
     // correct DOM elements from the page based on the website we're looking at.
     // Then call, in sequence, the sexSearch, then the productSearch, then the callback
     // to the contentScript (which is receiveSearchResults)
-    getElements(tabURL,websiteURL,sexSearch,productSearch,searchData,1);
+    getElements(tabURL,websiteURL,pvDOM,searchData,sexSearch,productSearch,1);
 
 }
 
@@ -69,7 +84,7 @@ function searchPage_master(searchData,tabURL,websiteURL){
 /*
  *
  */
-function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,searchData,attemptCount) {
+function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,productSearchCallback,attemptCount) {
 
     log(gvScriptName_CSSearch + '.getElements: Start >>> attemptCount == ' + attemptCount,'PROCS');
 
@@ -115,8 +130,8 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
     // General order for each website:
     //  - lvDepartments: usually from lvBreadcrumbs at the top (the department you're currently in) and categories on the LHS (refinement options)
     //  - Breadcrumbs:
-    //  - Results page: can sometimes have different DOMs for list / grid views
-    //  - Product page: if multi-item DOM elements weren't found, then check assume it's a product page
+    //  - Results page: can sometimes have different pvDOMs for list / grid views
+    //  - Product page: if multi-item pvDOM elements weren't found, then check assume it's a product page
 
     switch(websiteURL){
 
@@ -139,7 +154,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             // The navBar is the leading department. If we're in a department, this will not be
             // "Amazon.co.uk"
-            var amazon_dep_navBar_parent = document.getElementById('nav-subnav');
+            var amazon_dep_navBar_parent = pvDOM.getElementById('nav-subnav');
             var amazon_dep_navBar_text = '';
 
             if(amazon_dep_navBar_parent !== null){
@@ -157,7 +172,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* categories */
 
-            var amazon_dep_cat_parent = document.getElementById('refinements');
+            var amazon_dep_cat_parent = pvDOM.getElementById('refinements');
             // It's the first UL in this div, then for each LI the text we want is in the <a> element at the start of the LI
             // or, sometimes, in the <strong> element
             if(amazon_dep_cat_parent !== null) {
@@ -188,9 +203,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
              * Breadcrumbs *
              ***************/
 
-            var amazon_bc = document.getElementById('s-result-info-bar-content');
+            var amazon_bc = pvDOM.getElementById('s-result-info-bar-content');
             if(amazon_bc === null) {
-                amazon_bc = document.getElementById('wayfinding-breadcrumbs_container');
+                amazon_bc = pvDOM.getElementById('wayfinding-breadcrumbs_container');
             }
             if(amazon_bc !== null) {
                 lvBreadcrumbs = amazon_bc.textContent.toLowerCase();
@@ -219,7 +234,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             var amazon_first_result_element_to_watch;
             var test2;
 
-            amazon_pn_results_parent_resultsCol = document.getElementById('resultsCol');
+            amazon_pn_results_parent_resultsCol = pvDOM.getElementById('resultsCol');
 
             if(amazon_pn_results_parent_resultsCol !== null) {
                 test2 = amazon_pn_results_parent_resultsCol;
@@ -235,7 +250,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                     lvFoundResults = true;
                 }
             } else {
-                amazon_pn_results_parent_searchResults = document.getElementById('searchResults');
+                amazon_pn_results_parent_searchResults = pvDOM.getElementById('searchResults');
                 if(amazon_pn_results_parent_searchResults !== null) {
                     var amazon_pn_results_h3s = amazon_pn_results_parent_searchResults.querySelectorAll('h3.newaps');
                     for (i = 0; i < amazon_pn_results_h3s.length; i++) {
@@ -249,7 +264,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                         lvFoundResults = true;
                     }
                 } else {
-                    amazon_pn_results_parent_search_results = document.getElementById('search-results');
+                    amazon_pn_results_parent_search_results = pvDOM.getElementById('search-results');
                     if(amazon_pn_results_parent_search_results !== null) {
                         var amazon_pn_results_links2 = amazon_pn_results_parent_search_results.querySelectorAll('a.s-access-detail-page');
                         for (i = 0; i < amazon_pn_results_links2.length; i++) {
@@ -288,7 +303,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
                 // #1
 
-                amazon_pn_prod_titleSection = document.getElementById('titleSection');
+                amazon_pn_prod_titleSection = pvDOM.getElementById('titleSection');
                 if(amazon_pn_prod_titleSection !== null) {
                     lvProductNames.push(amazon_pn_prod_titleSection.textContent.toLowerCase().trim());
                     logMessage_extra += '  Product Page: found in id="titleSection"' + '\n';
@@ -299,7 +314,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                 // #2
 
                 if(!lvFoundProduct){
-                    amazon_pn_prod_productTitle = document.getElementById('productTitle');
+                    amazon_pn_prod_productTitle = pvDOM.getElementById('productTitle');
                     if(amazon_pn_prod_productTitle !== null) {
                         lvProductNames.push(amazon_pn_prod_productTitle.textContent.toLowerCase().trim());
                         logMessage_extra += '  Product Page: found in id="productTitle"' + '\n';
@@ -310,7 +325,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                 // #3
 
                 if(!lvFoundProduct){
-                    amazon_pn_prod_btAsinTitle = document.getElementById('btAsinTitle');
+                    amazon_pn_prod_btAsinTitle = pvDOM.getElementById('btAsinTitle');
                     if(amazon_pn_prod_btAsinTitle !== null) {
                         lvProductNames.push(amazon_pn_prod_btAsinTitle.textContent.toLowerCase().trim());
                         logMessage_extra += '  Product Page: found in id="btAsinTitle"' + '\n';
@@ -348,9 +363,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var ebay_dep_bc = document.getElementById('vi-VR-brumb-lnkLst');
+            var ebay_dep_bc = pvDOM.getElementById('vi-VR-brumb-lnkLst');
             if(ebay_dep_bc === null) {
-                ebay_dep_bc2 = document.getElementsByClassName('bc-cat');
+                ebay_dep_bc2 = pvDOM.getElementsByClassName('bc-cat');
                 if(ebay_dep_bc2.length > 0){
                     ebay_dep_bc = ebay_dep_bc2[0];
                 }
@@ -359,7 +374,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             if(ebay_dep_bc !== null){
                 var ebay_dep_bc_listItems = ebay_dep_bc.getElementsByTagName('li');
                 for(i = 0; i < ebay_dep_bc_listItems.length; i++) {
-                    lvDepartments.push(ebay_dep_bc_listItems[i].textContent.toLowerCase().trim());
+                    lvDepartments.push(ebay_dep_bc_listItems[i].textContent.toLowerCase().replace('>','').trim());
                 }
                 if(ebay_dep_bc_listItems.length > 0){
                     logMessage_extra += '  Departments: found in id="vi-VR-brumb-lnkLst" or class="bc-cat"' + '\n';
@@ -373,9 +388,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             // but the last one is often "see all categories"
             // There's also a case where it's a ptCat div
 
-            var ebay_dep_cat = document.getElementsByClassName('cat-t');
+            var ebay_dep_cat = pvDOM.getElementsByClassName('cat-t');
             if(ebay_dep_cat.length === 0) {
-                ebay_dep_cat = document.getElementsByClassName('ptCat');
+                ebay_dep_cat = pvDOM.getElementsByClassName('ptCat');
             }
             var ebay_dep_cat_links;
             if(ebay_dep_cat.length > 0) {
@@ -408,7 +423,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                 logMessage_extra += '  Breadcrumbs: found in id="vi-VR-brumb-lnkLst"' + '\n';
                 lvFoundBreadcrumbs = true;
             } else {
-                ebay_bc = document.getElementById('RelatedSearchesContainer');
+                ebay_bc = pvDOM.getElementById('RelatedSearchesContainer');
                 if(ebay_bc !== null) {
                     lvBreadcrumbs = ebay_bc.textContent.toLowerCase().trim();
                     logMessage_extra += '  Breadcrumbs: found in id="vi-VR-brumb-lnkLst"' + '\n';
@@ -428,7 +443,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             // Two views: GalleryViewInner, and ListViewInner
 
-            var ebay_pn_results_gallery_parent = document.getElementById('GalleryViewInner');
+            var ebay_pn_results_gallery_parent = pvDOM.getElementById('GalleryViewInner');
             if(ebay_pn_results_gallery_parent !== null) {
                 ebay_pn_results_gallery_h3s = ebay_pn_results_gallery_parent.querySelectorAll('div.gvtitle > h3');
                 for(i = 0; i < ebay_pn_results_gallery_h3s.length; i++){
@@ -439,7 +454,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                     lvFoundResults = true;
                 }
             } else {
-                var ebay_pn_results_list_parent = document.getElementById('ListViewInner');
+                var ebay_pn_results_list_parent = pvDOM.getElementById('ListViewInner');
                 if(ebay_pn_results_list_parent !== null) {
                     ebay_pn_results_list_h3s = ebay_pn_results_list_parent.querySelectorAll('h3.lvtitle');
                     for(i = 0; i < ebay_pn_results_list_h3s.length; i++){
@@ -462,7 +477,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             // the breadcrumbs (I think) and only one page display format
 
             if(!lvFoundResults){
-                var ebay_pn_prod = document.querySelector('h1#itemTitle');
+                var ebay_pn_prod = pvDOM.querySelector('h1#itemTitle');
 
                 if(ebay_pn_prod !== null) {
                     lvProductNames.push(ebay_pn_prod.textContent.toLowerCase().trim());
@@ -501,7 +516,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var argos_dep_bc = document.getElementById('breadcrumb');
+            var argos_dep_bc = pvDOM.getElementById('breadcrumb');
 
             if(argos_dep_bc !== null){
                 var argos_dep_bc_listItems = argos_dep_bc.getElementsByTagName('li');
@@ -521,7 +536,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Categories */
 
-            var argos_dep_cat = document.getElementById('categoryList');
+            var argos_dep_cat = pvDOM.getElementById('categoryList');
 
             if(argos_dep_cat !== null) {
                 var argos_dep_cat_listItems = argos_dep_cat.getElementsByTagName('li');
@@ -563,7 +578,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results page */
 
-            var argos_pn_results = document.getElementById('products');
+            var argos_pn_results = pvDOM.getElementById('products');
 
             if(argos_pn_results !== null) {
                 var argos_pn_results_dts = argos_pn_results.querySelectorAll('dt.title');
@@ -583,7 +598,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             /* Product Page */
 
             if(!lvFoundResults){
-                var argos_pn_prod_pdpProduct = document.getElementById('pdpProduct');
+                var argos_pn_prod_pdpProduct = pvDOM.getElementById('pdpProduct');
 
                 if(argos_pn_prod_pdpProduct !== null) {
                     lvProductNames.push(argos_pn_prod_pdpProduct.textContent.toLowerCase().trim());
@@ -621,9 +636,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
              * Breadcrumbs *
              ***************/
 
-            var asos_bc = document.getElementsByClassName('breadcrumb');
+            var asos_bc = pvDOM.getElementsByClassName('breadcrumb');
             if(asos_bc.length === 0){
-                asos_bc = document.getElementsByClassName('breadcrumbs');
+                asos_bc = pvDOM.getElementsByClassName('breadcrumbs');
             }
 
             if(asos_bc.length > 0){
@@ -646,7 +661,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             // "category pages" too (google ASOS T-shirt and click the top (unsponsored) sponsored link)
             // These category pages have a different container div class
 
-            var asos_pn_results_productList = document.getElementsByClassName('product-list');
+            var asos_pn_results_productList = pvDOM.getElementsByClassName('product-list');
 
             if(asos_pn_results_productList.length > 0) {
                 var asos_pn_results_spans = asos_pn_results_productList[0].getElementsByTagName('span');
@@ -662,7 +677,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             }
 
             if(!lvFoundResults) {
-                var asos_pn_results_categoryItems = document.getElementsByClassName('category-items');
+                var asos_pn_results_categoryItems = pvDOM.getElementsByClassName('category-items');
                 if(asos_pn_results_categoryItems.length > 0){
                     var asos_pn_results_links = asos_pn_results_categoryItems[0].querySelectorAll('a.desc');
                     for (i = 0; i < asos_pn_results_links.length; i++) {
@@ -681,7 +696,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             /* Product page */
 
             if(!lvFoundResults) {
-                var asos_pn_prod_lblProductTitle = document.getElementById('ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle');
+                var asos_pn_prod_lblProductTitle = pvDOM.getElementById('ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle');
 
                 if(asos_pn_prod_lblProductTitle !== null){
                    lvProductNames.push(asos_pn_prod_lblProductTitle.textContent.toLowerCase().trim());
@@ -715,7 +730,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var debenhams_dep_bc = document.getElementsByClassName('breadcrumb_links');
+            var debenhams_dep_bc = pvDOM.getElementsByClassName('breadcrumb_links');
             if(debenhams_dep_bc.length > 0){
                 var debenhams_dep_bc_spans = debenhams_dep_bc[0].getElementsByTagName('span');
                 for(i = 0; i < debenhams_dep_bc_spans.length; i++) {
@@ -732,7 +747,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Categories */
 
-            var debenhams_dep_cat = document.getElementById('categoryFacetDiv_categories');
+            var debenhams_dep_cat = pvDOM.getElementById('categoryFacetDiv_categories');
             if(debenhams_dep_cat !== null){
                 var debenhams_dep_cat_list = debenhams_dep_cat.getElementsByTagName('li');
                 for(i = 0; i < debenhams_dep_cat_list.length; i++) {
@@ -771,7 +786,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var debenhams_pn_results = document.getElementById('body_content_ProductSelectionPage');
+            var debenhams_pn_results = pvDOM.getElementById('body_content_ProductSelectionPage');
 
             if(debenhams_pn_results !== null) {
                 var debenhams_pn_results_description = debenhams_pn_results.getElementsByClassName('description');
@@ -791,7 +806,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults) {
 
-                var debenhams_pn_prod = document.getElementsByClassName('product-top-info');
+                var debenhams_pn_prod = pvDOM.getElementsByClassName('product-top-info');
 
                 if(debenhams_pn_prod.length > 0){
                     lvProductNames.push(debenhams_pn_prod[0].textContent.toLowerCase().trim());
@@ -829,7 +844,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var very_dep_bc = document.getElementById('breadcrumb');
+            var very_dep_bc = pvDOM.getElementById('breadcrumb');
 
             if(very_dep_bc !== null){
                 var very_dep_bc_listItems = very_dep_bc.getElementsByTagName('li');
@@ -853,7 +868,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Categories */
 
-            var very_dep_cat_navigation = document.getElementById('navigation');
+            var very_dep_cat_navigation = pvDOM.getElementById('navigation');
             if(very_dep_cat_navigation !== null){
                 very_dep_cat_navigation_firstUL = very_dep_cat_navigation.querySelector('ul');
                 if(very_dep_cat_navigation_firstUL !== null) {
@@ -899,7 +914,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var very_pn_results_products = document.getElementById('products');
+            var very_pn_results_products = pvDOM.getElementById('products');
 
             if(very_pn_results_products !== null) {
                 var very_pn_results_h3s = very_pn_results_products.getElementsByTagName('h3');
@@ -929,7 +944,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                     departmentOverride = true;
                 }
 
-                var very_pn_results_productHeadings = document.getElementsByClassName('productHeading');
+                var very_pn_results_productHeadings = pvDOM.getElementsByClassName('productHeading');
 
                 if(very_pn_results_productHeadings.length > 0){
                     lvProductNames.push(very_pn_results_productHeadings[0].textContent.toLowerCase().trim());
@@ -973,7 +988,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var next_dep_bc = document.getElementsByClassName('BreadcrumbNavigation');
+            var next_dep_bc = pvDOM.getElementsByClassName('BreadcrumbNavigation');
             if(next_dep_bc.length > 0){
                 var next_dep_bc_listItems = next_dep_bc[0].getElementsByTagName('li');
                 for(i = 0; i < next_dep_bc_listItems.length; i++) {
@@ -1007,7 +1022,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Menu */
 
-            var next_dep_menu = document.querySelector('li.currentDepartment');
+            var next_dep_menu = pvDOM.querySelector('li.currentDepartment');
             if(next_dep_menu !== null){
                 lvDepartments.push(next_dep_menu.getAttribute('data-department').toLowerCase().trim());
                 lvFoundDepartments = true;
@@ -1037,8 +1052,8 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             // Men/women filter checkboxes //
 
-            var next_gender1 = document.getElementById('gender1');
-            var next_gender2 = document.getElementById('gender2');
+            var next_gender1 = pvDOM.getElementById('gender1');
+            var next_gender2 = pvDOM.getElementById('gender2');
             if(next_gender1 !== null && next_gender2 !== null) {
                 if(next_gender1.value === 'gender:women' && next_gender1.checked) {
                     lvWomenFilter = 'WOMEN';
@@ -1072,7 +1087,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var next_pn_results = document.getElementsByClassName('Results');
+            var next_pn_results = pvDOM.getElementsByClassName('Results');
 
             if(next_pn_results.length > 0) {
                 var next_pn_results_h2s = next_pn_results[0].getElementsByTagName('h2');
@@ -1108,7 +1123,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults){
 
-                var next_pn_prod_styleCopys = document.getElementsByClassName('StyleCopy');
+                var next_pn_prod_styleCopys = pvDOM.getElementsByClassName('StyleCopy');
 
                 if(next_pn_prod_styleCopys.length > 0){
                     for(i = 0; i < next_pn_prod_styleCopys.length; i++){
@@ -1171,7 +1186,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
              * Breadcrumbs *
              ***************/
 
-            var newlook_bc = document.getElementsByClassName('breadcrumb');
+            var newlook_bc = pvDOM.getElementsByClassName('breadcrumb');
             if(newlook_bc.length > 0){
                 lvBreadcrumbs = newlook_bc[0].textContent.toLowerCase().trim();
                 logMessage_extra += '  Breadcrumbs: found in class="breadcrumb"' + '\n';
@@ -1186,7 +1201,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
              * Gender *
              **********/
 
-            var newlook_gender_bc = document.getElementsByClassName('breadcrumbRemoveText');
+            var newlook_gender_bc = pvDOM.getElementsByClassName('breadcrumbRemoveText');
             if(newlook_gender_bc.length > 0) {
                 for(i = 0; i < newlook_gender_bc.length; i++){
                     if(newlook_gender_bc[i].innerHTML === 'Mens'){
@@ -1212,7 +1227,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var newlook_pn_results = document.getElementsByClassName('prod_overview');
+            var newlook_pn_results = pvDOM.getElementsByClassName('prod_overview');
 
             if(newlook_pn_results.length > 0) {
                 for(i = 0; i < newlook_pn_results.length; i++){
@@ -1235,7 +1250,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults){
 
-                newlook_pn_prod = document.getElementsByClassName('title_container');
+                newlook_pn_prod = pvDOM.getElementsByClassName('title_container');
                 if(newlook_pn_prod.length > 0){
                     lvProductNames.push(newlook_pn_prod[0].textContent.toLowerCase().trim());
                     logMessage_extra += '  Product Page: found in class="title_container"' + '\n';
@@ -1298,8 +1313,8 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             // has a class of category_products
 
             var topshop_pn_results = null;
-            if($('#wrapper_page_content').hasClass('category_products')){
-                topshop_pn_results = document.getElementById('wrapper_page_content');
+            if($(pvDOM).find('#wrapper_page_content').hasClass('category_products')){
+                topshop_pn_results = pvDOM.getElementById('wrapper_page_content');
             }
 
             if(topshop_pn_results !== null){
@@ -1320,7 +1335,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             /* Product page */
 
             if(!lvFoundResults){
-                var topshop_pn_prod = document.getElementsByClassName('product_column_2');
+                var topshop_pn_prod = pvDOM.getElementsByClassName('product_column_2');
                 if(topshop_pn_prod.length > 0){
                     logMessage_extra += '  Product Page: found in class="product_column_2"' + '\n';
                     var topshop_pn_prod_1hs = topshop_pn_prod[0].getElementsByTagName('h1');
@@ -1372,7 +1387,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var tesco_pn_results = document.getElementsByClassName('allProducts');
+            var tesco_pn_results = pvDOM.getElementsByClassName('allProducts');
 
             if(tesco_pn_results.length > 0) {
 
@@ -1396,7 +1411,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults){
 
-                var tesco_pn_prod = document.getElementsByClassName('productDetailsContainer');
+                var tesco_pn_prod = pvDOM.getElementsByClassName('productDetailsContainer');
 
                 if(tesco_pn_prod.length > 0) {
                     var tesco_pn_prod_spans = tesco_pn_prod[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
@@ -1454,7 +1469,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var sainsbury_pn_results = document.getElementById('productLister');
+            var sainsbury_pn_results = pvDOM.getElementById('productLister');
 
             if(sainsbury_pn_results !== null) {
                 var sainsbury_pn_results_h3s = sainsbury_pn_results.getElementsByTagName('h3');
@@ -1475,7 +1490,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults){
 
-                var sainsbury_pn_prod = document.getElementsByClassName('productTitleDescriptionContainer');
+                var sainsbury_pn_prod = pvDOM.getElementsByClassName('productTitleDescriptionContainer');
 
                 if(sainsbury_pn_prod.length > 0) {
                     var sainsbury_pn_prod_h1s = sainsbury_pn_prod[0].getElementsByTagName('h1');
@@ -1515,7 +1530,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var waitrose_dep_bc = document.querySelector('.breadcrumbs');
+            var waitrose_dep_bc = pvDOM.querySelector('.breadcrumbs');
             if(waitrose_dep_bc !== null){
                 var waitrose_dep_bc_listItems = waitrose_dep_bc.getElementsByTagName('li');
                 for(i = 0; i < waitrose_dep_bc_listItems.length; i++) {
@@ -1540,7 +1555,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             // After the last of these top level <ul> elements we get another div, which contains its own
             // <ul>s. We don't want these.
 
-            var waitrose_dep_cat = document.querySelector('.refinement');
+            var waitrose_dep_cat = pvDOM.querySelector('.refinement');
             if(waitrose_dep_cat !== null){
 
                 // First get the ul's that are directly inside the nav
@@ -1598,7 +1613,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var waitrose_pn_results = document.getElementsByClassName('products-grid');
+            var waitrose_pn_results = pvDOM.getElementsByClassName('products-grid');
 
             if(waitrose_pn_results.length > 0) {
                 var waitrose_pn_results_container = waitrose_pn_results[0].querySelectorAll('div.m-product-details-container > a');
@@ -1655,7 +1670,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Categories */
 
-            noth_dep_cat = document.getElementById('categories_filterbox');
+            noth_dep_cat = pvDOM.getElementById('categories_filterbox');
             if(noth_dep_cat !== null){
                 noth_dep_cat_selectedLink = noth_dep_cat.querySelector('a.selected.top_level_category');
                 if(noth_dep_cat_selectedLink !== null){
@@ -1666,7 +1681,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Breadcrumbs */
 
-            var noths_dep_bc = document.getElementById('breadcrumb');
+            var noths_dep_bc = pvDOM.getElementById('breadcrumb');
             if(noths_dep_bc !== null){
 
                 // We need to take all the links, and the non-link (span) at the end
@@ -1715,9 +1730,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var noths_pn_results = document.getElementsByClassName('categories_content_container');
+            var noths_pn_results = pvDOM.getElementsByClassName('categories_content_container');
             if(noths_pn_results.length === 0){
-                noths_pn_results = document.getElementsByClassName('featured_content');
+                noths_pn_results = pvDOM.getElementsByClassName('featured_content');
             }
             if(noths_pn_results.length > 0) {
                 var noths_pn_results_productDetails = noths_pn_results[0].getElementsByClassName('product_details');
@@ -1738,7 +1753,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults) {
 
-                var noths_pn_prod = document.querySelectorAll('h1.product_title');
+                var noths_pn_prod = pvDOM.querySelectorAll('h1.product_title');
 
                 if(noths_pn_prod.length > 0) {
                     lvProductNames.push(noths_pn_prod[0].textContent.toLowerCase().trim());
@@ -1787,7 +1802,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* breadcrumbs */
 
-            var johnlewis_dep_bc = document.getElementById('breadcrumbs');
+            var johnlewis_dep_bc = pvDOM.getElementById('breadcrumbs');
             if(johnlewis_dep_bc !== null){
                 johnlewis_dep_bc_listItems = johnlewis_dep_bc.getElementsByTagName('li');
                 for(i = 0; i < johnlewis_dep_bc_listItems.length; i++){
@@ -1799,7 +1814,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
                 }
             }
 
-            var johnlewis_dep_cat = document.getElementById('facet-department');
+            var johnlewis_dep_cat = pvDOM.getElementById('facet-department');
             if(johnlewis_dep_cat !== null){
                 johnlewis_dep_cat_listItems = johnlewis_dep_cat.getElementsByTagName('li');
                 for(i = 0; i < johnlewis_dep_cat_listItems.length && i < 5; i++){
@@ -1839,7 +1854,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var johnlewis_pn_results = document.getElementById('product-grid');
+            var johnlewis_pn_results = pvDOM.getElementById('product-grid');
 
             if(johnlewis_pn_results !== null) {
                 var johnlewis_pn_results_links = johnlewis_pn_results.querySelectorAll('article > a');
@@ -1859,7 +1874,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults){
 
-                var johnlewis_pn_prod = document.getElementById('prod-title');
+                var johnlewis_pn_prod = pvDOM.getElementById('prod-title');
 
                 if(johnlewis_pn_prod !== null) {
                     lvProductNames.push(johnlewis_pn_prod.textContent.toLowerCase().trim());
@@ -1911,7 +1926,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             /* Results Page */
 
-            var paperchase_pn_results = document.getElementsByClassName('category-products');
+            var paperchase_pn_results = pvDOM.getElementsByClassName('category-products');
 
             if(paperchase_pn_results.length > 0) {
                 var paperchase_pn_results_h2s = paperchase_pn_results[0].querySelectorAll('h2.product-name');
@@ -1932,7 +1947,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
 
             if(!lvFoundResults){
 
-                var paperchase_pn_prod = document.querySelectorAll('div.product-name');
+                var paperchase_pn_prod = pvDOM.querySelectorAll('div.product-name');
 
                 if(paperchase_pn_prod.length > 0) {
                     lvProductNames.push(paperchase_pn_prod[0].textContent.toLowerCase().trim());
@@ -2004,9 +2019,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
      *********************************************************************/
 
     if(lvFoundEverything){
-        logMessage += 'SUCCESS: Found necessary DOM elements to run search.' + '\n';
+        logMessage += 'SUCCESS: Found necessary pvDOM elements to run search.' + '\n';
     } else {
-        logMessage += 'FAILURE: Did not find necessary DOM elements to run search.' + '\n';
+        logMessage += 'FAILURE: Did not find necessary pvDOM elements to run search.' + '\n';
         logMessage += '    Failed to find: ' + logMessage_elementsNotFound + '\n';
     }
 
@@ -2061,7 +2076,7 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
         logMessage += '\n' + 'Attempt count (' + attemptCount + ') < 10, waiting ' + delayMS + 'ms and retrying' + '\n';
         log(gvScriptName_CSSearch + logMessage,'SERCH');
         logMessage = '';
-        window.setTimeout(function(){attemptCount++; return getElements(tabURL,websiteURL,sexSearch,productSearch,searchData,attemptCount);},delayMS);
+        window.setTimeout(function(){attemptCount++; return getElements(tabURL,websiteURL,pvDOM,searchData,sexSearch,productSearch,attemptCount);},delayMS);
     } else if (lvFoundEverything) {
 
         logMessage += '** Search Page Elements **' + '\n\n';
@@ -2080,9 +2095,9 @@ function getElements(tabURL,websiteURL,sexSearchCallback,productSearchCallback,s
             productSearchCallback(pageElements,websiteURL,searchData,logMessage, departmentOverride);
         }
     } else { // if we havne't found every page element we need
-        log(gvScriptName_CSSearch + '.getElements: Failed to pull expected elements from the DOM on websiteURL == ' + websiteURL,'ERROR');
+        log(gvScriptName_CSSearch + '.getElements: Failed to pull expected elements from the pvDOM on websiteURL == ' + websiteURL,'ERROR');
         // No need to call our search functions, just return no search results
-        logMessage += '\n' + 'FAILED to pull any productNames from DOM elements, skipping search and returning no results' + '\n';
+        logMessage += '\n' + 'FAILED to pull any productNames from pvDOM elements, skipping search and returning no results' + '\n';
         processSearchResults(null,null,false);
     }
 }
@@ -2546,93 +2561,3 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
     // This is usually going to be content_script.receiveSearchResults
     processSearchResults(searchResults,foundSomething);
 }
-
-
-
-
-/*
-        case 'groceries.asda.com':
-
-            runSexSearch = false;
-            var asdaSpans;
-
-            // Two cases, multi-items or single item.
-            // Check multi-items first and if no elements found, check single item
-
-            var listings = document.getElementsByClassName('listings');
-            // The allProducts class is the grid containing all search results. It's a div. Inside it are:
-               // div: listings
-               //   div: listing
-               //     div: container
-               //       div: slider
-               //         div: product
-               //           div: product-contnet
-               //             span: title
-               //               a:           (Title contains product name)
-               //                 span:                        <-- This is our product name!
-
-            if(listings[0]) {
-
-                // First things first, Asda doesn't refresh the page so we need to keep an eye on the listsings DOM from now on
-
-                if(!observeDOM) { // only if we haven't already done this . To do: this won't work if we are opening multiple tabs? :(
-
-                        var observeDOM = (function(){
-                        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
-                            eventListenerSupported = window.addEventListener;
-
-                        return function(obj, callback){
-                            if( MutationObserver ){
-                                // define a new observer
-                                var obs = new MutationObserver(function(mutations, observer){
-                                    if( mutations[0].addedNodes.length || mutations[0].removedNodes.length )
-                                        callback();
-                                });
-                                // have the observer observe foo for changes in children
-                                obs.observe( obj, { childList:true, subtree:true });
-                            }
-                            else if( eventListenerSupported ){
-                                obj.addEventListener('DOMNodeInserted', callback, false);
-                                obj.addEventListener('DOMNodeRemoved', callback, false);
-                            }
-                        };
-                    })();
-
-                    // Observe a specific DOM element:
-                    observeDOM( document.getElementById('listings') ,function(){
-
-                        console.log(gvScriptName_CSSearch + '.getElements: ASDA DOM changed',' INFO');
-                        getElements(websiteURL,sexSearchCallback,productSearchCallback,searchData,attemptCount);
-                    });
-                }
-
-                // Now go ahead and pull out our spans
-
-                asdaSpans = listings[0].getElementsByTagName('span');
-                for (i = 0; i < asdaSpans.length; i++) {
-                    if(asdaSpans[i].getAttribute('class') === 'title') {
-                        productNames.push(asdaSpans[i].textContent.toLowerCase().trim());
-                    }
-                }
-            } *//*else {
-                var productDetailsContainer = document.getElementsByClassName('productDetailsContainer');
-                // The productDetailsContainer class is the box containing the product. It's a div. Inside it are:
-                   // div: productDescription
-                   //   div: productWrapper
-                   //     div: descriptionDetails
-                   //       div: desc
-                   //         h1:
-                   //           span data-title="true"    <-- This is our product name!
-
-                if(productDetailsContainer[0]) {
-                    asdaSpans = productDetailsContainer[0].getElementsByClassName('descriptionDetails')[0].getElementsByTagName('span');
-                    for (i = 0; i < asdaSpans.length; i++) {
-                        if(asdaSpans[i].getAttribute('data-title') === 'true') {
-                            productNames.push(asdaSpans[i].innerHTML.toLowerCase().trim());
-                        }
-                    }
-                }
-            }*/
-/*
-        break;
-*/
