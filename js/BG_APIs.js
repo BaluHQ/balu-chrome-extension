@@ -146,6 +146,13 @@ function chromeMessageListener(msg, sender, callback){
             showPrivacyWindow(sender.tab.id);
         break;
 
+        case 'CS_main | pleaseAddFeedbackPage':
+            log(logMessage,'MESSG');
+            addFeedbackPage({tabId:    sender.tab.id,
+                             pageHTML: msg.data.pageHTML,
+                             feedback: msg.data.feedback});
+        break;
+
         // Log in sidebar
 
         case 'CS_main | pleaseLogUserIn':

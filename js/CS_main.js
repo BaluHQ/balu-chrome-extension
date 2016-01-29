@@ -247,6 +247,22 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
 
     var bottomRow = '';
 
+    bottomRow += '<div class="row sidebarFeedbackRow">';
+    bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
+    //bottomRow += '    <i class="fi-arrow-down"></i>';
+    bottomRow += '    <a id="btsMissingRecs_a" class="qtip_tooltips_feedback"><i id="btsMissingRecs_icon" class="fi-page-delete feedbackIcon"></i></a>';
+    bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom left" data-position-at="top right">I\'m not seeing the recommendations I expect</div>';
+    bottomRow += '  </div>';
+    bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
+    bottomRow += '    <a id="btsFalsePositives_a" class="qtip_tooltips_feedback"><i id="btsFalsePositives_icon" class="fi-page-multiple feedbackIcon"></i></a>';
+    bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom center" data-position-at="top center">I\'m seeing products that don\'t make sense</div>';
+    bottomRow += '  </div>';
+    bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
+    bottomRow += '    <a id="btsBangOn_a" class="qtip_tooltips_feedback"><i id="btsBangOn_icon" class="fi-check feedbackIcon"></i></a>';
+    bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom right" data-position-at="top left">Results look all good to me!</div>';
+    bottomRow += '  </div>';
+    bottomRow += '</div>';
+
     bottomRow += '<div class="row footer"><div class="small-12 columns">';
 /*
     bottomRow += '<div class="row collapse">';
@@ -280,6 +296,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     bottomRow += '        </div>';
     bottomRow += '      </div>';
     bottomRow += '      <div class="small-4 columns text-center footerDivs">';
+    //bottomRow += '        <p class="feedbackLink">Feedback</p>';
     bottomRow += '      </div>';
     bottomRow += '      <div class="small-5 columns text-right footerDivs">';
     bottomRow += '        <span class="footerText"><a id="showInfoWindow_link">Info</a>&nbsp;|&nbsp;<a id="showFAQWindow_link">FAQs</a>&nbsp;|&nbsp;<a id="showPrivacyWindow_link">Privacy</a></span>';
@@ -339,6 +356,11 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
         gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
     }
+
+    gvIframe.contentWindow.document.getElementById('btsMissingRecs_a').addEventListener('click',btsMissingRecs_listener);
+    gvIframe.contentWindow.document.getElementById('btsFalsePositives_a').addEventListener('click',btsFalsePositives_listener);
+    gvIframe.contentWindow.document.getElementById('btsBangOn_a').addEventListener('click',btsBangOn_listener);
+
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRefresh_icon').addEventListener('click',hideSidebar_untilRefresh_listener);
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRestart_icon').addEventListener('click',hideSidebar_untilRestart_listener);
     gvIframe.contentWindow.document.getElementById('showInfoWindow_link').addEventListener('click',showInfoWindow_listener);
@@ -427,7 +449,8 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
 
     if(!recommendations || recommendations.length === 0) {
         sidebarContentHTML += '<div class="origProductBlock">';
-        sidebarContentHTML += '  No products found. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"';
+        sidebarContentHTML += '<p>We couldn\'t find anything. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"</p>';
+        sidebarContentHTML += '<p><b>Think we\'re missing something? Hit the plus button above and tell us about it!</b></p>';
         sidebarContentHTML += '</div>';
     }
 
@@ -568,7 +591,7 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
 
         prevProductGroupId = thisProductGroupId;
 
-    }
+    } // end of primary loop, through recommendations
 
     gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = sidebarContentHTML;
 
@@ -734,7 +757,7 @@ function hideSidebar(callback) {
 
 function manualSearchSubmit_keydown_listener(event) {if (event.keyCode == 13) {manualSearchSubmit_listener();}}
 function manualSearchSubmit_listener() {
-    log(gvScriptName_CSMain + '.manualSearchSubmit_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.manualSearchSubmit_listener: Start','LSTNR');
     // we're about to refresh the iframe, so set the iFrame ready variable back to false
     gvIsIframeReady = false;
     var searchTerm = gvIframe.contentWindow.document.getElementById('fieldManualSearch').value;
@@ -742,12 +765,12 @@ function manualSearchSubmit_listener() {
 }
 
 function showOptionsPageWindow_listener() {
-    log(gvScriptName_CSMain + '.showOptionsPageWindow_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.showOptionsPageWindow_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowOptionsPageWindow');
 }
 
 function showProductLinkWindow_listener() {
-    log(gvScriptName_CSMain + '.productLink_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.productLink_listener: Start','LSTNR');
     var productURL = this.getAttribute('data-url');
     var recommendationId = this.getAttribute('data-recid');
     var productName = this.getAttribute('data-productname');
@@ -762,14 +785,14 @@ function showProductLinkWindow_listener() {
 }
 
 function showWhyDoWeCareWindow_listener() {
-    log(gvScriptName_CSMain + '.showWhyDoWeCareWindow_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.showWhyDoWeCareWindow_listener: Start','LSTNR');
     var whyDoWeCare = this.getAttribute('data-whydowecare');
     sendMessage('BG_main','pleaseShowWhyDoWeCareWindow',{whyDoWeCare: whyDoWeCare});
 }
 
 function voteUp_listener() {
 
-    log(gvScriptName_CSMain + '.voteUp_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.voteUp_listener: Start','LSTNR');
 
     var recommendationId = this.getAttribute('data-recid');
 
@@ -792,7 +815,7 @@ function voteUp_listener() {
 
 function voteDown_listener() {
 
-    log(gvScriptName_CSMain + '.voteDown_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.voteDown_listener: Start','LSTNR');
 
     var recommendationId = this.getAttribute('data-recid');
 
@@ -816,7 +839,7 @@ function voteDown_listener() {
 
 function twitterShare_listener() {
 
-    log(gvScriptName_CSMain + '.twitterShare_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.twitterShare_listener: Start','LSTNR');
 
     var tweetContent = this.getAttribute('data-tweetcontent');
 
@@ -826,7 +849,7 @@ function twitterShare_listener() {
 
 function blockBrand_listener() {
 
-    log(gvScriptName_CSMain + '.blockBrand_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.blockBrand_listener: Start','LSTNR');
 
     var recommendationId = this.getAttribute('data-recid');
     var productName = this.getAttribute('data-productname');
@@ -835,59 +858,92 @@ function blockBrand_listener() {
 
     // Message extension to open block brand window
     sendMessage('BG_main','pleaseShowBlockBrandWindow',{recommendationId: recommendationId,
-                                              productName:      productName,
-                                              brandName:        brandName,
-                                              brandId:          brandId,
-                                              reason:           '',
-                                              tabURL:           ''});
+                                                        productName:      productName,
+                                                        brandName:        brandName,
+                                                        brandId:          brandId,
+                                                        reason:           '',
+                                                        tabURL:           ''});
 }
 
 function showUserSubmittedRecWindow_listener() {
-    log(gvScriptName_CSMain + '.showUserSubmittedRecWindow_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.showUserSubmittedRecWindow_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowUserSubmittedRecWindow');
 }
 
+function btsMissingRecs_listener(){
+
+    log(gvScriptName_CSMain + '.btsMissingRecs_listener: Start','LSTNR');
+    sendMessage('BG_main','pleaseAddFeedbackPage',{pageHTML:  document.all[0].outerHTML,
+                                                   feedback:  'MISSING'});
+    gvIframe.contentWindow.document.getElementById('btsMissingRecs_icon').style.color = 'black';
+    gvIframe.contentWindow.document.getElementById("btsMissingRecs_a").removeEventListener("click", btsMissingRecs_listener);
+    gvIframe.contentWindow.document.getElementById("btsFalsePositives_a").removeEventListener("click", btsFalsePositives_listener);
+    gvIframe.contentWindow.document.getElementById("btsBangOn_a").removeEventListener("click", btsBangOn_listener);
+}
+
+function btsFalsePositives_listener(){
+
+    log(gvScriptName_CSMain + '.btsFalsePositives_listener: Start','LSTNR');
+    sendMessage('BG_main','pleaseAddFeedbackPage',{pageHTML:  document.all[0].outerHTML,
+                                                   feedback:  'FALSE +VE'});
+    gvIframe.contentWindow.document.getElementById('btsFalsePositives_icon').style.color = 'black';
+    gvIframe.contentWindow.document.getElementById("btsMissingRecs_a").removeEventListener("click", btsMissingRecs_listener);
+    gvIframe.contentWindow.document.getElementById("btsFalsePositives_a").removeEventListener("click", btsFalsePositives_listener);
+    gvIframe.contentWindow.document.getElementById("btsBangOn_a").removeEventListener("click", btsBangOn_listener);
+}
+
+function btsBangOn_listener(){
+
+    log(gvScriptName_CSMain + '.btsBangOn_listener: Start','LSTNR');
+    sendMessage('BG_main','pleaseAddFeedbackPage',{pageHTML:  document.all[0].outerHTML,
+                                                   feedback:  'BANG ON'});
+    gvIframe.contentWindow.document.getElementById('btsBangOn_icon').style.color = 'black';
+    gvIframe.contentWindow.document.getElementById("btsMissingRecs_a").removeEventListener("click", btsMissingRecs_listener);
+    gvIframe.contentWindow.document.getElementById("btsFalsePositives_a").removeEventListener("click", btsFalsePositives_listener);
+    gvIframe.contentWindow.document.getElementById("btsBangOn_a").removeEventListener("click", btsBangOn_listener);
+}
+
 function hideSidebar_untilRefresh_listener() {
-    log(gvScriptName_CSMain + '.hideSidebar_untilRefresh_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.hideSidebar_untilRefresh_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseHideSidebar_untilRefresh');
 }
 
 function hideSidebar_untilRestart_listener() {
-    log(gvScriptName_CSMain + '.hideSidebar_untilRestart_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.hideSidebar_untilRestart_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseHideSidebar_untilRestart');
 }
 
 function showInfoWindow_listener() {
-    log(gvScriptName_CSMain + '.showInfoWindow_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.showInfoWindow_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowInfoWindow');
 }
 
 function showFAQWindow_listener() {
-    log(gvScriptName_CSMain + '.showFAQWindow_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.showFAQWindow_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowFAQWindow');
 }
 
 function showPrivacyWindow_listener() {
-    log(gvScriptName_CSMain + '.showPrivacyWindow_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.showPrivacyWindow_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowPrivacyWindow');
 }
 
 // Log in sidebar
 
 function logUserIn_listener() {
-    log(gvScriptName_CSMain + '.logUserIn_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.logUserIn_listener: Start','LSTNR');
     var username    = gvIframe.contentWindow.document.getElementById('fieldLogInEmail').value;
     var password = gvIframe.contentWindow.document.getElementById('fieldLogInPassword').value;
     sendMessage('BG_main','pleaseLogUserIn',{username: username,password: password});
 }
 
 function passwordReset_listener() {
-    log(gvScriptName_CSMain + '.passwordReset_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.passwordReset_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowOptionsPageWindow');
 }
 
 function signUserUp_listener() {
-    log(gvScriptName_CSMain + '.signUserUp_listener: Start','PROCS');
+    log(gvScriptName_CSMain + '.signUserUp_listener: Start','LSTNR');
     var username    = gvIframe.contentWindow.document.getElementById('fieldSignUpUsername').value;
     var password = gvIframe.contentWindow.document.getElementById('fieldSignUpPassword').value;
     sendMessage('BG_main','pleaseSignUserUp',{username: username, password: password});

@@ -79,7 +79,7 @@ function chromeMessageListener(msg, sender, callback) {
             log(logMessage,'MESSG');
             // Callback is the BTS_test.addFeedbackPage function
             callback({
-                tabId:       msg.data.tabId,
+                tabId:     msg.data.tabId,
                 pageHTML:  document.all[0].outerHTML,
                 feedback:  msg.data.feedback
             });

@@ -46,7 +46,6 @@ var gvBlockBrandParams;
 
     // Listeners //
 
-
     try {
         // Listen for messages from the content scripts
         chrome.runtime.onMessage.addListener(chromeMessageListener);
@@ -278,50 +277,46 @@ function getSearchProductData() {
                         for (var j = 0; j < categoryWebsiteJoins.length; j++) {
 
                             if(searchProducts[i].get('searchCategories').id === categoryWebsiteJoins[j].get('searchCategory').id) {
+
+                                var searchTermsArray = [];
+                                searchTermsArray.push(searchProducts[i].get('searchTerm1'));
+                                searchTermsArray.push(searchProducts[i].get('searchTerm2'));
+                                searchTermsArray.push(searchProducts[i].get('searchTerm3'));
+                                searchTermsArray.push(searchProducts[i].get('searchTerm4'));
+                                searchTermsArray.push(searchProducts[i].get('searchTerm5'));
+                                searchTermsArray.push(searchProducts[i].get('searchTerm6'));
+                                searchTermsArray.push(searchProducts[i].get('searchTerm7'));
+
+                                var negativeSearchTermsArray = [];
+                                negativeSearchTermsArray.push(searchProducts[i].get('negativeSearchTerm1'));
+                                negativeSearchTermsArray.push(searchProducts[i].get('negativeSearchTerm2'));
+                                negativeSearchTermsArray.push(searchProducts[i].get('negativeSearchTerm3'));
+                                negativeSearchTermsArray.push(searchProducts[i].get('negativeSearchTerm4'));
+
                                 gvSearchProducts.push({// Search Category
-                                                       searchCategoryId:       categoryWebsiteJoins[j].get('searchCategory').id,
-                                                       categoryName:           categoryWebsiteJoins[j].get('searchCategory').get('categoryName'),
-                                                       departments:            categoryWebsiteJoins[j].get('departments_LC'),
-                                                       whyDoWeCare:            categoryWebsiteJoins[j].get('searchCategory').get('whyDoWeCare'),
+                                                       searchCategoryId:         categoryWebsiteJoins[j].get('searchCategory').id,
+                                                       categoryName:             categoryWebsiteJoins[j].get('searchCategory').get('categoryName'),
+                                                       departments:              categoryWebsiteJoins[j].get('departments_LC'),
+                                                       whyDoWeCare:              categoryWebsiteJoins[j].get('searchCategory').get('whyDoWeCare'),
                                                        // Website
-                                                       websiteId:              categoryWebsiteJoins[j].get('website').id,
-                                                       websiteURL:             categoryWebsiteJoins[j].get('website').get('websiteURL'),
-                                                       isWebsiteOnOrOff:       categoryWebsiteJoins[j].get('website').get('isWebsiteOnOrOff'),
+                                                       websiteId:                categoryWebsiteJoins[j].get('website').id,
+                                                       websiteURL:               categoryWebsiteJoins[j].get('website').get('websiteURL'),
+                                                       isWebsiteOnOrOff:         categoryWebsiteJoins[j].get('website').get('isWebsiteOnOrOff'),
                                                        // Product Group
-                                                       productGroupId:         searchProducts[i].get('productGroups').id,
-                                                       productGroupName:       searchProducts[i].get('productGroups').get('productGroupName'),
+                                                       productGroupId:           searchProducts[i].get('productGroups').id,
+                                                       productGroupName:         searchProducts[i].get('productGroups').get('productGroupName'),
                                                        // Search Product
-                                                       searchProductId:        searchProducts[i].id,
-                                                       productName:            searchProducts[i].get('productName'),
-                                                       brand:                  searchProducts[i].get('brand'),
-                                                       brand_LC:               searchProducts[i].get('brand_LC'),
-                                                       searchTerm1:            searchProducts[i].get('searchTerm1'),
-                                                       searchTerm1_LC:         searchProducts[i].get('searchTerm1_LC'),
-                                                       searchTerm2:            searchProducts[i].get('searchTerm2'),
-                                                       searchTerm2_LC:         searchProducts[i].get('searchTerm2_LC'),
-                                                       searchTerm3:            searchProducts[i].get('searchTerm3'),
-                                                       searchTerm3_LC:         searchProducts[i].get('searchTerm3_LC'),
-                                                       searchTerm4:            searchProducts[i].get('searchTerm4'),
-                                                       searchTerm4_LC:         searchProducts[i].get('searchTerm4_LC'),
-                                                       searchTerm5:            searchProducts[i].get('searchTerm5'),
-                                                       searchTerm5_LC:         searchProducts[i].get('searchTerm5_LC'),
-                                                       searchTerm6:            searchProducts[i].get('searchTerm6'),
-                                                       searchTerm6_LC:         searchProducts[i].get('searchTerm6_LC'),
-                                                       searchTerm7:            searchProducts[i].get('searchTerm7'),
-                                                       searchTerm7_LC:         searchProducts[i].get('searchTerm7_LC'),
-                                                       andOr:                  searchProducts[i].get('andOr'),
-                                                       sex:                    searchProducts[i].get('sex'),
-                                                       sex_LC:                 searchProducts[i].get('sex_LC'),
-                                                       negativeSearchTerm1:    searchProducts[i].get('negativeSearchTerm1'),
-                                                       negativeSearchTerm1_LC: searchProducts[i].get('negativeSearchTerm1_LC'),
-                                                       negativeSearchTerm2:    searchProducts[i].get('negativeSearchTerm2'),
-                                                       negativeSearchTerm2_LC: searchProducts[i].get('negativeSearchTerm2_LC'),
-                                                       negativeSearchTerm3:    searchProducts[i].get('negativeSearchTerm3'),
-                                                       negativeSearchTerm3_LC: searchProducts[i].get('negativeSearchTerm3_LC'),
-                                                       negativeSearchTerm4:    searchProducts[i].get('negativeSearchTerm4'),
-                                                       negativeSearchTerm4_LC: searchProducts[i].get('negativeSearchTerm4_LC'),
-                                                       negativeAndOr:          searchProducts[i].get('negativeAndOr'),
-                                                       numberOfSearchHits:     0}); // this is used by the search function to count up hits (and order the results)
+                                                       searchProductId:          searchProducts[i].id,
+                                                       productName:              searchProducts[i].get('productName'),
+                                                       brand:                    searchProducts[i].get('brand'),
+                                                       brand_LC:                 searchProducts[i].get('brand_LC'),
+                                                       searchTermsArray:         searchTermsArray,
+                                                       andOr:                    searchProducts[i].get('andOr'),
+                                                       sex:                      searchProducts[i].get('sex'),
+                                                       sex_LC:                   searchProducts[i].get('sex_LC'),
+                                                       negativeSearchTermsArray: negativeSearchTermsArray,
+                                                       negativeAndOr:            searchProducts[i].get('negativeAndOr'),
+                                                       numberOfSearchHits:       0}); // this is used by the search function to count up hits (and order the results)
                             }
                         }
                     }
@@ -951,6 +946,10 @@ function manualSearch(tabId, searchTerm) {
                                 }
 
                                 // Note, the content_script will catch no-results and display the empty side bar
+                                // But we also want to log no results separately, because these could be products we should be adding to Balu
+                                if(!recommendations || recommendationsArray.length === 0) {
+                                    userLog(tabId,'MANUAL_SEARCH_NO_RESULTS',{searchTerm: searchTerm});
+                                }
                                 displayRecommendations(tabId,recommendationsArray,searchTerm,displayChristmasBanner,productGroupIDsArray);
                                 userLog(tabId,'MANUAL_SEARCH_RECOMMENDATIONS_RETURNED',{searchTerm: searchTerm, recommendationsArray: recommendationsArray});
                             },
@@ -1531,6 +1530,8 @@ function reportTrackedTabError(tabId,trackedTab){
 
 /*
  * @userFeedback one of 'MISSING' | 'FALSE +VE' | 'BANG ON'
+ * This is a simple wrapper function, which requests the pageDOM from the content script
+ * and then calls the proper addFeedbackPage function as a callback
  */
 function _addFeedbackPage(userFeedback,tabId) {
     log(gvScriptName_BGMain + '._addFeedbackPage, userFeedback === ' + userFeedback,'PROCS');
@@ -1538,7 +1539,6 @@ function _addFeedbackPage(userFeedback,tabId) {
     sendMessage(tabId,'pleaseGetThePageDOM',{tabId:   tabId,
                                              feedback: userFeedback},addFeedbackPage);
 }
-
 
 /*
  * args = {tabId, pageHTML, feedback}

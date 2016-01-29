@@ -77,6 +77,25 @@ function activateQTips(){
             }
         });
     });
+
+    $('.qtip_tooltips_feedback').each(function(i){
+        var feedbackDesc = $(this).next('div');
+        $(this).qtip({
+            content: {
+                text: $(feedbackDesc).html(),
+                title: function(event, api) {
+                            return $(feedbackDesc).attr('data-qtiptitle');
+                        }
+            },
+            position: {
+                my: $(feedbackDesc).attr('data-position-my'),
+                at: $(feedbackDesc).attr('data-position-at')
+            },
+            style: {
+                classes: 'feedbackToolTips'
+            }
+        });
+    });
 }
 
 function activateJoyride(){

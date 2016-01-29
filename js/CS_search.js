@@ -150,26 +150,6 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
             // for the categories and the other in the top left of the nav bar.
             // When adding new Search Categories, make sure all possible values are included.
 
-            /* navBar */
-
-            // The navBar is the leading department. If we're in a department, this will not be
-            // "Amazon.co.uk"
-            var amazon_dep_navBar_parent = pvDOM.getElementById('nav-subnav');
-            var amazon_dep_navBar_text = '';
-
-            if(amazon_dep_navBar_parent !== null){
-                var amazon_dep_navBar_firstElement = amazon_dep_navBar_parent.firstElementChild;
-                if(amazon_dep_navBar_firstElement !== null) {
-                    amazon_dep_navBar_text = amazon_dep_navBar_firstElement.textContent.toLowerCase().trim();
-                    if(amazon_dep_navBar_text !== 'amazon.co.uk') {
-                        lvDepartments.push(amazon_dep_navBar_text);
-                        logMessage_extra += '  Departments: navBar department found in id="nav-subnav"' + '\n';
-                        lvFoundDepartments = true;
-                    }
-                    // we don't need to log a failure here, because we have a second attempt below with the categories
-                }
-            }
-
             /* categories */
 
             var amazon_dep_cat_parent = pvDOM.getElementById('refinements');
@@ -191,6 +171,26 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                 if(amazon_dep_cat_listItems.length > 0){
                     logMessage_extra += '  Departments:  found in id="refinements"' + '\n';
                     lvFoundDepartments = true;
+                }
+            }
+
+            /* navBar */
+
+            // The navBar is the leading department. If we're in a department, this will not be
+            // "Amazon.co.uk"
+            var amazon_dep_navBar_parent = pvDOM.getElementById('nav-subnav');
+            var amazon_dep_navBar_text = '';
+
+            if(amazon_dep_navBar_parent !== null){
+                var amazon_dep_navBar_firstElement = amazon_dep_navBar_parent.firstElementChild;
+                if(amazon_dep_navBar_firstElement !== null) {
+                    amazon_dep_navBar_text = amazon_dep_navBar_firstElement.textContent.toLowerCase().trim();
+                    if(amazon_dep_navBar_text !== 'amazon.co.uk') {
+                        lvDepartments.push(amazon_dep_navBar_text);
+                        logMessage_extra += '  Departments: navBar department found in id="nav-subnav"' + '\n';
+                        lvFoundDepartments = true;
+                    }
+                    // we don't need to log a failure here, because we have a second attempt below with the categories
                 }
             }
 
@@ -361,27 +361,6 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
              * Departments *
              ***************/
 
-            /* Breadcrumbs */
-
-            var ebay_dep_bc = pvDOM.getElementById('vi-VR-brumb-lnkLst');
-            if(ebay_dep_bc === null) {
-                ebay_dep_bc2 = pvDOM.getElementsByClassName('bc-cat');
-                if(ebay_dep_bc2.length > 0){
-                    ebay_dep_bc = ebay_dep_bc2[0];
-                }
-            }
-
-            if(ebay_dep_bc !== null){
-                var ebay_dep_bc_listItems = ebay_dep_bc.getElementsByTagName('li');
-                for(i = 0; i < ebay_dep_bc_listItems.length; i++) {
-                    lvDepartments.push(ebay_dep_bc_listItems[i].textContent.toLowerCase().replace('>','').trim());
-                }
-                if(ebay_dep_bc_listItems.length > 0){
-                    logMessage_extra += '  Departments: found in id="vi-VR-brumb-lnkLst" or class="bc-cat"' + '\n';
-                    lvFoundDepartments = true;
-                }
-            }
-
             /* Categories */
 
             // cat-t class appears to be the top level departments in the cat list,
@@ -406,6 +385,26 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                         logMessage_extra += '  Departments: found in classes="cat-t" or "ptCat"' + '\n';
                         lvFoundDepartments = true;
                     }
+                }
+            }
+            /* Breadcrumbs */
+
+            var ebay_dep_bc = pvDOM.getElementById('vi-VR-brumb-lnkLst');
+            if(ebay_dep_bc === null) {
+                ebay_dep_bc2 = pvDOM.getElementsByClassName('bc-cat');
+                if(ebay_dep_bc2.length > 0){
+                    ebay_dep_bc = ebay_dep_bc2[0];
+                }
+            }
+
+            if(ebay_dep_bc !== null){
+                var ebay_dep_bc_listItems = ebay_dep_bc.getElementsByTagName('li');
+                for(i = 0; i < ebay_dep_bc_listItems.length; i++) {
+                    lvDepartments.push(ebay_dep_bc_listItems[i].textContent.toLowerCase().replace('>','').trim());
+                }
+                if(ebay_dep_bc_listItems.length > 0){
+                    logMessage_extra += '  Departments: found in id="vi-VR-brumb-lnkLst" or class="bc-cat"' + '\n';
+                    lvFoundDepartments = true;
                 }
             }
 
@@ -514,6 +513,24 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
             // Breadcrumbs are usually useful, but after a user search, they
             // only display the search term. Categories are good though.
 
+            /* Categories */
+
+            var argos_dep_cat = pvDOM.getElementById('categoryList');
+
+            if(argos_dep_cat !== null) {
+                var argos_dep_cat_listItems = argos_dep_cat.getElementsByTagName('li');
+                for(i = 0; i < argos_dep_cat_listItems.length; i++) {
+                    // The text on the page has a (n) after each catgory, denoting how many products
+                    // fall into the category. We need to remove this.
+                    var argos_dep_cat_listItems_text = argos_dep_cat_listItems[i].textContent.toLowerCase().trim();
+                    lvDepartments.push(argos_dep_cat_listItems_text.substring(0,argos_dep_cat_listItems_text.indexOf('(')-1));
+                }
+                if(argos_dep_cat_listItems.length > 0){
+                    logMessage_extra += '  Departments: found in id="categoryList"' + '\n';
+                    lvFoundDepartments = true;
+                }
+            }
+
             /* Breadcrumbs */
 
             var argos_dep_bc = pvDOM.getElementById('breadcrumb');
@@ -530,24 +547,6 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                 }
                 if(argos_dep_bc_listItems.length > 0) {
                     logMessage_extra += '  Departments: found in id="breadcrumb"' + '\n';
-                    lvFoundDepartments = true;
-                }
-            }
-
-            /* Categories */
-
-            var argos_dep_cat = pvDOM.getElementById('categoryList');
-
-            if(argos_dep_cat !== null) {
-                var argos_dep_cat_listItems = argos_dep_cat.getElementsByTagName('li');
-                for(i = 0; i < argos_dep_cat_listItems.length; i++) {
-                    // The text on the page has a (n) after each catgory, denoting how many products
-                    // fall into the category. We need to remove this.
-                    var argos_dep_cat_listItems_text = argos_dep_cat_listItems[i].textContent.toLowerCase().trim();
-                    lvDepartments.push(argos_dep_cat_listItems_text.substring(0,argos_dep_cat_listItems_text.indexOf('(')-1));
-                }
-                if(argos_dep_cat_listItems.length > 0){
-                    logMessage_extra += '  Departments: found in id="categoryList"' + '\n';
                     lvFoundDepartments = true;
                 }
             }
@@ -631,6 +630,28 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
              ***************/
 
             // No departments needed. ASOS does fashion only.
+
+            /**********
+             * Gender *
+             **********/
+
+            var asos_dep_womenCheckbox = pvDOM.querySelector('li[data-name="WOMEN"][data-checked="true"]');
+            var asos_dep_menCheckbox = pvDOM.querySelector('li[data-name="MEN"][data-checked="true"]');
+            if(asos_dep_womenCheckbox !== null){
+                lvWomenFilter = 'WOMEN';
+                lvFoundGender = true;
+            }
+            if(asos_dep_menCheckbox !== null){
+                lvMenFilter = 'MEN';
+                lvFoundGender = true;
+            }
+            if(lvFoundGender) {
+                logMessage_extra += '  Gender: found"' + '\n';
+            }
+
+            if(!lvFoundGender){
+                logMessage_extra += '  Gender: FAILED to find' + '\n';
+            }
 
             /***************
              * Breadcrumbs *
@@ -728,6 +749,22 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
              * Departments *
              ***************/
 
+            /* Categories */
+
+            var debenhams_dep_cat = pvDOM.getElementById('categoryFacetDiv_categories');
+            if(debenhams_dep_cat !== null){
+                var debenhams_dep_cat_list = debenhams_dep_cat.getElementsByTagName('li');
+                for(i = 0; i < debenhams_dep_cat_list.length; i++) {
+                    var debenhams_dep_cat_list_text = debenhams_dep_cat_list[i].textContent.toLowerCase().trim();
+                    debenhams_dep_cat_list_text = debenhams_dep_cat_list_text.substring(0,debenhams_dep_cat_list_text.indexOf('(')-1).trim();
+                    lvDepartments.push(debenhams_dep_cat_list_text);
+                }
+                if(debenhams_dep_cat_list.length > 0) {
+                    logMessage_extra += '  Departments: found in id="categoryFacetDiv_categories"' + '\n';
+                    lvFoundDepartments = true;
+                }
+            }
+
             /* Breadcrumbs */
 
             var debenhams_dep_bc = pvDOM.getElementsByClassName('breadcrumb_links');
@@ -742,22 +779,6 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                 }
                 if(lvFoundDepartments) {
                     logMessage_extra += '  Departments: found in class="breadcrumb_links"' + '\n';
-                }
-            }
-
-            /* Categories */
-
-            var debenhams_dep_cat = pvDOM.getElementById('categoryFacetDiv_categories');
-            if(debenhams_dep_cat !== null){
-                var debenhams_dep_cat_list = debenhams_dep_cat.getElementsByTagName('li');
-                for(i = 0; i < debenhams_dep_cat_list.length; i++) {
-                    var debenhams_dep_cat_list_text = debenhams_dep_cat_list[i].textContent.toLowerCase().trim();
-                    debenhams_dep_cat_list_text = debenhams_dep_cat_list_text.substring(0,debenhams_dep_cat_list_text.indexOf('(')-1).trim();
-                    lvDepartments.push(debenhams_dep_cat_list_text);
-                }
-                if(debenhams_dep_cat_list.length > 0) {
-                    logMessage_extra += '  Departments: found in id="categoryFacetDiv_categories"' + '\n';
-                    lvFoundDepartments = true;
                 }
             }
 
@@ -842,6 +863,29 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
             // the department match and just pull the user's search term. This is done below, in Product Page section
             var very_userSearch = false;
 
+            /* Categories */
+
+            var very_dep_cat_navigation = pvDOM.getElementById('navigation');
+            if(very_dep_cat_navigation !== null){
+                very_dep_cat_navigation_firstUL = very_dep_cat_navigation.querySelector('ul');
+                if(very_dep_cat_navigation_firstUL !== null) {
+                    var very_dep_cat_navigation_firstUL_listItems = very_dep_cat_navigation_firstUL.getElementsByTagName('li');
+                    for(i = 0; i < very_dep_cat_navigation_firstUL_listItems.length; i++) {
+                        // The text on the page has a (n) after each catgory, denoting how many products
+                        // fall into the category. We need to remove this.
+                        var very_dep_cat_navigation_firstUL_listItem_text = very_dep_cat_navigation_firstUL_listItems[i].textContent.toLowerCase().trim();
+                        very_dep_cat_navigation_firstUL_listItem_text = very_dep_cat_navigation_firstUL_listItem_text.substring(0,very_dep_cat_navigation_firstUL_listItem_text.indexOf('(')-1).trim();
+                        if(very_dep_cat_navigation_firstUL_listItem_text.length > 0) {
+                            lvDepartments.push(very_dep_cat_navigation_firstUL_listItem_text);
+                            lvFoundDepartments = true;
+                        }
+                    }
+                    if(lvFoundDepartments) {
+                        logMessage_extra += '  Departments: LIs found in first UL of id="navigation"' + '\n';
+                    }
+                }
+            }
+
             /* Breadcrumbs */
 
             var very_dep_bc = pvDOM.getElementById('breadcrumb');
@@ -863,29 +907,6 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                 if(very_dep_bc_listItems.length > 0) {
                     logMessage_extra += '  Departments: found in id="breadcrumb"' + '\n';
                     lvFoundDepartments = true;
-                }
-            }
-
-            /* Categories */
-
-            var very_dep_cat_navigation = pvDOM.getElementById('navigation');
-            if(very_dep_cat_navigation !== null){
-                very_dep_cat_navigation_firstUL = very_dep_cat_navigation.querySelector('ul');
-                if(very_dep_cat_navigation_firstUL !== null) {
-                    var very_dep_cat_navigation_firstUL_listItems = very_dep_cat_navigation_firstUL.getElementsByTagName('li');
-                    for(i = 0; i < very_dep_cat_navigation_firstUL_listItems.length; i++) {
-                        // The text on the page has a (n) after each catgory, denoting how many products
-                        // fall into the category. We need to remove this.
-                        var very_dep_cat_navigation_firstUL_listItem_text = very_dep_cat_navigation_firstUL_listItems[i].textContent.toLowerCase().trim();
-                        very_dep_cat_navigation_firstUL_listItem_text = very_dep_cat_navigation_firstUL_listItem_text.substring(0,very_dep_cat_navigation_firstUL_listItem_text.indexOf('(')-1).trim();
-                        if(very_dep_cat_navigation_firstUL_listItem_text.length > 0) {
-                            lvDepartments.push(very_dep_cat_navigation_firstUL_listItem_text);
-                            lvFoundDepartments = true;
-                        }
-                    }
-                    if(lvFoundDepartments) {
-                        logMessage_extra += '  Departments: LIs found in first UL of id="navigation"' + '\n';
-                    }
                 }
             }
 
@@ -1000,6 +1021,9 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                         // Also, we want to override department on user search, so pick out the "" in the breadcrumbs
                         // (only if there are only two items, because when you go to the product page from a search
                         // it sticks the actual department on after the search term) and push men/women into lvDepartments
+                        // To do: this leaves one case not dealt with, where the search term defaults to a category, e.g.
+                        // Coat -> Coats and Jackets. In these cases, there are no "" around the search term (in fact, the
+                        // search term is not displayed, the category is displayed. )
                         if(next_dep_bc_link_text.indexOf('women\'s') !== -1) {
                             lvDepartments.push('women\'s');
                         } else if(next_dep_bc_link_text.indexOf('men\'s') !== -1) {
@@ -2255,17 +2279,8 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
 
     var foundSomething = false;
     var position_brand;
-    var position_searchTerm1;
-    var position_searchTerm2;
-    var position_searchTerm3;
-    var position_searchTerm4;
-    var position_searchTerm5;
-    var position_searchTerm6;
-    var position_searchTerm7;
-    var position_negativeSearchTerm1;
-    var position_negativeSearchTerm2;
-    var position_negativeSearchTerm3;
-    var position_negativeSearchTerm4;
+    var searchTermPositionsArray = [];
+    var negativeSearchTermPositionsArray = [];
     var matchedSex;
 
     logMessage += '\n' + 'Product Name search:' + '\n\n';
@@ -2274,18 +2289,6 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
     var tempLogMsg_searchProduct = '';
     for (var i = 0; i < searchData.length; i++) {
 
-        position_brand = -1;
-        position_searchTerm1 = -1;
-        position_searchTerm2 = -1;
-        position_searchTerm3 = -1;
-        position_searchTerm4 = -1;
-        position_searchTerm5 = -1;
-        position_searchTerm6 = -1;
-        position_searchTerm7 = -1;
-        position_negativeSearchTerm1 = -1;
-        position_negativeSearchTerm2 = -1;
-        position_negativeSearchTerm3 = -1;
-        position_negativeSearchTerm4 = -1;
         matchedSex = false;
 
         // Only search for this searchProduct if it belongs to a searchCategory that is valid for the user's current website
@@ -2311,9 +2314,26 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
                 // To do: if the searchProducts are grouped by category, you could confirm this once for a set of searchProducts
                 for(var k = 0; k < pageElements.departments.length; k++) {
                     if(searchData[i].departments.indexOf(pageElements.departments[k]) !== -1){
-                        departmentMatch = true;
-                        tempLogMsg_searchProduct += '        Matched Department: "' + pageElements.departments[k] + '" (' + searchData[i].departments + ')' + '\n';
-                        break;
+                        // This is a messy bit of custom code to deal with productGroups that appear only by matching to department,
+                        // never by productName match. E.g. Books and Toys.
+                        // The issue is, if, say, "Toys (1)" appears right at the bottom of the department list, Toy recs will all appear,
+                        // possibly at the top ("Toys" comes before "Women's --").
+                        // So for these department-only matches, they must be the first department listed.
+                        // Note, requires the category departments to be pushed into the array first, in the getPageElements function
+                        if(searchData[i].productGroupName === 'Toys' || searchData[i].productGroupName === 'Books') {
+                            if(k !== 0 && k !== 1) {
+                                // Not counted as a match, do nothing
+                                break;
+                            } else {
+                                departmentMatch = true;
+                                tempLogMsg_searchProduct += '        Matched Department: "' + pageElements.departments[k] + '" (' + searchData[i].departments + ')' + ' -- NB. this is a department-only match -- ' + '\n';
+                                break;
+                            }
+                        } else {
+                            departmentMatch = true;
+                            tempLogMsg_searchProduct += '        Matched Department: "' + pageElements.departments[k] + '" (' + searchData[i].departments + ')' + '\n';
+                            break;
+                        }
                     }
                 }
                 if(!departmentMatch){
@@ -2323,7 +2343,7 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
 
             /************************************************************************
              * Match the web page's product names to the searchProduct search terms *
-             * (searchTerms 1 to x, negative search terms 1 to y, and sex search)  *
+             * (searchTerms 1 to x, negative search terms 1 to y, and sex search)   *
              ************************************************************************/
 
             if(departmentMatch) {
@@ -2335,78 +2355,48 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
                 var tempLogMsg_productNameMatches = '';
                 for (var j = 0; j < pageElements.productNames.length; j++) {
 
-                    /* Firstly, check whether we have a match on each searchTerm (postive and negative searchTerms) */
+                    /* Before we start, reset our search result vars */
+                    position_brand = -1;
+                    for (var a = 0; a < searchData[i].searchTermsArray.length; a++){
+                        searchTermPositionsArray[a] = -1;
+                    }
+                    for (var b = 0; b < searchData[i].negativeSearchTermsArray.length; b++){
+                        negativeSearchTermPositionsArray[b] = -1;
+                    }
 
+                    /* Firstly, check whether we have a match on each searchTerm (brand, then postive and negative searchTerms) */
+
+                    // Brand
                     if(searchData[i].brand_LC !== 'all') {
-                        position_brand = pageElements.productNames[j].indexOf(searchData[i].brand_LC);
+                        //position_brand = pageElements.productNames[j].indexOf(searchData[i].brand_LC);
+                        if(new RegExp('\\b' + searchData[i].brand_LC  + '\\b','i').test(pageElements.productNames[j])){
+                            position_brand = 1;
+                        }
                     } else {
                         position_brand = -2;
                     }
 
-                    if(searchData[i].searchTerm1 !== '') {
-                        position_searchTerm1 = pageElements.productNames[j].indexOf(searchData[i].searchTerm1_LC);
-                    } else {
-                        position_searchTerm1 = -2;
+                    // Positive search terms
+                    for(a = 0; a < searchData[i].searchTermsArray.length; a++){
+                        if(searchData[i].searchTermsArray[a] !== '') {
+                            if(new RegExp('\\b' + searchData[i].searchTermsArray[a] + '\\b','i').test(pageElements.productNames[j])){
+                                searchTermPositionsArray[a] = 1;
+                                //log(gvScriptName_CSSearch + '.productSearch: ' + searchData[i].productName + ' - Positive search term ' + a + ' = ' + searchData[i].searchTermsArray[a] + ' - pageElement.productNames[j] = ' + pageElements.productNames[j],'DEBUG');
+                            }
+                        } else {
+                            searchTermPositionsArray[a] = -2;
+                        }
                     }
 
-                    if(searchData[i].searchTerm2 !== '') {
-                        position_searchTerm2 = pageElements.productNames[j].indexOf(searchData[i].searchTerm2_LC);
-                    } else{
-                        position_searchTerm2 = -2;
-                    }
-
-                    if(searchData[i].searchTerm3 !== '') {
-                        position_searchTerm3 = pageElements.productNames[j].indexOf(searchData[i].searchTerm3_LC);
-                    } else{
-                        position_searchTerm3 = -2;
-                    }
-
-                    if(searchData[i].searchTerm4 !== '') {
-                        position_searchTerm4 = pageElements.productNames[j].indexOf(searchData[i].searchTerm4_LC);
-                    } else{
-                        position_searchTerm4 = -2;
-                    }
-
-                    if(searchData[i].searchTerm5 !== '') {
-                        position_searchTerm5 = pageElements.productNames[j].indexOf(searchData[i].searchTerm5_LC);
-                    } else{
-                        position_searchTerm5 = -2;
-                    }
-
-                    if(searchData[i].searchTerm6 !== '') {
-                        position_searchTerm6 = pageElements.productNames[j].indexOf(searchData[i].searchTerm6_LC);
-                    } else{
-                        position_searchTerm6 = -2;
-                    }
-
-                    if(searchData[i].searchTerm7 !== '') {
-                        position_searchTerm7 = pageElements.productNames[j].indexOf(searchData[i].searchTerm7_LC);
-                    } else{
-                        position_searchTerm7 = -2;
-                    }
-
-                    if(searchData[i].negativeSearchTerm1 !== '') {
-                        position_negativeSearchTerm1 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm1_LC);
-                    } else{
-                        position_negativeSearchTerm1 = -2;
-                    }
-
-                    if(searchData[i].negativeSearchTerm2 !== '') {
-                        position_negativeSearchTerm2 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm2_LC);
-                    } else{
-                        position_negativeSearchTerm2 = -2;
-                    }
-
-                    if(searchData[i].negativeSearchTerm3 !== '') {
-                        position_negativeSearchTerm3 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm3_LC);
-                    } else{
-                        position_negativeSearchTerm3 = -2;
-                    }
-
-                    if(searchData[i].negativeSearchTerm4 !== '') {
-                        position_negativeSearchTerm4 = pageElements.productNames[j].indexOf(searchData[i].negativeSearchTerm4_LC);
-                    } else{
-                        position_negativeSearchTerm4 = -2;
+                    // negative search terms
+                    for(b = 0; b < searchData[i].negativeSearchTermsArray.length; b++){
+                        if(searchData[i].negativeSearchTermsArray[b] !== '') {
+                            if(new RegExp('\\b' + searchData[i].negativeSearchTermsArray[b] + '\\b','i').test(pageElements.productNames[j])){
+                                negativeSearchTermPositionsArray[b] = 1;
+                            }
+                        } else {
+                            negativeSearchTermPositionsArray[b] = -2;
+                        }
                     }
 
                     /* Secondly, check whether we have a match on sex */
@@ -2441,59 +2431,66 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
                     foundThisItemInThisElement = false;
                     excludeThisItemInThisElement = false;
 
-                    // Logic depends on whether searchProdcut is set to OR conditions or AND conditions
+                    // Logic depends on whether searchProduct is set to OR conditions or AND conditions
                     // We've set our position vars to -2 if the searchProduct didn't have a searchTerm entered.
                     // This way we can ignore blank values for AND (i.e. a product with all blank values will always return)
                     // and take them into account for OR (i.e. a product with one blank value will NOT always return!)
+
+                    // AND condition, positive search terms
                     if(searchData[i].andOr === 'AND') {
-                        if((position_brand > -1      || position_brand === -2)          &&
-                           ((position_searchTerm1 > -1 || position_searchTerm1 === -2)  &&
-                            (position_searchTerm2 > -1 || position_searchTerm2 === -2)  &&
-                            (position_searchTerm3 > -1 || position_searchTerm3 === -2)  &&
-                            (position_searchTerm4 > -1 || position_searchTerm4 === -2)  &&
-                            (position_searchTerm5 > -1 || position_searchTerm5 === -2)  &&
-                            (position_searchTerm6 > -1 || position_searchTerm6 === -2)  &&
-                            (position_searchTerm7 > -1 || position_searchTerm7 === -2)) && matchedSex) {
+                        var searchTermsMatch_AND = true;
+                        for(a = 0; a < searchTermPositionsArray.length; a++){
+                            if(searchTermPositionsArray[a] === -1){
+                                searchTermsMatch_AND = false;
+                            }
+                        }
 
+                        if(searchTermsMatch_AND && (position_brand > -1 || position_brand === -2) && matchedSex) {
                             foundThisItemInThisElement = true;
-
                         }
                     }
-                    // For our negative AND search, it's just like above except that if they are all blank we don't want to exclude
-                    // the searchProduct (because negativeSearchTerms are an optional feature)
+
+                    // AND condition, negative search terms //
                     if(searchData[i].negativeAndOr === 'AND') {
-
-                        if(((position_negativeSearchTerm1 > -1 || position_negativeSearchTerm1 === -2)  &&
-                            (position_negativeSearchTerm2 > -1 || position_negativeSearchTerm2 === -2)  &&
-                            (position_negativeSearchTerm3 > -1 || position_negativeSearchTerm3 === -2)  &&
-                            (position_negativeSearchTerm4 > -1 || position_negativeSearchTerm4 === -2)) &&
-                           !(position_negativeSearchTerm1 === -2 &&
-                             position_negativeSearchTerm2 === -2 &&
-                             position_negativeSearchTerm3 === -2 &&
-                             position_negativeSearchTerm4 === -2)) {
-
-                            excludeThisItemInThisElement = true;
+                        var negativeSearchTermsMatch_AND = true, negativeSearchTermsMatch_AND_allBlank = true;
+                        for(b = 0; b < negativeSearchTermPositionsArray.length; b++){
+                            if(negativeSearchTermPositionsArray[b] === -1){
+                                negativeSearchTermsMatch_AND = false;
+                            }
+                            // It's possible they are all blank (-2), in which case, negativeSearchTermsMatch_AND will still be true.
+                            if(negativeSearchTermPositionsArray[b] !== -2){
+                                negativeSearchTermsMatch_AND_allBlank = false;
+                            }
+                        }
+                        if(negativeSearchTermsMatch_AND && !negativeSearchTermsMatch_AND_allBlank) {
+                            excludeThisItemInThisElement = false;
                         }
                     }
 
+                    // OR condition, positive search terms //
                     if(searchData[i].andOr === 'OR') {
-                        if ((position_brand > -1 || position_brand === -2) &&
-                            (position_searchTerm1 > -1 ||
-                             position_searchTerm2 > -1 ||
-                             position_searchTerm3 > -1 ||
-                             position_searchTerm4 > -1 ||
-                             position_searchTerm5 > -1 ||
-                             position_searchTerm6 > -1 ||
-                             position_searchTerm7 > -1) && matchedSex) {
+                        var searchTermsMatch_OR = false;
+                        for(a = 0; a < searchTermPositionsArray.length; a++){
+                            if(searchTermPositionsArray[a] > -1 ){
+                                searchTermsMatch_OR = true;
+                            }
+                        }
+
+                        if (searchTermsMatch_OR && (position_brand > -1 || position_brand === -2) && matchedSex) {
                             foundThisItemInThisElement = true;
                         }
                     }
 
+                    // OR condition, negative search terms //
                     if(searchData[i].negativeAndOr === 'OR') {
-                        if((position_negativeSearchTerm1 > -1 ||
-                            position_negativeSearchTerm2 > -1 ||
-                            position_negativeSearchTerm3 > -1 ||
-                            position_negativeSearchTerm4 > -1)) {
+                        var negativeSearchTermsMatch_OR = false;
+                        for(b = 0; b < negativeSearchTermPositionsArray.length; b++){
+                            if(negativeSearchTermPositionsArray[b] > -1 ){
+                                negativeSearchTermsMatch_OR = true;
+                            }
+                        }
+
+                        if(negativeSearchTermsMatch_OR) {
                                 excludeThisItemInThisElement = true;
                         }
                     }

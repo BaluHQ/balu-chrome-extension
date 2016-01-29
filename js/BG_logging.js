@@ -211,7 +211,7 @@ function userLog(tabId, eventName, data) {
             break;
 
 
-            case ('MANUAL_SEARCH' || 'MANUAL_SEARCH_EMPTY_STRING'):
+            case ('MANUAL_SEARCH' || 'MANUAL_SEARCH_EMPTY_STRING' || 'MANUAL_SEARCH_NO_RESULTS'):
 
                 var UserLog_ManualSearch = Parse.Object.extend("UserLog_ManualSearch");
                 var userLog_ManualSearch = new UserLog_ManualSearch();

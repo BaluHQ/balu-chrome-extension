@@ -170,7 +170,7 @@ function buildPopupHTML(){
                 lvHtmlString += '  <div class="small-12 columns header">';
                 lvHtmlString += '    <div class="row collapse">';
                 lvHtmlString += '      <div class="small-6 columns">';
-                lvHtmlString += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius">';
+                lvHtmlString += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius" autofocus>';
                 lvHtmlString += '      </div>';
                 lvHtmlString += '      <div class="small-2 column text-center">';
                 lvHtmlString += '        <a id="manualSearchSubmit_icon" class="button postfix searchLinkIconPopup radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
@@ -191,8 +191,38 @@ function buildPopupHTML(){
              *************************************************************/
 
             var testFeedbackText = '';
+
+            testFeedbackText += '<div class="row popupFeedbackRow_title">';
+            testFeedbackText += '  <div class="small-12 columns">';
+            testFeedbackText += '    <div id="testFeedback" class="testFeedbackText">Balu not getting its recommendations right? Let us know...</div><br />';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '</div>';
+            testFeedbackText += '<div class="row popupFeedbackRow">';
+            testFeedbackText += '  <div class="small-4 sidebarFeedbackColumn columns">';
+            testFeedbackText += '    <a id="btsMissingRecs_a"><i id="btsMissingRecs_icon" class="fi-page-delete feedbackIcon"></i></a>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '  <div class="small-4 sidebarFeedbackColumn columns">';
+            testFeedbackText += '    <a id="btsFalsePositives_a"><i id="btsFalsePositives_icon" class="fi-page-multiple feedbackIcon"></i></a>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '  <div class="small-4 sidebarFeedbackColumn columns">';
+            testFeedbackText += '    <a id="btsBangOn_a"><i id="btsBangOn_icon" class="fi-check feedbackIcon"></i></a>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '</div>';
+            testFeedbackText += '<div class="row popupFeedbackRow_captions">';
+            testFeedbackText += '  <div class="small-4 sidebarFeedbackColumn columns">';
+            testFeedbackText += '    <span>Missing recommendations</span>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '  <div class="small-4 sidebarFeedbackColumn columns">';
+            testFeedbackText += '    <span>False positives</span>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '  <div class="small-4 sidebarFeedbackColumn columns">';
+            testFeedbackText += '    <span>Bang on</span>';
+            testFeedbackText += '  </div>';
+            testFeedbackText += '</div>';
+
+            /*
             testFeedbackText += '<div id="testFeedbackContainer" class="testFeedbackContainer">';
-            testFeedbackText += '  <div id="testFeedback" class="testFeedbackText"><b>Balu not getting its recommendations right? <a id="bts_letUsKnow">Let us know</a></b></div><br />';
+
             testFeedbackText += '  <div id="testFeedbackLinks" class="testFeedbackText" hidden>';
             testFeedbackText +=     '- <a id="bts_missingRecs">I\'m not seeing the recommendations I expect</a><br />';
             testFeedbackText +=     '- <a id="bts_falsePositives">I\'m seeing products that don\'t make sense</a><br />';
@@ -200,6 +230,7 @@ function buildPopupHTML(){
             testFeedbackText += '  </div>';
             testFeedbackText += '  <div id="testFeedbackThanks" class="testFeedbackText" hidden>Thanks!</div>';
             testFeedbackText += '</div>';
+            */
 
             // Is the active tab amazon? We only have a website object in gvTabs if it's an active website
             var amazonTipsString = '';
@@ -272,11 +303,10 @@ function buildPopupHTML(){
                 document.getElementById("fieldManualSearch").addEventListener('keydown', manualSearch_keydown_listener);
                 document.getElementById("showOptionsPageWindow_icon").addEventListener('click',showOptionsPageWindow_listener);
                 document.getElementById("showUserSubmittedRecWindow_icon").addEventListener('click',showUserSubmittedRecWindow_listener);
-                document.getElementById("bts_letUsKnow").addEventListener('click',showBTSfeedbackLinks_listener);
-                document.getElementById("bts_missingRecs").addEventListener('click',btsMissingRecs_listener);
-                document.getElementById("bts_falsePositives").addEventListener('click',btsFalsePositives_listener);
-                document.getElementById("bts_bangOn").addEventListener('click',btsBangOn_listener);
 
+                document.getElementById('btsMissingRecs_a').addEventListener('click',btsMissingRecs_listener);
+                document.getElementById('btsFalsePositives_a').addEventListener('click',btsFalsePositives_listener);
+                document.getElementById('btsBangOn_a').addEventListener('click',btsBangOn_listener);
             }
             if (!isWebsiteOn){
                 document.getElementById('showUserSubmittedWebsiteRecWindow_link').addEventListener('click',showUserSubmittedWebsiteRecWindow_listener);
@@ -338,26 +368,32 @@ function showBTSfeedbackLinks_listener(){
 function btsMissingRecs_listener(){
 
     log(gvScriptName_BAMain + '.btsMissingRecs_listener: Start','PROCS');
-    document.getElementById('testFeedbackLinks').style.display = 'none';
-    document.getElementById('testFeedbackThanks').style.display = 'block';
     gvBackground._addFeedbackPage('MISSING',gvActiveTab.tab.id);
+    document.getElementById('btsMissingRecs_icon').style.color = 'black';
+    document.getElementById("btsMissingRecs_a").removeEventListener("click", btsMissingRecs_listener);
+    document.getElementById("btsFalsePositives_a").removeEventListener("click", btsFalsePositives_listener);
+    document.getElementById("btsBangOn_a").removeEventListener("click", btsBangOn_listener);
 }
 
 function btsFalsePositives_listener(){
 
     log(gvScriptName_BAMain + '.btsFalsePositives_listener: Start','PROCS');
-    document.getElementById('testFeedbackLinks').style.display = 'none';
-    document.getElementById('testFeedbackThanks').style.display = 'block';
     gvBackground._addFeedbackPage('FALSE +VE',gvActiveTab.tab.id);
+    document.getElementById('btsFalsePositives_icon').style.color = 'black';
+    document.getElementById("btsMissingRecs_a").removeEventListener("click", btsMissingRecs_listener);
+    document.getElementById("btsFalsePositives_a").removeEventListener("click", btsFalsePositives_listener);
+    document.getElementById("btsBangOn_a").removeEventListener("click", btsBangOn_listener);
 
 }
 
 function btsBangOn_listener(){
 
     log(gvScriptName_BAMain + '.btsBangOn_listener: Start','PROCS');
-    document.getElementById('testFeedbackLinks').style.display = 'none';
-    document.getElementById('testFeedbackThanks').style.display = 'block';
     gvBackground._addFeedbackPage('BANG ON',gvActiveTab.tab.id);
+    document.getElementById('btsBangOn_icon').style.color = 'black';
+    document.getElementById("btsMissingRecs_a").removeEventListener("click", btsMissingRecs_listener);
+    document.getElementById("btsFalsePositives_a").removeEventListener("click", btsFalsePositives_listener);
+    document.getElementById("btsBangOn_a").removeEventListener("click", btsBangOn_listener);
 
 }
 
