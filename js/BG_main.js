@@ -66,6 +66,7 @@ var gvBlockBrandParams;
 
             if(settings.isBaluOnOrOff === 'ON') {
                 turnBaluOn(); // Split this out so we can call it separately (e.g. from options screen when turning Balu on)
+                userLog(0,'APP_LOAD');
             } else {
                 // Set the browser icon to the inactive version
                 chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});

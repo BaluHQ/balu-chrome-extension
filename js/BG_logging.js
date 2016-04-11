@@ -10,7 +10,7 @@ gvScriptName_BGLogging = 'BG_logging';
 
 // Logging control
 var gvLogErrors = true;
-var gvLogProcs  = true;
+var gvLogProcs  = false;
 var gvLogSearch = false;
 var gvLogMessg  = false;
 var gvLogDebugs = false;
@@ -60,6 +60,7 @@ function userLog(tabId, eventName, data) {
     // For the UserLog events that require no bespoke code...
     if(eventName === 'USER_LOG_IN' ||
        eventName === 'USER_LOG_OUT' ||
+       eventName === 'APP_LOAD' ||
        eventName === 'USER_PASSWORD_RESET' ||
        eventName === 'USER_SIGNED_UP' ||
        eventName === 'HIDE_SIDEBAR_REFRESH' ||
