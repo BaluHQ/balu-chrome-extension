@@ -9,7 +9,8 @@
 var gvBackground;
 var gvScriptName_BAMain = 'BA_main';
 var gvActiveTab;
-var isInvalidTab = false;
+var isTabInalidForSearch = false;
+var gvShowTestFeedbackText = false; // this is currently broken formatting!
 
 /*
  *
@@ -105,6 +106,8 @@ function buildPopupHTML(){
 
             if(gvActiveTab){
 
+                isTabInalidForSearch = false;
+
                 // to do: build generic mechanism for adding lost tabs back into gvtabs
 
                 // Determine what to display on the popup
@@ -119,13 +122,12 @@ function buildPopupHTML(){
                     isThereAnyRecommendationsForThisTab = true;
                 }
             } else {
-
+                isTabInalidForSearch = true;
             }
 
             // For all chrome:// and chrome-extension:// tabs, treat them as website off but in addition do not allow the search
-            isInvalidTab = false;
-            if(tabs[0].url.indexOf('chrome://') !== -1 || tabs[0].url.indexOf('chrome-extension://') !== -1 ) {
-                isInvalidTab = true;
+            if(tabs[0].url.indexOf('chrome://') !== -1 || tabs[0].url.indexOf('chrome-extension://') !== -1) {
+                isTabInalidForSearch = true;
                 isWebsiteOn = false;
             }
 
@@ -151,39 +153,37 @@ function buildPopupHTML(){
              * build the HTML for the top bar of the popup window *
              ******************************************************/
 
-            // For both/either not on and not logged in we just want the options link at the top of the popup
-            if(!isBaluOn || !isLoggedIn || isInvalidTab) {
-                lvHtmlString += '<div class="row">';
-                lvHtmlString += '  <div class="small-12 columns header">';
-                lvHtmlString += '    <div class="row collapse">';
-                lvHtmlString += '      <div class="small-2 small-offset-10 columns end text-center">';
-                lvHtmlString += '        <a href="' + chrome.extension.getURL("options.html") + '" target="_blank" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
-                lvHtmlString += '      </div>';
-                lvHtmlString += '    </div>';
+            // For both/either not on and not logged in, and not actie tab, we just want the settings link at the top of the popup
+            if(!isBaluOn || !isLoggedIn || isTabInalidForSearch) {
+                lvHtmlString += '<div class="row popup_topRow">';
+                lvHtmlString += '  <div class="small-12 columns text-center">';
+                lvHtmlString += '    <span class="popup_LogoHeader">BALU</span>';
                 lvHtmlString += '  </div>';
                 lvHtmlString += '</div>';
 
             // If Balu is on and the user is logged in, then display the header (manual search and options page link)
             } else {
-                lvHtmlString += '<form id="manualSearchForm">';
+                lvHtmlString += '<div class="row popup_topRow">';
+                lvHtmlString += '  <div class="small-12 columns text-center">';
+                lvHtmlString += '    <span class="popup_LogoHeader">BALU</span>';
+                lvHtmlString += '  </div>';
+                lvHtmlString += '    <span style="font-size: 25px"><i id="showOptionsPageWindow_icon" class="fi-widget popup_addUserRecIcon"></i></span>';
+                lvHtmlString += '    <span style="font-size: 25px"><i id="showUserSubmittedRecWindow_icon" class="fi-plus popup_settingsCogIcon"></i></span>';
+                lvHtmlString += '</div>';
                 lvHtmlString += '<div class="row">';
-                lvHtmlString += '  <div class="small-12 columns header">';
-                lvHtmlString += '    <div class="row collapse">';
-                lvHtmlString += '      <div class="small-6 columns">';
-                lvHtmlString += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius" autofocus>';
-                lvHtmlString += '      </div>';
-                lvHtmlString += '      <div class="small-2 column text-center">';
-                lvHtmlString += '        <a id="manualSearchSubmit_icon" class="button postfix searchLinkIconPopup radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
-                lvHtmlString += '      </div>';
-                lvHtmlString += '      <div class="small-2 column text-center">';
-                lvHtmlString += '        <a id="showOptionsPageWindow_icon" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
-                lvHtmlString += '      </div>';
-                lvHtmlString += '      <div class="small-2 column text-center">';
-                lvHtmlString += '        <a id="showUserSubmittedRecWindow_icon" class="button postfix accountLinkIcon"><i class="fi-plus addNewIcon"></i></a>';
-                lvHtmlString += '      </div>';
+                lvHtmlString += '  <div class="small-12 columns end text-center">';
+                lvHtmlString += '    <div class="popup_manualSearchDiv">';
+                lvHtmlString += '      <i id="manualSearchSubmit_icon" class="fi-magnifying-glass manualSearchIcon_popup"></i>';
+                lvHtmlString += '      <input id="fieldManualSearch" class="manualSearchField_popup" />';
                 lvHtmlString += '    </div>';
                 lvHtmlString += '  </div>';
                 lvHtmlString += '</div>';
+
+/*
+                lvHtmlString += '  <div class="small-2 columns end text-center">';
+                lvHtmlString += '    <a id="showUserSubmittedRecWindow_icon" class="button postfix accountLinkIcon"><i class="fi-plus addNewIcon"></i></a>';
+                lvHtmlString += '  </div>';
+*/
             }
 
             /*************************************************************
@@ -220,6 +220,10 @@ function buildPopupHTML(){
             testFeedbackText += '  </div>';
             testFeedbackText += '</div>';
 
+            if(!gvShowTestFeedbackText){
+                testFeedbackText = '';
+            }
+
             /*
             testFeedbackText += '<div id="testFeedbackContainer" class="testFeedbackContainer">';
 
@@ -238,9 +242,7 @@ function buildPopupHTML(){
             if(gvActiveTab) {
                 if(gvActiveTab.website) {
                     if(gvActiveTab.website.websiteURL === 'www.amazon.co.uk'){
-                        amazonTipsString += '<br />';
-                        amazonTipsString += '<br />';
-                        amazonTipsString += '<b><u>Tips for using Balu with Amazon</u></b><br />';
+                        amazonTipsString += '<br /><br /><b style="font-size: 12px">Tips for using Balu with Amazon</b><br /><br />';
                         amazonTipsString += 'Amazon doesn\'t always do a full refresh of the page when you search, which means this Beta version of Balu doesn\'t know to refresh. We\'re working to fix this, but in the meantime just hit the refresh button on your browser if you\'re not seeing the Balu results you expect.';
                     }
                 }
@@ -249,23 +251,24 @@ function buildPopupHTML(){
             if(isThereAnErrorMessage){
                 lvHtmlString += errorMessage;
             } else
+            lvHtmlString += '<br /><br /><hr /><b style="font-size: 12px">Not seeing what you expect?</b><br /><br />';
             if(!isLoggedIn) {
-                lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the account button above and log in or create a new account.';
+                lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the settings icon above and log in or create a new account.';
             //        lvHtmlString += '<br />';
             } else
-            if(isInvalidTab) {
-                lvHtmlString += 'To search Balu, navigate to a real website (like <a href="http://www.google.com" target="_blank">Google.com</a>) and open this popup again.';
-            //    lvHtmlString += '<br />';
-            } else
             if(!isBaluOn) {
-                lvHtmlString += 'Balu is turned off. To get Balu\'s ethical recommendations while you shop click on the account button above and turn Balu back on.';
+                lvHtmlString += 'Balu is turned off. To get Balu\'s ethical recommendations while you shop click on the settings icon above and turn Balu back on.';
             //    lvHtmlString += '<br />';
             } else
             if(!gvActiveTab) {
                 lvHtmlString += 'Something\'s wrong! Can you try refreshing your page and clicking the Balu icon again? If that doesn\'t work, try restarting Chrome.<br /><br />If you\'re still having problems <a href="mailto:support@getbalu.org" target="_blank">contact us</a>.';
             } else
+            if(isTabInalidForSearch) {
+                lvHtmlString += 'To search Balu, navigate to a real website (like <a href="http://www.google.com" target="_blank">Google.com</a>) and open this popup again.';
+            //    lvHtmlString += '<br />';
+            } else
             if(!isWebsiteOn){
-                lvHtmlString += 'You can search Balu using the search box above.<br /><br /><span style="font-size: 12px">Your current website is not an active Balu website. If this is a site you think we should "turn on", please <a id="showUserSubmittedWebsiteRecWindow_link">tell us</a>.<br /><br />We are "turning on" more websites as quickly as we can; click on the account button above to see a list of current active websites.</span>';
+                lvHtmlString += 'Your current website is not an active Balu website. If this is a site you think we should "turn on", please <a id="showUserSubmittedWebsiteRecWindow_link">tell us</a>.<br /><br />We are "turning on" more websites as quickly as we can; click on the settings icon above to see a list of current active websites.';
         //        lvHtmlString += '<br />';
             } else
             // If we have forced the sidebar on because of a temp hide, then close the popup - we've done what we need to do with it.
@@ -298,17 +301,19 @@ function buildPopupHTML(){
             var lvContentDiv = document.getElementById("contentDiv");
             lvContentDiv.innerHTML += lvHtmlString;
 
-            if(isBaluOn && isLoggedIn && !isInvalidTab && gvActiveTab) {
-                document.getElementById("manualSearchSubmit_icon").addEventListener('click', manualSearchSubmit_listener);
+            if(isBaluOn && isLoggedIn && !isTabInalidForSearch && gvActiveTab) {
+                //document.getElementById("manualSearchSubmit_icon").addEventListener('click', manualSearchSubmit_listener);
                 document.getElementById("fieldManualSearch").addEventListener('keydown', manualSearch_keydown_listener);
                 document.getElementById("showOptionsPageWindow_icon").addEventListener('click',showOptionsPageWindow_listener);
                 document.getElementById("showUserSubmittedRecWindow_icon").addEventListener('click',showUserSubmittedRecWindow_listener);
 
-                document.getElementById('btsMissingRecs_a').addEventListener('click',btsMissingRecs_listener);
-                document.getElementById('btsFalsePositives_a').addEventListener('click',btsFalsePositives_listener);
-                document.getElementById('btsBangOn_a').addEventListener('click',btsBangOn_listener);
+                if(gvShowTestFeedbackText) {
+                    document.getElementById('btsMissingRecs_a').addEventListener('click',btsMissingRecs_listener);
+                    document.getElementById('btsFalsePositives_a').addEventListener('click',btsFalsePositives_listener);
+                    document.getElementById('btsBangOn_a').addEventListener('click',btsBangOn_listener);
+                }
             }
-            if (!isWebsiteOn){
+            if (gvActiveTab && !isWebsiteOn){
                 document.getElementById('showUserSubmittedWebsiteRecWindow_link').addEventListener('click',showUserSubmittedWebsiteRecWindow_listener);
             }
         }));

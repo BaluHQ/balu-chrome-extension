@@ -50,7 +50,7 @@ function createOptionsPage(){
         userFormHTML += '<br />';
         userFormHTML += '<div class="row">';
         userFormHTML += '  <div class="large-8 columns">';
-        userFormHTML += '    <span style="font-size: 12px">' + userDetails.email + '</span><br />';
+        userFormHTML += '    <span style="font-size: 12px">Logged in as: ' + userDetails.email + '</span><br />';
         userFormHTML += '    <a id="logOutButton" class="button radius tiny">Log Out</a>';
         userFormHTML += '    <a id="resetPasswordButton" class="button radius tiny">Reset Password</a>';
         userFormHTML += '   <span style="visibility: hidden" id="resetPasswordEmailConfirmation">Password reset email sent.</span>';

@@ -1,7 +1,3 @@
-.searchIcon {
-  font-size: 25px;
-  color: orange;
-}
 
 .searchLinkIconPopup {
     padding-top: 0rem;
@@ -31,12 +27,12 @@ accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLi
 
 .minimiseBaluIcon {
     font-size: 20px;
-    color: #A0522D;
+    color: #6bd3c2; /* Balu Green */
 }
 
 .brandSpielIcon {
     font-size: 17px;
-    color: #A0522D;
+    color: #706f6f; /* Balu grey */
 }
 
 .joyrideIcon {
@@ -83,7 +79,7 @@ accountLinkIcon:hover, accountLinkIcon:focus, .accountLinkIcon:hover, .accountLi
 
 .blockedBrand_notBlocked {
     font-size: 15px;
-    color: #C69781;
+    color:  #706f6f; /* Balu grey */
 }
 .unBlockBrandTickIcon {
     font-size: 15px;

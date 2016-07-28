@@ -1,6 +1,55 @@
-/********
- * Body *
- ********/
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans');
+
+/***********
+ * Sidebar *
+ ***********/
+
+ .sidebarBody {
+   height: 99%; /* prevents scroll bar appearing until needed */
+   width: 99%;
+   background-color: #706f6f; /* Balu grey */
+   background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
+   background-repeat: repeat-y;
+ }
+
+.sidebar_topRow {
+    margin-top: 2px;
+}
+
+.sidebarLogoHeader {
+    font-family: Noto Sans;
+    font-weight: bold;
+    font-size: 45px;
+    color: #6bd3c2;  /* Balu Green */
+}
+
+.settingsCogIcon {
+    float:    right;
+    right:    12;
+    position: absolute;
+    top:      15px;
+    color:    #3C3B3B; /* darker than Balu Grey */
+    /* border-radius: 50%; */
+    /* border-color: black; */
+    /* border: aquamarine; */
+    font-size: 20;
+}
+
+.sidebar_searchBarRow {
+    margin-top: 5px;
+}
+
+.altProductProductName {
+    color: #3C3B3B; /* darker than Balu Grey */
+}
+
+.findOutMoreButton, .findOutMoreButton:hover {
+     color: #6bd3c2;
+     font-family: Noto Sans;
+     text-transform: uppercase;
+     font-weight: bolder;
+     font-size: 11px;
+}
 
  .testFeedbackContainer {
      position: fixed;
@@ -11,26 +60,121 @@
     font-size: 9px;
 }
 
+
 .brandSpielToolTips {width: 250px}
 
 .custom .joyride-nub {
     visibility: hidden;
 }
-.iframeBody {
-  height: 99%; /* prevents scroll bar appearing until needed */
-  width: 99%;
-  background-color: #f7f9f9;
+
+.manualSearchDiv {
+    position: relative;
+    margin-bottom: 5px;
 }
+
+.manualSearchField {
+    text-indent: 10px;
+    padding-right: 30px;
+    background-color: #3C3B3B; /* darker than Balu Grey */
+    color: #6bd3c2;  /* Balu Green */
+    width: 270px;
+    height: 32px;
+    border-style: none;
+}
+
+.manualSearchIcon {
+    position: absolute;
+    font-size: 18px;
+    top: 7px;
+    right: 20px;
+    color: #6bd3c2; /* Balu Green. Or try white? */
+    transform: scaleX(-1);
+}
+
+/*********
+ * Popup *
+ *********/
 
 .popupBody {
     margin-top: 18px;
     margin-left: 18px;
     margin-right: 18px;
-
     min-width: 300px;
-
     overflow: hidden;
+    font-family: Noto Sans;
+    font-size: 11px;
+    background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
+    background-repeat: repeat-y;
 }
+
+
+.popup_topRow {
+    margin-top: 2px;
+}
+
+.popup_LogoHeader {
+    font-family: Noto Sans;
+    font-weight: bold;
+    font-size: 45px;
+    color: #6bd3c2;  /* Balu Green */
+}
+
+.popup_settingsCogIcon {
+    color: #a6a6a6;
+    font-size: 20;
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+}
+
+.popup_addUserRecIcon {
+    color: #a6a6a6;
+    font-size: 20;
+    position: absolute;
+    right: 40px;
+    cursor: pointer;
+}
+
+.popup_manualSearchDiv {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+
+.manualSearchField_popup {
+    text-indent: 10px;
+    padding-right: 30px;
+    background-color: #3C3B3B; /* darker than Balu Grey */
+    color: #6bd3c2;  /* Balu Green */
+    height: 32px;
+    border-style: none;
+    width: 200px;
+}
+
+.manualSearchIcon_popup {
+    position: absolute;
+    font-size: 18px;
+    top: 3px;
+    right: 58px;
+    color: #6bd3c2; /* Balu Green */
+    transform: scaleX(-1);
+}
+
+.sideBarFreeText{
+    color: #3C3B3B; /* darker than Balu Grey */
+    font-family: Noto sans;
+    background-color: white;
+    padding: 10px;
+}
+.sideBarFreeText > a {
+    color: #3C3B3B; /* darker than Balu Grey */
+    
+}
+
+/*****************
+ * Uncategorised *
+ *****************/
+
 .header {
     margin-left: 2px;
 }
@@ -58,7 +202,7 @@
 .brandSpielHidden {
     visibility: hidden;
 }
-/* .... */
+
 
 .column,
 .columns {
@@ -80,11 +224,11 @@
   background-color: white;
   border-top-style: solid;
   border-top-width: 1px;
-  border-top-color: #808080;
+  border-top-color: #3C3B3B; /* darker than Balu Grey */
+  background-color: #706f6f; /* Balu Grey */
 }
 
 .bottomNavDiv{
-    background-color: #DCDCDC;
     height: 40px;
     margin-bottom: 2px;
 }
@@ -96,8 +240,13 @@
 }
 
 .footerText {
-    background-color: white;
+    color: white;
     font-size: 10px;
+    color: #6bd3c2; /* Balu Green */
+}
+
+.footerText > a {
+    color: #6bd3c2; /* Balu Green */
 }
 
 .contentDiv {
@@ -126,10 +275,11 @@
 }
 
 .origProductHeaderStripText{
-    padding-left: 5px;
-    font-size: 13px;
-    font-weight: bold;
-    color: #A0522D;
+    font-size: 11px;
+    font-weight: bolder;
+    text-transform: uppercase;
+    font-family: Noto Sans;
+    color: #6bd3c2;  /* Balu Green */
     position: relative;
 }
 
@@ -157,8 +307,17 @@
 }
 
 .altProductBlock {
-    padding: 5px 0px;
+    padding: 5px 5px;
     position: relative;
+    background-color: white;
+    margin-bottom: 15px;
+    margin-top: 7px;
+}
+
+.altProductBrandName {
+    color: #3C3B3B; /* darker than Balu Grey */
+    font-weight: bolder;
+    font-family: Noto Sans;
 }
 
 .altProductLink {
@@ -181,15 +340,22 @@
 
 .altText-top {
     padding-left: 5px;
+    padding-right: 15px;
 }
 
 .altText-bottom {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    text-align: right;
-    font-size: 12px;
-    color: orange;
+    width: 143px;
+    color: #6bd3c2;
+    border-color: #6bd3c2;
+    border-style: solid;
+    border-width: 1px;
+    text-align: center;
+    height: 30px;
+    line-height: 30px;
+    background-color: white;
 }
 
 
@@ -241,7 +407,8 @@
   height: 40px; /*63px;*/
   margin-top: 5px;
   padding-top: 5px;
-  background-color: #f7f9f9;
+  padding-bottom: 15px;
+  background-color: #706f6f;
 }
 
 .popupFeedbackRow {
@@ -251,6 +418,7 @@
   height: 40px; /*63px;*/
   margin-top: 5px;
   padding-top: 5px;
+  padding-bottom: 15px;
 }
 
 .popupFeedbackRow_title {
@@ -260,6 +428,7 @@
     height: 10px; /*63px;*/
     margin-top: 5px;
     padding-top: 5px;
+    padding-bottom: 15px;
     font-weight: bold;
 }
 
@@ -270,6 +439,7 @@
     height: 5px;
     margin-top: 5px;
     padding-top: 5px;
+    padding-bottom: 15px;
     font-size: 9px;
     font-style: italic;
 }

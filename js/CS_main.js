@@ -46,12 +46,14 @@ function searchTrackedTabForRecommendation(trackedTab){
 
     log(gvScriptName_CSMain + '.searchTrackedTabForRecommendation: start','PROCS');
 
-    var pageText = document.body.textContent.toLowerCase();
+    if(typeof(trackedTab) !== 'undefined') {
+        var pageText = document.body.textContent.toLowerCase();
 
-    if(pageText.indexOf(trackedTab.pageConfirmationSearch.toLowerCase()) !== -1){
-        sendMessage('BG_main','pleaseRegisterTrackedTabAsOK',{trackedTab: trackedTab});
-    } else {
-        sendMessage('BG_main','pleaseRegisterTrackedTabAsProblem',{trackedTab: trackedTab});
+        if(pageText.indexOf(trackedTab.pageConfirmationSearch.toLowerCase()) !== -1){
+            sendMessage('BG_main','pleaseRegisterTrackedTabAsOK',{trackedTab: trackedTab});
+        } else {
+            sendMessage('BG_main','pleaseRegisterTrackedTabAsProblem',{trackedTab: trackedTab});
+        }
     }
 }
 
@@ -202,36 +204,35 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     var topRow = '';
 
     if(showTopRow) {
-        topRow += '<form>';
-        topRow += '<div class="row" style="margin-top: 2px;">';
-        topRow += '  <div class="small-12 columns header">';
-        topRow += '    <div class="row collapse">';
-        topRow += '      <div id="joyrideStop4" class="small-6 columns">';
+
+        var searchTermString;
         if(searchTerm){
-            topRow += '        <input type="text" id="fieldManualSearch" value="' + searchTerm + '" placeholder="Search" class="radius">';
-        } else{
-            topRow += '        <input type="text" id="fieldManualSearch" placeholder="Search" class="radius">';
+            searchTermString = 'value="' + searchTerm + '"';
         }
-        topRow += '      </div>';
-        topRow += '      <div class="small-2 column text-center">';
-        topRow += '        <a id="manualSearchSubmit_icon" class="button postfix searchLinkIcon radius"><i class="fi-magnifying-glass searchIcon"></i></a>';
-        topRow += '      </div>';
-        topRow += '      <div class="small-2 column text-center">';
-        topRow += '        <span title="Account settings">';
-        topRow += '        <a id="showOptionsPageWindow_icon" class="button postfix accountLinkIcon"><i class="fi-torso accountIcon"></i></a>';
-        topRow += '      </div>';
-        topRow += '      <div class="small-2 columns text-center">';
-        topRow += '        <span title="Add your favourite ethical retailers to Balu">';
-        topRow += '          <a id="showUserSubmittedRecWindow_icon"><i class="fi-plus addNewIcon" id="joyrideStop5"></i></a>';
-        topRow += '        </span>';
+        else {
+            searchTermString = '';
+        }
+
+        topRow += '<form>';
+        topRow += '  <div class="row sidebar_topRow">';
+        topRow += '    <div class="small-12 columns text-center">';
+        topRow += '      <span class="sidebarLogoHeader">BALU</span>';
+        topRow += '      <a href="' + chrome.extension.getURL("options.html") + '" target="_blank"><i id="settingsCog_icon" class="fi-widget settingsCogIcon"></i></a>';
+        topRow += '    </div>';
+        topRow += '  </div>'; // Top row
+        topRow += '  <div class="row sidebar_searchBarRow">';
+        topRow += '    <div class="small-12 column text-center manualSearchDiv">';
+        topRow += '      <div class="manualSearchDiv">';
+        topRow += '        <i id="manualSearchSubmit_icon" class="fi-magnifying-glass manualSearchIcon"></i>';
+        topRow += '        <input id="fieldManualSearch" ' + searchTermString + ' class="manualSearchField" />';
         topRow += '      </div>';
         topRow += '    </div>';
         topRow += '  </div>';
         topRow += '</div>';
         topRow += '</form>';
 
-        // If our search reesults have triggered a banner, display it here
-
+        // If our search results have triggered a banner, display it here
+/*
         if(displayChristmasBanner){
             topRow += '<div id="banner_container" class="banner_container">';
             topRow += '  <div class="row">';
@@ -241,12 +242,14 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
             topRow += '  </div>';
             topRow += '</div>';
         }
+*/
     }
 
     var content = '<div id="contentDiv" class="contentDiv"></div>';
 
     var bottomRow = '';
 
+/*
     bottomRow += '<div class="row sidebarFeedbackRow">';
     bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
     //bottomRow += '    <i class="fi-arrow-down"></i>';
@@ -262,7 +265,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom right" data-position-at="top left">Results look all good to me!</div>';
     bottomRow += '  </div>';
     bottomRow += '</div>';
-
+*/
     bottomRow += '<div class="row footer"><div class="small-12 columns">';
 /*
     bottomRow += '<div class="row collapse">';
@@ -308,7 +311,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     bottomRow += '</div>';
 
     docBody = gvIframe.contentWindow.document.createElement('body');
-    docBody.className = 'iFrameBody';
+    docBody.className = 'sidebarBody';
 
     docBody.innerHTML  = topRow;
     docBody.innerHTML += content;
@@ -353,13 +356,13 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     if(showTopRow){
         gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
         gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
-        gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
-        gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
+        //gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
+        //gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
     }
 
-    gvIframe.contentWindow.document.getElementById('btsMissingRecs_a').addEventListener('click',btsMissingRecs_listener);
-    gvIframe.contentWindow.document.getElementById('btsFalsePositives_a').addEventListener('click',btsFalsePositives_listener);
-    gvIframe.contentWindow.document.getElementById('btsBangOn_a').addEventListener('click',btsBangOn_listener);
+    //gvIframe.contentWindow.document.getElementById('btsMissingRecs_a').addEventListener('click',btsMissingRecs_listener);
+    //gvIframe.contentWindow.document.getElementById('btsFalsePositives_a').addEventListener('click',btsFalsePositives_listener);
+    //gvIframe.contentWindow.document.getElementById('btsBangOn_a').addEventListener('click',btsBangOn_listener);
 
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRefresh_icon').addEventListener('click',hideSidebar_untilRefresh_listener);
     gvIframe.contentWindow.document.getElementById('hideSidebarUntilRestart_icon').addEventListener('click',hideSidebar_untilRestart_listener);
@@ -449,8 +452,8 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
 
     if(!recommendations || recommendations.length === 0) {
         sidebarContentHTML += '<div class="origProductBlock">';
-        sidebarContentHTML += '<p>We couldn\'t find anything. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"</p>';
-        sidebarContentHTML += '<p><b>Think we\'re missing something? Hit the plus button above and tell us about it!</b></p>';
+        sidebarContentHTML += '  <p class="sideBarFreeText">We couldn\'t find anything. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"</p>';
+        sidebarContentHTML += '  <p class="sideBarFreeText"><b>Think we\'re missing something? <a class="showUserSubmittedRecWindow_text">Tell us about it!</a></b></p>';
         sidebarContentHTML += '</div>';
     }
 
@@ -480,11 +483,13 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
             productGroupHead += '  <div class="row origProductHeaderStrip">';
             productGroupHead += '    <div class="small-8 columns origProductHeaderStripText">' + recommendations[i].productGroupName + '</div>';
             // We won't always have a whydowecare handle for manual search
+            /*
             if(recommendations[i].whyDoWeCare !== '') {
                 productGroupHead += '    <div class="small-4 columns text-right origProductHeaderStripWhyCare">';
                 productGroupHead += '      <a class="whyCare_triggers" data-whydowecare="' + recommendations[i].whyDoWeCare + '">why care?</a>';
                 productGroupHead += '    </div>';
             }
+            */
             productGroupHead += '  </div>';
             productGroupHead += '</div>';
         }
@@ -523,23 +528,36 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         if(recommendations[i].baluFavourite){
             recBlock += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
         }
-        recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        recBlock += '          <b>' + recommendations[i].brandName + '</b>';
-        recBlock += '        </a>';
+        //recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
+        recBlock += '          <span class="altProductBrandName">' + recommendations[i].brandName + '</span>';
+        //recBlock += '        </a>';
         //recBlock += '        <a class="morePlus" id="showBrand_' + recommendations[i].brandId + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '">+</a>';
-        recBlock += '        <br />';
-        recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        recBlock += '          ' + recommendations[i].productName;
-        recBlock += '        </a>';
+        //recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
+        if(recommendations[i].productGroupName !== recommendations[i].productName){
+            recBlock += '<br /><span class="altProductProductName">' + recommendations[i].productName + '</span>';
+        }
+        //recBlock += '        </a>';
         recBlock += '      </div>';
         recBlock += '      <div style="position: absolute; top: 0px; right: 0px;">';
         recBlock += '        <div class="qtip_tooltips">';
         recBlock += '          <i class="fi-info brandSpielIcon" id="joyrideStop1"></i>';
         recBlock += '        </div>';
         recBlock += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="' + recommendations[i].brandName + '">' + recommendations[i].brandSpiel + '</div>';
+        recBlock += '        <div class="qtip_tooltips">';
+        recBlock += '          <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
+        recBlock += '        </div>';
+        recBlock += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="Block brand: ' + recommendations[i].brandName + '">I don\'t want to see recommendations from this brand again</div>';
         recBlock += '      </div>';
         recBlock += '    </div>';
+
+
         recBlock += '    <div class="altText-bottom">';
+        recBlock += '      <a class="productLinks findOutMoreButton" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
+        recBlock +=         'Find Out More';
+        recBlock +=       '</a>';
+        recBlock += '    </div>';
+
+        /*
 
         // check whether this product has been voted up or down by the user (passed in to the rec array by getRecommendations) and
         // style the arrows accordingly
@@ -560,9 +578,11 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         recBlock += '      <a class="voteUp_icons" id="voteUp_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Like this recommendation"><i class="fi-like ' + voteUpClass + '" id="voteUpRec_upArrow_' + recommendations[i].recommendationId + '"></i></a>';
         recBlock += '      <a class="voteDown_icons" id="voteDown_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Dislike this recommendation"><i class="fi-dislike ' + voteDownClass + '" id="voteDownRec_downArrow_' + recommendations[i].recommendationId + '"></i></a>';
         recBlock += '      <a class="twitterShareIcons" data-tweetcontent="' + tweetContent + '" title="Share on Twitter"><i class="fi-social-twitter twitterIcon"></i></a>';
-        recBlock += '      <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '" title="I don\'t want to see this brand again"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
+
+
         //recBlock += '      <a href="#" title="Share..."><i class="fi-share altProdIcon"></i></a>';
         recBlock += '    </div>';
+        */
         recBlock += '  </div>';
 
         if (!lastInProductGroup) {
@@ -579,7 +599,7 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
             sidebarContentHTML += productGroupHead;
             sidebarContentHTML += notVotedDownRecs;
             sidebarContentHTML += votedDownRecs;
-            sidebarContentHTML += '  <hr class="hrClass"/>';
+            //sidebarContentHTML += '  <hr class="hrClass"/>';
             //sidebarContentHTML += '  <label style="font-size: 11px">Know of other great retailers of <i>' + recommendations[i].productGroupName + '</i>?<br />Get them <a class="showUserSubmittedRecWindow_text">added to Balu</a> so everybody can find them! </label>';
             sidebarContentHTML += '</div>';
 
@@ -602,10 +622,10 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
     }
 
     // Why care listeners
-    var whyCareLinks = gvIframe.contentWindow.document.getElementsByClassName("whyCare_triggers");
-    for(var a = 0; a < whyCareLinks.length; a++) {
-        whyCareLinks[a].addEventListener('click',showWhyDoWeCareWindow_listener);
-    }
+    //var whyCareLinks = gvIframe.contentWindow.document.getElementsByClassName("whyCare_triggers");
+    //for(var a = 0; a < whyCareLinks.length; a++) {
+    //    whyCareLinks[a].addEventListener('click',showWhyDoWeCareWindow_listener);
+    //}
 
 
     // Vote up/down listeners
