@@ -153,8 +153,8 @@ function buildPopupHTML(){
              * build the HTML for the top bar of the popup window *
              ******************************************************/
 
-            // For both/either not on and not logged in, and not actie tab, we just want the settings link at the top of the popup
-            if(!isBaluOn || !isLoggedIn || isTabInalidForSearch) {
+            // For both/either not on and not logged in, and not active tab, we just want the settings link at the top of the popup
+        /*    if(!isBaluOn || !isLoggedIn || isTabInalidForSearch) {
                 lvHtmlString += '<div class="row popup_topRow">';
                 lvHtmlString += '  <div class="small-12 columns text-center">';
                 lvHtmlString += '    <span class="popup_LogoHeader">BALU</span>';
@@ -162,13 +162,15 @@ function buildPopupHTML(){
                 lvHtmlString += '</div>';
 
             // If Balu is on and the user is logged in, then display the header (manual search and options page link)
-            } else {
+        } else {*/
                 lvHtmlString += '<div class="row popup_topRow">';
                 lvHtmlString += '  <div class="small-12 columns text-center">';
                 lvHtmlString += '    <span class="popup_LogoHeader">BALU</span>';
                 lvHtmlString += '  </div>';
                 lvHtmlString += '    <span style="font-size: 25px"><i id="showOptionsPageWindow_icon" class="fi-widget popup_addUserRecIcon"></i></span>';
-                lvHtmlString += '    <span style="font-size: 25px"><i id="showUserSubmittedRecWindow_icon" class="fi-plus popup_settingsCogIcon"></i></span>';
+                if(isLoggedIn && isBaluOn){
+                    lvHtmlString += '    <span style="font-size: 25px"><i id="showUserSubmittedRecWindow_icon" class="fi-plus popup_settingsCogIcon"></i></span>';
+                }
                 lvHtmlString += '</div>';
                 lvHtmlString += '<div class="row">';
                 lvHtmlString += '  <div class="small-12 columns end text-center">';
@@ -184,7 +186,7 @@ function buildPopupHTML(){
                 lvHtmlString += '    <a id="showUserSubmittedRecWindow_icon" class="button postfix accountLinkIcon"><i class="fi-plus addNewIcon"></i></a>';
                 lvHtmlString += '  </div>';
 */
-            }
+        /*    } */
 
             /*************************************************************
              * build the HTML for the bottom section of the popup window *
@@ -301,10 +303,13 @@ function buildPopupHTML(){
             var lvContentDiv = document.getElementById("contentDiv");
             lvContentDiv.innerHTML += lvHtmlString;
 
+            document.getElementById("showOptionsPageWindow_icon").addEventListener('click',showOptionsPageWindow_listener);
+
+            if(isBaluOn){
+                document.getElementById("fieldManualSearch").addEventListener('keydown', manualSearch_keydown_listener);
+            }
             if(isBaluOn && isLoggedIn && !isTabInalidForSearch && gvActiveTab) {
                 //document.getElementById("manualSearchSubmit_icon").addEventListener('click', manualSearchSubmit_listener);
-                document.getElementById("fieldManualSearch").addEventListener('keydown', manualSearch_keydown_listener);
-                document.getElementById("showOptionsPageWindow_icon").addEventListener('click',showOptionsPageWindow_listener);
                 document.getElementById("showUserSubmittedRecWindow_icon").addEventListener('click',showUserSubmittedRecWindow_listener);
 
                 if(gvShowTestFeedbackText) {
@@ -343,9 +348,13 @@ function manualSearchSubmit_listener() {
 
 function showOptionsPageWindow_listener() {
 
-    log(gvScriptName_BAMain + '.showOptionsPageWindow_listener: Start','PROCS');
+    log(gvScriptName_BAMain + '.showOptionsPageWindow_listener: Start: ','PROCS');
+    if(typeof(gvActiveTab) === 'undefined'){
+        gvBackground.showOptionsPageWindow(null);
+    } else {
+        gvBackground.showOptionsPageWindow(gvActiveTab.tab.id);
+    }
 
-    gvBackground.showOptionsPageWindow(gvActiveTab.tab.id);
 }
 
 function showUserSubmittedRecWindow_listener() {

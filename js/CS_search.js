@@ -1337,31 +1337,29 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
             // has a class of category_products
 
             var topshop_pn_results = null;
-            if($(pvDOM).find('#wrapper_page_content').hasClass('category_products')){
-                topshop_pn_results = pvDOM.getElementById('wrapper_page_content');
-            }
+            topshop_pn_results = pvDOM.getElementsByClassName('products');
 
-            if(topshop_pn_results !== null){
-                var topshop_pn_results_productDescriptions = topshop_pn_results.getElementsByClassName('product_description');
+            if(topshop_pn_results.length > 0){
+                var topshop_pn_results_productDescriptions = topshop_pn_results[0].getElementsByClassName('product_name');
                 for(i = 0; i < topshop_pn_results_productDescriptions.length; i++){
                     lvProductNames.push(topshop_pn_results_productDescriptions[i].textContent.toLowerCase().trim());
                 }
                 if(topshop_pn_results_productDescriptions.length > 0){
-                    logMessage_extra += '  Search Results: found in id="wrapper_page_content" (inside id="wrapper_page_content" div with class="category_products")' + '\n';
+                    logMessage_extra += '  Search Results: found in class="products" (inside id="wrapper_page_content" div with class="category_products")' + '\n';
                     lvFoundResults = true;
                 }
             }
 
             if(!lvFoundResults){
-                logMessage_extra += '  Search Results: FAILED to find in id="wrapper_page_content" (inside id="wrapper_page_content" div with class="category_products")' + '\n';
+                logMessage_extra += '  Search Results: FAILED to find in id="wrapper_content" (inside id="wrapper_content" div with class="results_container")' + '\n';
             }
 
             /* Product page */
 
             if(!lvFoundResults){
-                var topshop_pn_prod = pvDOM.getElementsByClassName('product_column_2');
+                var topshop_pn_prod = pvDOM.getElementsByClassName('product_details');
                 if(topshop_pn_prod.length > 0){
-                    logMessage_extra += '  Product Page: found in class="product_column_2"' + '\n';
+                    logMessage_extra += '  Product Page: found in class="product_details"' + '\n';
                     var topshop_pn_prod_1hs = topshop_pn_prod[0].getElementsByTagName('h1');
                     if(topshop_pn_prod_1hs.length > 0) {
                         lvProductNames.push(topshop_pn_prod_1hs[0].textContent.toLowerCase().trim());
@@ -1554,7 +1552,7 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
 
             /* Breadcrumbs */
 
-            var waitrose_dep_bc = pvDOM.querySelector('.breadcrumbs');
+            var waitrose_dep_bc = pvDOM.querySelector('.breadcrumb');
             if(waitrose_dep_bc !== null){
                 var waitrose_dep_bc_listItems = waitrose_dep_bc.getElementsByTagName('li');
                 for(i = 0; i < waitrose_dep_bc_listItems.length; i++) {
@@ -1565,7 +1563,7 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                     }
                 }
                 if(lvFoundDepartments){
-                    logMessage_extra += '  Departments: found in class="breadcrumbs"' + '\n';
+                    logMessage_extra += '  Departments: found in class="breadcrumb"' + '\n';
                 }
             }
             if(!lvFoundDepartments) {
@@ -2168,10 +2166,12 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
              foundMen = true;
          }
          // Next, check the URL for a sex
-         if (pageElements.URLText.indexOf('women') > -1 || pageElements.URLText.indexOf('female') > -1) {
+         if ((new RegExp('\\b' + 'women' + '\\b','i').test(pageElements.URLText)) ||
+                    (new RegExp('\\b' + 'female' + '\\b','i').test(pageElements.URLText))){
              logMessage += '    Identified a women filter in URL' + '\n';
              foundWomen = true;
-         } else if (pageElements.URLText.indexOf('men') > -1 || pageElements.URLText.indexOf('male') > -1) {
+         } else if ((new RegExp('\\b' + 'men' + '\\b','i').test(pageElements.URLText)) ||
+                    (new RegExp('\\b' + 'male' + '\\b','i').test(pageElements.URLText))){
              logMessage += '    Identified a men filter in URL' + '\n';
              foundMen = true;
          }
@@ -2179,17 +2179,17 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
          // Next, look in the breadcrumbs in the hope that the user has navigated to the item via a men/women category or included sex in their search term
          if (pageElements.breadcrumbs) {
              if(!foundMen && !foundWomen) {
-                 if (pageElements.breadcrumbs.indexOf('women') > -1 ||
-                     pageElements.breadcrumbs.indexOf('woman') > -1 ||
-                     pageElements.breadcrumbs.indexOf('lady') > -1 ||
-                     pageElements.breadcrumbs.indexOf('female') > -1) {
+                 if ((new RegExp('\\b' + 'women' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                     (new RegExp('\\b' + 'woman' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                     (new RegExp('\\b' + 'lady' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                     (new RegExp('\\b' + 'female' + '\\b','i').test(pageElements.breadcrumbs))) {
 
                      logMessage += '    Identified a women filter in breadcrumbs' + '\n';
                      foundWomen = true;
 
-                 } else if (pageElements.breadcrumbs.indexOf('men') > -1 ||
-                            pageElements.breadcrumbs.indexOf('man') > -1 ||
-                            pageElements.breadcrumbs.indexOf('male') > -1) {
+                 } else if ((new RegExp('\\b' + 'men' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                            (new RegExp('\\b' + 'man' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                            (new RegExp('\\b' + 'male' + '\\b','i').test(pageElements.breadcrumbs))) {
 
                      logMessage += '    Identified a men filter in breadcrumbs' + '\n';
                      foundMen = true;
@@ -2201,22 +2201,21 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
          if (pageElements.departments.length > 0) {
              for (i = 0; i < pageElements.departments.length; i++){
                  if(!foundMen && !foundWomen) {
-                     if (pageElements.departments[i].indexOf('women') > -1 ||
-                         pageElements.departments[i].indexOf('woman') > -1 ||
-                         pageElements.departments[i].indexOf('lady') > -1 ||
-                         pageElements.departments[i].indexOf('female') > -1) {
-
+                     if ((new RegExp('\\b' + 'women' + '\\b','i').test(pageElements.departments[i])) ||
+                         (new RegExp('\\b' + 'woman' + '\\b','i').test(pageElements.departments[i])) ||
+                         (new RegExp('\\b' + 'lady' + '\\b','i').test(pageElements.departments[i])) ||
+                         (new RegExp('\\b' + 'ladies' + '\\b','i').test(pageElements.departments[i])) ||
+                         (new RegExp('\\b' + 'lady\'s' + '\\b','i').test(pageElements.departments[i])) ||
+                         (new RegExp('\\b' + 'female' + '\\b','i').test(pageElements.departments[i]))) {
                          logMessage += '    Identified a women indicator in a department (' + pageElements.departments[i] + ')' + '\n';
                          foundWomen = true;
-
                          break;
-                     } else if (pageElements.departments[i].indexOf(' men ') > -1 ||
-                                pageElements.departments[i].indexOf(' man ') > -1 ||
-                                pageElements.departments[i].indexOf('male') > -1) {
-
+                     } else if ((new RegExp('\\b' + 'men' + '\\b','i').test(pageElements.departments[i])) ||
+                                (new RegExp('\\b' + 'men\'s' + '\\b','i').test(pageElements.departments[i])) ||
+                                (new RegExp('\\b' + 'man' + '\\b','i').test(pageElements.departments[i])) ||
+                                (new RegExp('\\b' + 'male' + '\\b','i').test(pageElements.departments[i]))) {
                          logMessage += '    Identified a men indicator in a department (' + pageElements.departments[i] + ')' + '\n';
                          foundMen = true;
-
                          break;
                      }
                  }
@@ -2228,18 +2227,20 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
          if (pageElements.productNames.length === 1) {
              for (i = 0; i < pageElements.productNames.length; i++){
                  if(!foundMen && !foundWomen) {
-                     if (pageElements.productNames[i].indexOf('women') > -1 ||
-                         pageElements.productNames[i].indexOf('woman') > -1 ||
-                         pageElements.productNames[i].indexOf('lady') > -1 ||
-                         pageElements.productNames[i].indexOf('female') > -1) {
+                     if ((new RegExp('\\b' + 'women' + '\\b','i').test(pageElements.productNames[i])) ||
+                         (new RegExp('\\b' + 'woman' + '\\b','i').test(pageElements.productNames[i])) ||
+                         (new RegExp('\\b' + 'ladies' + '\\b','i').test(pageElements.productNames[i])) ||
+                         (new RegExp('\\b' + 'lady\'s' + '\\b','i').test(pageElements.productNames[i])) ||
+                         (new RegExp('\\b' + 'female' + '\\b','i').test(pageElements.productNames[i]))) {
 
                          logMessage += '    Identified a women indicator in the product name' + '\n';
                          foundWomen = true;
 
                          break;
-                     } else if (pageElements.productNames[i].indexOf(' men ') > -1 ||
-                                pageElements.productNames[i].indexOf(' man ') > -1 ||
-                                pageElements.productNames[i].indexOf('male') > -1) {
+                     } else if ((new RegExp('\\b' + 'men' + '\\b','i').test(pageElements.productNames[i])) ||
+                                (new RegExp('\\b' + 'men\'s' + '\\b','i').test(pageElements.productNames[i])) ||
+                                (new RegExp('\\b' + 'man' + '\\b','i').test(pageElements.productNames[i])) ||
+                                (new RegExp('\\b' + 'male' + '\\b','i').test(pageElements.productNames[i]))) {
 
                          logMessage += '    Identified a men indicator in the product name' + '\n';
                          foundMen = true;
@@ -2379,7 +2380,9 @@ function productSearch(pageElements,websiteURL,searchData,logMessage, department
                     // Positive search terms
                     for(a = 0; a < searchData[i].searchTermsArray.length; a++){
                         if(searchData[i].searchTermsArray[a] !== '') {
-                            if(new RegExp('\\b' + searchData[i].searchTermsArray[a] + '\\b','i').test(pageElements.productNames[j])){
+                        //    log(gvScriptName_CSSearch + '.productSearch: ' + searchData[i].productName + ' - Positive search term ' + a + ' = ' + searchData[i].searchTermsArray[a] + ' - pageElement.productNames[j] = ' + pageElements.productNames[j],'DEBUG');
+
+                            if(new RegExp('\\b' + searchData[i].searchTermsArray[a].toLowerCase() + '\\b','i').test(pageElements.productNames[j] + '.')){
                                 searchTermPositionsArray[a] = 1;
                                 //log(gvScriptName_CSSearch + '.productSearch: ' + searchData[i].productName + ' - Positive search term ' + a + ' = ' + searchData[i].searchTermsArray[a] + ' - pageElement.productNames[j] = ' + pageElements.productNames[j],'DEBUG');
                             }

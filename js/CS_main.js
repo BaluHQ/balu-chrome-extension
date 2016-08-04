@@ -515,12 +515,10 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         }
 
         recBlock += '<div class="altProductsBlock">';
-        recBlock += '  <div class="row collapse altProductBlock">';
+        recBlock += '  <div class="row collapse altProductBlock productLinks" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
         recBlock += '    <div class="small-5 columns">';
         recBlock += '      <div class="row text-center">';
-        recBlock += '        <a class="productLinks" target="_blank" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        recBlock += '          <img class="altImage" src="' + recommendations[i].imageURL + '" />';
-        recBlock += '        </a>';
+        recBlock += '        <img class="altImage" src="' + recommendations[i].imageURL + '" />';
         recBlock += '      </div>';
         recBlock += '    </div>';
         recBlock += '    <div class="small-7 columns altText">';
@@ -551,11 +549,7 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         recBlock += '    </div>';
 
 
-        recBlock += '    <div class="altText-bottom">';
-        recBlock += '      <a class="productLinks findOutMoreButton" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        recBlock +=         'Find Out More';
-        recBlock +=       '</a>';
-        recBlock += '    </div>';
+        recBlock += '    <div class="altText-bottom findOutMoreButton">Find Out More</div>';
 
         /*
 
@@ -629,18 +623,18 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
 
 
     // Vote up/down listeners
-    var voteUpIcons = gvIframe.contentWindow.document.getElementsByClassName("voteUp_icons");
-    var voteDownIcons = gvIframe.contentWindow.document.getElementsByClassName("voteDown_icons");
-    for(var z = 0; z < voteUpIcons.length; z++) {
-        voteUpIcons[z].addEventListener('click',voteUp_listener);
-        voteDownIcons[z].addEventListener('click',voteDown_listener);
-    }
+    //var voteUpIcons = gvIframe.contentWindow.document.getElementsByClassName("voteUp_icons");
+    //var voteDownIcons = gvIframe.contentWindow.document.getElementsByClassName("voteDown_icons");
+    //for(var z = 0; z < voteUpIcons.length; z++) {
+    //    voteUpIcons[z].addEventListener('click',voteUp_listener);
+    //    voteDownIcons[z].addEventListener('click',voteDown_listener);
+    //}
 
     // Twitter share listeners
-    var twitterShareIcons = gvIframe.contentWindow.document.getElementsByClassName("twitterShareIcons");
-    for(var v = 0; v < twitterShareIcons.length; v++) {
-        twitterShareIcons[v].addEventListener('click',twitterShare_listener);
-    }
+    //var twitterShareIcons = gvIframe.contentWindow.document.getElementsByClassName("twitterShareIcons");
+    //for(var v = 0; v < twitterShareIcons.length; v++) {
+    //    twitterShareIcons[v].addEventListener('click',twitterShare_listener);
+    //}
 
     // Block brand listeners
     var blockBrandIcons = gvIframe.contentWindow.document.getElementsByClassName("blockBrand_icons");
@@ -686,30 +680,30 @@ function createLogInSidebarContent(a,b,c,d,authMessage) {
     userForm += '<div class="row" style="margin-left: 10px">';
     userForm += '  <div class="small-8 columns end">';
     if(typeof authMessage !== 'undefined'){
-        userForm += '<p style="color:red">' + authMessage + '</p>';
+        userForm += '<p class="authError">' + authMessage + '</p>';
     }
-    userForm += '    <h4>Sign In to Balu</h4>';
+    userForm += '    <h4 class="signInToBalu">Sign In to Balu</h4>';
     userForm += '  </div>';
     userForm += '</div>';
     userForm += '<form id="logInUserForm">';
     userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label>Email';
+    userForm += '      <label class="loginFieldLabels">Email';
     userForm += '        <input type="text" id="fieldLogInEmail" placeholder="Email" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
     userForm += '  </div>';
     userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label>Password';
+    userForm += '      <label class="loginFieldLabels">Password';
     userForm += '        <input type="password" id="fieldLogInPassword" placeholder="Password" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
     userForm += '  </div>';
     userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-12 columns end">';
-    userForm += '      <input id="logInUserButton" class="button radius" type="submit" value="Log In">';
-    userForm += '      <input id="passwordResetButton" class="button radius" type="submit" value="Reset password">';
+    userForm += '      <input id="logInUserButton" class="button radius signInScreenButtons" type="submit" value="Log In">';
+    userForm += '      <input id="passwordResetButton" class="button radius signInScreenButtons" type="submit" value="Reset password">';
     userForm += '    </div>';
     userForm += '  </div>';
     userForm += '</form>';
@@ -719,27 +713,27 @@ function createLogInSidebarContent(a,b,c,d,authMessage) {
     userForm += '<br />';
     userForm += '<div class="row" style="margin-left: 10px">';
     userForm += '  <div class="small-8 columns end">';
-    userForm += '    <h4>Create a New Account</h4>';
+    userForm += '    <h4 class="signInToBalu">Create a New Account</h4>';
     userForm += '  </div>';
     userForm += '</div>';
     userForm += '<form id="signUserUpForm">';
     userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label>Email';
+    userForm += '      <label class="loginFieldLabels">Email';
     userForm += '        <input type="text" id="fieldSignUpUsername" placeholder="Email" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
     userForm += '  </div>';
     userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label>Password';
+    userForm += '      <label class="loginFieldLabels">Password';
     userForm += '        <input type="password" id="fieldSignUpPassword" placeholder="Password" required="yes">';
     userForm += '      </label>';
     userForm += '    </div>';
     userForm += '  </div>';
     userForm += '  <div class="row" style="margin-left: 10px">';
     userForm += '    <div class="small-4 columns end">';
-    userForm += '      <input id="signUserUpButton" class="button radius" type="submit" value="Sign Up">';
+    userForm += '      <input id="signUserUpButton" class="button radius signInScreenButtons" type="submit" value="Sign Up">';
     userForm += '    </div>';
     userForm += '  </div>';
     userForm += '</form>';
@@ -803,13 +797,14 @@ function showProductLinkWindow_listener() {
                                                          recProductName:         productName,
                                                          isManualSearch:         isManualSearch});
 }
-
+/*
 function showWhyDoWeCareWindow_listener() {
     log(gvScriptName_CSMain + '.showWhyDoWeCareWindow_listener: Start','LSTNR');
     var whyDoWeCare = this.getAttribute('data-whydowecare');
     sendMessage('BG_main','pleaseShowWhyDoWeCareWindow',{whyDoWeCare: whyDoWeCare});
 }
-
+*/
+/*
 function voteUp_listener() {
 
     log(gvScriptName_CSMain + '.voteUp_listener: Start','LSTNR');
@@ -832,7 +827,8 @@ function voteUp_listener() {
     // Message extension to update DB
     sendMessage('BG_main','pleaseVoteProductUp',{recommendationId: recommendationId});
 }
-
+*/
+/*
 function voteDown_listener() {
 
     log(gvScriptName_CSMain + '.voteDown_listener: Start','LSTNR');
@@ -856,7 +852,8 @@ function voteDown_listener() {
     sendMessage('BG_main','pleaseVoteProductDown',{recommendationId: recommendationId});
 
 }
-
+*/
+/*
 function twitterShare_listener() {
 
     log(gvScriptName_CSMain + '.twitterShare_listener: Start','LSTNR');
@@ -866,10 +863,13 @@ function twitterShare_listener() {
     // Message extension to open tweet window
     sendMessage('BG_main','pleaseShowTweetWindow',{tweetContent: tweetContent});
 }
+*/
 
-function blockBrand_listener() {
+function blockBrand_listener(event) {
 
     log(gvScriptName_CSMain + '.blockBrand_listener: Start','LSTNR');
+
+    event.stopPropagation();
 
     var recommendationId = this.getAttribute('data-recid');
     var productName = this.getAttribute('data-productname');

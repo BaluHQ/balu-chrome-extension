@@ -91,6 +91,27 @@
     transform: scaleX(-1);
 }
 
+.signInToBalu {
+    color: #6bd3c2; /* Balu Green */
+}
+
+.loginFieldLabels {
+    color: #6bd3c2; /* Balu Green */
+}
+
+.signInScreenButtons {
+    border-radius: 3px;
+    background-color: #6bd3c2; /* Balu Green */
+    color: #706f6f;/* Balu Grey */
+    left: 10px;
+}
+
+.authError {
+    color: #6bd3c2;/* Balu Grey */
+    font-style:italic;
+
+}
+
 /*********
  * Popup *
  *********/
@@ -168,7 +189,7 @@
 }
 .sideBarFreeText > a {
     color: #3C3B3B; /* darker than Balu Grey */
-    
+
 }
 
 /*****************
@@ -312,6 +333,11 @@
     background-color: white;
     margin-bottom: 15px;
     margin-top: 7px;
+    cursor: pointer;
+}
+
+.altProductBlock:hover {
+    box-shadow: -4px -4px 3px 2px #3C3B3B;
 }
 
 .altProductBrandName {
@@ -345,17 +371,19 @@
 
 .altText-bottom {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 0px;
+    left: 120px;
     width: 143px;
     color: #6bd3c2;
-    border-color: #6bd3c2;
+    /*border-color: #6bd3c2;
     border-style: solid;
     border-width: 1px;
     text-align: center;
+    background-color: white;
+    */
     height: 30px;
     line-height: 30px;
-    background-color: white;
+
 }
 
 

@@ -17,7 +17,7 @@ var gvLogDebugs = true;
 var gvLogInfos  = true;
 var gvLogInits  = false;
 var gvLogLstnrs = false;
-var gvLogTemps  = false;
+var gvLogTemps  = true;
 
 /*
  *
