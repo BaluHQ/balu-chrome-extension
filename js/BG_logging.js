@@ -10,14 +10,14 @@ gvScriptName_BGLogging = 'BG_logging';
 
 // Logging control
 var gvLogErrors = true;
-var gvLogProcs  = true;
-var gvLogSearch = true;
+var gvLogProcs  = false;
+var gvLogSearch = false;
 var gvLogMessg  = false;
-var gvLogDebugs = true;
-var gvLogInfos  = true;
+var gvLogDebugs = false;
+var gvLogInfos  = false;
 var gvLogInits  = false;
 var gvLogLstnrs = false;
-var gvLogTemps  = true;
+var gvLogTemps  = false;
 
 /*
  *
