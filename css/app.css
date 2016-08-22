@@ -4,6 +4,14 @@
  * Sidebar *
  ***********/
 
+ .loginSidebarBody {
+     height: 99%; /* prevents scroll bar appearing until needed */
+     width: 99%;
+     background-color: #3C3B3B; /* darker than Balu grey */
+     background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
+     background-repeat: repeat-y;
+   }
+
  .sidebarBody {
    height: 99%; /* prevents scroll bar appearing until needed */
    width: 99%;
@@ -44,7 +52,7 @@
 }
 
 .findOutMoreButton, .findOutMoreButton:hover {
-     color: #6bd3c2;
+     color: #6bd3c2; /* Balu green */
      font-family: Noto Sans;
      text-transform: uppercase;
      font-weight: bolder;
@@ -82,6 +90,17 @@
     border-style: none;
 }
 
+.loginManualSearchField {
+    text-indent: 10px;
+    padding-right: 30px;
+    background-color: #3C3B3B; /* darker than Balu Grey */
+    color: #6bd3c2;  /* Balu Green */
+    width: 270px;
+    height: 32px;
+    border-style: solid;
+    border-colour: #6bd3c2; /* balu green */
+}
+
 .manualSearchIcon {
     position: absolute;
     font-size: 18px;
@@ -102,7 +121,7 @@
 .signInScreenButtons {
     border-radius: 3px;
     background-color: #6bd3c2; /* Balu Green */
-    color: #706f6f;/* Balu Grey */
+    color: #3C3B3B;/* Darker than Balu Grey */
     left: 10px;
 }
 

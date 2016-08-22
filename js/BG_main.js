@@ -435,6 +435,7 @@ function initialiseTab(tab){
    gvShowJoyride = false;
    if(currentUser && (typeof joyrideStatus === 'undefined' || joyrideStatus === 'NOT DONE')){
        gvShowJoyride = true;
+
    }
 
    gvTabs[tab.id] = {tab:                           tab, // Chrome's original tab object
@@ -1368,10 +1369,14 @@ function logUserIn(tabId,username,password,callback){
             }
         },
         error: function(user,error){
+            var lvErrorMessage = error.message;
+            if(error.code === 101){
+                lvErrorMessage = 'Incorrect email or password';
+            }
             if(callback){
-                alert(error.message);
+                alert(lvErrorMessage);
             } else {
-                refreshTab(tabId,error.message);
+                refreshTab(tabId,lvErrorMessage);
             }
         }
     });

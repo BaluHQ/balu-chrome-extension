@@ -251,9 +251,9 @@ function buildPopupHTML(){
             }
 
             if(isThereAnErrorMessage){
-                lvHtmlString += errorMessage;
+                lvHtmlString += errorMessage + '<br /><br /><hr />';
             } else
-            lvHtmlString += '<br /><br /><hr /><b style="font-size: 12px">Not seeing what you expect?</b><br /><br />';
+            lvHtmlString += '<b style="font-size: 12px">Not seeing what you expect?</b><br /><br />';
             if(!isLoggedIn) {
                 lvHtmlString += 'You are not logged in to Balu. To get Balu\'s ethical recommendations while you shop click on the settings icon above and log in or create a new account.';
             //        lvHtmlString += '<br />';

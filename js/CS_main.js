@@ -222,7 +222,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         topRow += '  </div>'; // Top row
         topRow += '  <div class="row sidebar_searchBarRow">';
         topRow += '    <div class="small-12 column text-center manualSearchDiv">';
-        topRow += '      <div class="manualSearchDiv">';
+        topRow += '      <div class="manualSearchDiv" id="joyrideStop4">';
         topRow += '        <i id="manualSearchSubmit_icon" class="fi-magnifying-glass manualSearchIcon"></i>';
         topRow += '        <input id="fieldManualSearch" ' + searchTermString + ' class="manualSearchField" />';
         topRow += '      </div>';
@@ -321,26 +321,26 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     if(showJoyride){
         var joyrideHTML = '';
         joyrideHTML += '<ol class="joyride-list" data-joyride>';
-        joyrideHTML += '  <li data-id="joyrideStop1" data-text="Next (1 of 5)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
+        joyrideHTML += '  <li data-id="joyrideStop1" data-text="Next (1 of 3)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
         joyrideHTML += '    <h4>How ethical?</h4>';
         joyrideHTML += '    <p>Hover over the <i class="fi-info joyrideIcon"></i> icon for information about the brand</p>';
         joyrideHTML += '  </li>';
-        joyrideHTML += '  <li data-id="joyrideStop2" data-text="Next (2 of 5)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
-        joyrideHTML += '    <h4>Block a brand</h4>';
-        joyrideHTML += '    <p>Click the <i class="fi-x-circle joyrideIcon"></i> icon to stop seeing recommendations from this brand</p>';
-        joyrideHTML += '  </li>';
-        joyrideHTML += '  <li data-id="joyrideStop3" data-text="Next (3 of 5)" data-prev-text="Prev" data-options="tip_location: top; nub_position: left;" class="custom">';
+        //joyrideHTML += '  <li data-id="joyrideStop2" data-text="Next (2 of 5)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
+        //joyrideHTML += '    <h4>Block a brand</h4>';
+        //joyrideHTML += '    <p>Click the <i class="fi-x-circle joyrideIcon"></i> icon to stop seeing recommendations from this brand</p>';
+        //joyrideHTML += '  </li>';
+        joyrideHTML += '  <li data-id="joyrideStop3" data-text="Next (2 of 3)" data-prev-text="Prev" data-options="tip_location: top; nub_position: left;" class="custom">';
         joyrideHTML += '    <h4>Sidebar getting in the way?</h4>';
         joyrideHTML += '    <p>Hide the side bar until refresh <i class="fi-play joyrideIcon"></i>, or until restart <i class="fi-fast-forward joyrideIcon"></i></p>';
         joyrideHTML += '  </li>';
-        joyrideHTML += '  <li data-id="joyrideStop4" data-text="Next (4 of 5)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
+        joyrideHTML += '  <li data-id="joyrideStop4" data-button="End" data-text="Next (3 of 3)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
         joyrideHTML += '    <h4>Search</h4>';
-        joyrideHTML += '    <p>Search Balu from the sidebar or from the icon on the toolbar above</i></p>';
+        joyrideHTML += '    <p>Search Balu from the sidebar or from the Balu icon on the Chrome toolbar</i></p>';
         joyrideHTML += '  </li>';
-        joyrideHTML += '  <li data-id="joyrideStop5" data-button="End" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
-        joyrideHTML += '    <h4>Spread the word</h4>';
-        joyrideHTML += '    <p>Not seeing your favourite ethical brands on Balu? Click the <i class="fi-plus joyrideIcon"></i> icon to get them added.</p>';
-        joyrideHTML += '  </li>';
+        //joyrideHTML += '  <li data-id="joyrideStop5" data-button="End" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
+        //joyrideHTML += '    <h4>Spread the word</h4>';
+        //joyrideHTML += '    <p>Not seeing your favourite ethical brands on Balu? Click the Balu icon on the Chrome toolbar to recommend a brand.</p>';
+        //joyrideHTML += '  </li>';
         joyrideHTML += '</ol>';
         docBody.innerHTML += joyrideHTML;
     }
@@ -739,6 +739,9 @@ function createLogInSidebarContent(a,b,c,d,authMessage) {
     userForm += '</form>';
 
     gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = userForm;
+
+    gvIframe.contentWindow.document.body.className = 'loginSidebarBody'; // a darker background, because there's light green text written directly on top of it
+    gvIframe.contentWindow.document.getElementById("fieldManualSearch").className = 'loginManualSearchField';
 
     gvIframe.contentWindow.document.getElementById('logInUserButton').addEventListener('click',logUserIn_listener);
     gvIframe.contentWindow.document.getElementById('passwordResetButton').addEventListener('click',passwordReset_listener);
