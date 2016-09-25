@@ -194,6 +194,26 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
                 }
             }
 
+            /* Search field drop down */
+
+            var amazon_dep_searchDropDown_spans = pvDOM.getElementsByClassName('nav-search-label');
+            if(amazon_dep_searchDropDown_spans.length > 0) {
+                lvDepartments.push(amazon_dep_searchDropDown_spans[0].textContent.toLowerCase().trim());
+                logMessage_extra += '  Departments: search DropDown department found in class="nav-subnav-label"' + '\n';
+                lvFoundDepartments = true;
+            }
+
+            /* Category image for Amazon Fashion */
+
+            var amazon_dep_categoryImage_img = pvDOM.getElementsByClassName('nav-categ-image');
+            if(amazon_dep_categoryImage_img.length > 0) {
+                if(amazon_dep_categoryImage_img[0].src.includes('amazon-fashion-store')) {
+                    lvDepartments.push('amazon fashion');
+                    logMessage_extra += '  Departments: Category Image identified as "amazon-fashion-store"' + '\n';
+                    lvFoundDepartments = true;
+                }
+            }
+
             // did we find a department somewhere?
             if(!lvFoundDepartments) {
                 logMessage_extra += '  Departments: FAILED to find first element in id="nav-subnav"' + '\n';
