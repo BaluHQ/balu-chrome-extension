@@ -5,10 +5,10 @@
 gvScriptName_BGMain = 'BG_main';
 
 /*
- * Parse init
+ * Parse SDK Config
  */
+var gvParseServerURL = 'https://balu-parse-server-test.herokuapp.com/parse'; //'http://localhost:1337/parse'; // localhost
 var gvAppId = 'mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu';
-var gvJSKey = 'IRfKgjMWYJqaHhgK3AUFNu2KsXrNnorzRZX1hmuY';
 
 /*
  * Global variables
@@ -42,7 +42,14 @@ var gvBlockBrandParams;
 
 (function initialise(){
 
+    setLoggingControl(gvParseServerURL);
+
     log(gvScriptName_BGMain + '.initialise: Start','INITS');
+
+    Parse.initialize(gvAppId);
+    Parse.serverURL = gvParseServerURL;
+
+    log(gvScriptName_BGMain + '.initialised Balu\'s Parse Server at ' + gvParseServerURL,' INFO');
 
     // Listeners //
 
@@ -124,7 +131,6 @@ function chromeActivatedTabListener(activeInfo){
 /*
  * When the extension is first installed, display a welcome screen
  * Note, this can be used for updates to the extension and to Chrome too
- * Apparently there's no way to programatically display the popup though :(
  */
 function chromeInstalledExtensionListener(details){
 
@@ -193,8 +199,6 @@ function getWebsiteData(callback){
     // gvWebsites is our global variable that we need to populate
     gvWebsites = [];
 
-    Parse.initialize(gvAppId,gvJSKey);
-
     var Website = Parse.Object.extend("Website");
     var websiteQuery = new Parse.Query(Website);
     websiteQuery.notEqualTo('websiteURL','balutestwebsite.html');
@@ -238,8 +242,6 @@ function getSearchProductData() {
 
     // gvSearchProducts is our global variable that we need to populate
     gvSearchProducts = [];
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     // First get all SearchProducts, and their Categories and ProductGroups
 
@@ -423,7 +425,6 @@ function initialiseTab(tab){
    }
 
    // Do we need to show the joyride. To do: might be better for it not to be here. must be a scenario where you can get the joyride to reappear by triggering a refresh tab, without re-init the app.
-   Parse.initialize(gvAppId, gvJSKey);
 
    var currentUser = Parse.User.current();
    var joyrideStatus;
@@ -476,8 +477,9 @@ function refreshTab(tabId,authMessage){
     // Only do something if Balu is on and the website is an active website
     if(gvIsBaluOnOrOff === 'ON' && gvTabs[tabId].isWebsiteOnOrOff === 'ON') {
 
+        log(gvScriptName_BGMain + '.refreshTab: Balu is on and website is active',' INFO');
+
         // Depending whether user is logged in, determines whether we show sign sidebar or run a search
-        Parse.initialize(gvAppId, gvJSKey);
         var user = Parse.User.current();
         if(user) {
             sendMessage(tabId,'pleaseSearchThePage',{searchData:  gvSearchProducts,
@@ -616,8 +618,6 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
 
     // Now we can create a Parse query for these ProductGroups and use that
     // to filter the Recommendation query
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     var ProductGroup = Parse.Object.extend('ProductGroup');
     var productGroupQuery = new Parse.Query(ProductGroup);
@@ -796,8 +796,6 @@ function manualSearch(tabId, searchTerm) {
         if(searchTerm_LC.indexOf('women') !== -1 || searchTerm_LC.indexOf('woman') !== -1 || searchTerm_LC.indexOf('lady') !== -1 || searchTerm_LC.indexOf('ladies') !== -1) {
             isWomenInSearchTerm = true;
         }
-
-        Parse.initialize(gvAppId, gvJSKey);
 
         var SearchProduct = Parse.Object.extend('SearchProduct');
 
@@ -1031,8 +1029,6 @@ function showProductLinkWindow(tabId,productURL,recommendationId, recProductName
     // don't log for the dev / test user
     if(Parse.User.current().get('email') !== 'dev.baluhq@gmail.com'){
 
-        Parse.initialize(gvAppId, gvJSKey);
-
         var RecommendationClickCount = Parse.Object.extend('RecommendationClickCount');
         var recommendationClickCountQuery = new Parse.Query(RecommendationClickCount);
         recommendationClickCountQuery.equalTo('recommendation',{__type: "Pointer",className: "Recommendation",objectId: recommendationId});
@@ -1072,8 +1068,6 @@ function voteProductUpOrDown(tabId,recommendationId,upOrDown){
     } else if (upOrDown === 'DOWN'){
         ratingScore = -1;
     }
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     var Recommendation = Parse.Object.extend('Recommendation');
     var recommendationQuery = new Parse.Query(Recommendation);
@@ -1161,8 +1155,6 @@ function blockBrand(tabId,data){
 
     log(gvScriptName_BGMain + '.blockBrand: start','PROCS');
 
-    Parse.initialize(gvAppId, gvJSKey);
-
     var UserBlockedBrand = Parse.Object.extend("UserBlockedBrand");
     var userBlockedBrand = new UserBlockedBrand();
 
@@ -1188,8 +1180,6 @@ function blockBrand(tabId,data){
 function unBlockBrand(brandId,callback){
 
     log(gvScriptName_BGMain + '.unBlockBrand: start','PROCS');
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     var UserBlockedBrand = Parse.Object.extend("UserBlockedBrand");
     var userBlockedBrandQuery = new Parse.Query(UserBlockedBrand);
@@ -1229,8 +1219,6 @@ function saveUserSubmittedRec(tabId,formFieldValues){
 
     log(gvScriptName_BGMain + '.saveUserSubmittedRec: start','PROCS');
 
-    Parse.initialize(gvAppId, gvJSKey);
-
     var UserSubmittedRec = Parse.Object.extend("UserSubmittedRec");
     var userSubmittedRec = new UserSubmittedRec();
 
@@ -1268,8 +1256,6 @@ function showUserSubmittedWebsiteRecWindow(tabId){
 function saveUserSubmittedWebsiteRec(tabId,formFieldValues){
 
     log(gvScriptName_BGMain + '.saveUserSubmittedWebsiteRec: start','PROCS');
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     var UserSubmittedWebsiteRec = Parse.Object.extend("UserSubmittedWebsiteRec");
     var userSubmittedWebsiteRec = new UserSubmittedWebsiteRec({ACL: new Parse.ACL(Parse.User.current())});
@@ -1420,7 +1406,6 @@ function logUserOut(callback){
 
     log(gvScriptName_BGMain + '.logUserOut: start','PROCS');
 
-    Parse.initialize(gvAppId, gvJSKey);
     var user = Parse.User.current();
 
     userLog(null,'USER_LOG_OUT',{user: user});
@@ -1438,8 +1423,6 @@ function logUserOut(callback){
 function resetPassword(email,callback){
 
     log(gvScriptName_BGMain + '.resetPassword: start','PROCS');
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     var _email = null;
 
@@ -1470,7 +1453,6 @@ function resetPassword(email,callback){
  *
  */
 function isUserLoggedIn(){
-    Parse.initialize(gvAppId, gvJSKey);
     if(Parse.User.current()){
         return {email: Parse.User.current().get('email'),
                 isUserLoggedIn: true};
@@ -1484,7 +1466,6 @@ function isUserLoggedIn(){
  *
  */
 function getUserId(){
-    Parse.initialize(gvAppId, gvJSKey);
     if(Parse.User.current()){
         return Parse.User.current().id;
     } else {
@@ -1554,8 +1535,6 @@ function _addFeedbackPage(userFeedback,tabId) {
 function addFeedbackPage(args) {
 
     log(gvScriptName_BGMain + '.addFeedbackPage: Start','PROCS');
-
-    Parse.initialize(gvAppId,gvJSKey);
 
     var acl = new Parse.ACL();
     acl.setRoleReadAccess("Balu Test System",true);

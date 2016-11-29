@@ -244,8 +244,6 @@ function createOptionsPage(){
 
     if(userDetails.isUserLoggedIn) {
 
-        Parse.initialize(chrome.extension.getBackgroundPage().gvAppId, chrome.extension.getBackgroundPage().gvJSKey);
-
         // Blocked Brands
 
         var blockedBrandsHTML = '';

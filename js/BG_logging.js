@@ -33,11 +33,30 @@ var gvLogTemps  = false;
 /*
  *
  */
+function setLoggingControl(pvParseServerURL){
+
+    log(gvScriptName_BGLogging + '.setLoggingControl: Start','PROCS');
+
+    if(pvParseServerURL.includes('balu-parse-server-test')) {
+        gvLogErrors = true;
+        gvLogProcs  = true;
+        gvLogSearch = true;
+        gvLogMessg  = true;
+        gvLogDebugs = true;
+        gvLogInfos  = true;
+        gvLogInits  = true;
+        gvLogLstnrs = true;
+        gvLogTemps  = true;
+
+        log(gvScriptName_BGLogging + '.setLoggingControl: this is the test server, so turned all logging levels on',' INFO');
+    }
+}
+/*
+ *
+ */
 function userLog(tabId, eventName, data) {
 
     log(gvScriptName_BGLogging + '.userLog: Start >>> eventName == ' + eventName + ', tabId == ' + tabId,' INFO');
-
-    Parse.initialize(gvAppId, gvJSKey);
 
     var acl = new Parse.ACL();
     acl.setRoleReadAccess("Analytics",true);

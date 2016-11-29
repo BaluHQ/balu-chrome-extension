@@ -17,6 +17,8 @@ var gvShowTestFeedbackText = false; // this is currently broken formatting!
  */
 (function initialise(){
     gvBackground = chrome.extension.getBackgroundPage();
+    Parse.initialize(gvBackground.gvAppId);
+    Parse.serverURL = gvBackground.gvParseServerURL;
     window.addEventListener('DOMContentLoaded', DOMContentLoadedListener);
 })();
 
@@ -61,7 +63,6 @@ function waitForBackgroundPageThenBuildPopupHTML(counter){
  */
 function buildPopupHTML(){
 
-    Parse.initialize(gvBackground.gvAppId, gvBackground.gvJSKey);
     var lvUser = Parse.User.current();
 
     var lvHtmlString = '';
@@ -77,7 +78,12 @@ function buildPopupHTML(){
 
         var isThereAnErrorMessage = false;
         var errorMessage;
+
+        // get the baluParseErrorMessage from local storage
         if(chrome.storage.local.get('baluParseErrorMessage',function(obj){
+
+            // Set some variables
+
             if(obj.baluParseErrorMessage){
                 isThereAnErrorMessage = true;
                 errorMessage = 'Not good!<br /><br />Something\'s gone wrong. It\'s probably got something to do with accessing the Balu database.<br /><br />Can you check your internet connection and restart Chrome? If it keeps happening, we\'d be really grateful if you could email the error message below to <a href="mailto:support@getbalu.org" target="_blank">support@getbalu.org</a><br /><br />' + obj.baluParseErrorMessage;
@@ -105,23 +111,18 @@ function buildPopupHTML(){
             var isThereAnyRecommendationsForThisTab = false;
 
             if(gvActiveTab){
-
                 isTabInalidForSearch = false;
-
-                // to do: build generic mechanism for adding lost tabs back into gvtabs
-
-                // Determine what to display on the popup
-
                 if(gvActiveTab.isWebsiteOnOrOff === 'ON') {
                     isWebsiteOn = true;
                 }
-                if(gvActiveTab.isBaluShowOrHide_untilRefresh === 'SHOW' ) {
+                if(gvActiveTab.isBaluShowOrHide_untilRefresh === 'SHOW') {
                     isSidebarVisibleOnThisTab = true;
                 }
                 if(gvActiveTab.recommendationCount > 0) {
                     isThereAnyRecommendationsForThisTab = true;
                 }
             } else {
+                // to do: build generic mechanism for adding lost tabs back into gvtabs
                 isTabInalidForSearch = true;
             }
 
@@ -321,9 +322,10 @@ function buildPopupHTML(){
             if (gvActiveTab && !isWebsiteOn){
                 document.getElementById('showUserSubmittedWebsiteRecWindow_link').addEventListener('click',showUserSubmittedWebsiteRecWindow_listener);
             }
-        }));
-    });
+        })); // get the baluParseErrorMessage from local storage
+    }); // get the active tab
 }
+
 /**********************
  * Listener Functions *
  **********************/
