@@ -1389,7 +1389,12 @@ function signUserUp(tabId,username,password,callback){
             userLog(tabId,'USER_SIGNED_UP',{user: user});
         },
         error: function(user,error){
-            var lvErrorMessage = error.message;
+            var lvErrorMessage = '';
+            if(typeof error.message === 'undefined'){
+                lvErrorMessage = 'Something\'s wrong; check your username and password and try again';
+            } else {
+                lvErrorMessage = error.message;
+            }
             if(callback){
                 callback(lvErrorMessage);
             } else {

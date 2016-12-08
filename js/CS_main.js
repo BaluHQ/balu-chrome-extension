@@ -217,7 +217,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         topRow += '  <div class="row sidebar_topRow">';
         topRow += '    <div class="small-12 columns text-center">';
         topRow += '      <span class="sidebarLogoHeader">BALU</span>';
-        topRow += '      <a href="' + chrome.extension.getURL("options.html") + '" target="_blank"><i id="settingsCog_icon" class="fi-widget settingsCogIcon"></i></a>';
+        topRow += '      <a href="' + chrome.extension.getURL("options.html") + '#settings" target="_blank"><i id="settingsCog_icon" class="fi-widget settingsCogIcon"></i></a>';
         topRow += '    </div>';
         topRow += '  </div>'; // Top row
         topRow += '  <div class="row sidebar_searchBarRow">';
@@ -331,6 +331,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         joyrideHTML += '  <li data-id="joyrideStop3" data-text="Next (2 of 3)" data-prev-text="Prev" data-options="tip_location: top; nub_position: left;" class="custom">';
         joyrideHTML += '    <h4>Sidebar getting in the way?</h4>';
         joyrideHTML += '    <p>Hide the side bar until refresh <i class="fi-play joyrideIcon"></i>, or until restart <i class="fi-fast-forward joyrideIcon"></i></p>';
+        joyrideHTML += '    <p>Hide it permanently from the options page <i class="fi-widget joyrideIcon"></i></p>';
         joyrideHTML += '  </li>';
         joyrideHTML += '  <li data-id="joyrideStop4" data-button="End" data-text="Next (3 of 3)" data-prev-text="Prev" data-options="tip_location: left; nub_position: right;" class="custom">';
         joyrideHTML += '    <h4>Search</h4>';

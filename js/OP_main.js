@@ -161,22 +161,22 @@ function createOptionsPage(pvTabName,pvUserDetails){
         // Sign up tab
         lvHtml += '                  <div class="content" id="panelRegister">';
         lvHtml += '                    <div class="row">';
-        lvHtml += '                      <div id="SignUpErrorMessageDiv" class="large-12 columns" style="display: none">';
-        lvHtml += '                        <span class="authError" id="SignUpErrorMessageSpan"><span>';
+        lvHtml += '                      <div id="signUpErrorMessageDiv" class="large-12 columns" style="display: none">';
+        lvHtml += '                        <span class="authError" id="signUpErrorMessageSpan"><span>';
         lvHtml += '                      </div>';
         lvHtml += '                      <div class="large-12 columns">';
         lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Email';
-        lvHtml += '                          <input type="text" name="email" placeholder="somebody@example.com">';
+        lvHtml += '                          <input id="fieldSignUpEmail" type="text" name="email" placeholder="somebody@example.com">';
         lvHtml += '                        </label>';
         lvHtml += '                      </div>';
         lvHtml += '                      <div class="large-12 columns">';
         lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Password';
-        lvHtml += '                          <input id="fieldSignUpEmail" type="password" name="newPassword" placeholder="">';
+        lvHtml += '                          <input id="fieldSignUpPassword" type="password" name="newPassword" placeholder="">';
         lvHtml += '                        </label>';
         lvHtml += '                      </div>';
         lvHtml += '                      <div class="large-12 columns">';
         lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Confirm Password';
-        lvHtml += '                          <input id="fieldSignUpPassword" type="password" name="confirmPassword" placeholder="">';
+        lvHtml += '                          <input id="fieldSignUpPasswordConfirm" type="password" name="confirmPassword" placeholder="">';
         lvHtml += '                        </label>';
         lvHtml += '                      </div>';
         lvHtml += '                      <div class="large-12 columns">';
@@ -221,19 +221,34 @@ function createOptionsPage(pvTabName,pvUserDetails){
     lvHtml +=     '            <div class="small-1 columns">';
     lvHtml +=     '              <img class="number-images" src="' + chrome.extension.getURL("images/2.svg") + '" />';
     lvHtml +=     '            </div>';
+
+    // Section to the right of the number 2
     lvHtml +=     '            <div class="small-11 columns">';
-    lvHtml +=     '              <h3 style="margin-left: 0">Start shopping - Balu will work on all of these websites...</h3>';
-    lvHtml +=     '              <p>See Balu in action <a href="http://www.asos.com/men/t-shirts/cat/?cid=7616" target="_blank">on ASOS</a> or browse any of these websites to see Balu\'s ethical alternatives</p>';
-    lvHtml +=     '            </div>';
+    lvHtml +=     '              <div class="row">';
+    lvHtml +=     '                <div class="small-12 columns">';
+    lvHtml +=     '                  <h3 style="margin-left: 0">Start shopping</h3>';
+    lvHtml +=     '                </div>';
+    lvHtml +=     '              </div>';
+    lvHtml +=     '              <div class="row">';
+    lvHtml +=     '                <div class="small-3 columns">';
+    lvHtml +=     '                  <a id="asosExampleButton" href="http://www.asos.com/men/t-shirts/cat/?cid=7616" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Check out Balu on ASOS</a>';
+    lvHtml +=     '                </div>';
+    lvHtml +=     '                <div class="small-3 columns end">';
+    lvHtml +=     '                  <a id="directoryButton" href="http://getbalu.org/app/" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Search the Directory</a>';
+    lvHtml +=     '                </div>';
+    lvHtml +=     '              </div>';
 
     // Website list
-    lvHtml +=     '            <div id="listOfWebsitesDiv" class="small-11 columns small-offset-1 end" style="padding-right: 150px   ">';
+    lvHtml +=     '              <div class="row">';
+    lvHtml +=     '                <div class="small-12 columns">';
+    lvHtml +=     '                  <p>Balu will work automatically on any of these websites...</p>';
+    lvHtml +=     '                </div>';
+    lvHtml +=     '                <div id="listOfWebsitesDiv" class="small-12 columns" style="padding-right: 150px">';
     // We'll attach the list of websites here later (so as not to slow the page load down)
-    lvHtml +=     '            </div>';
-    lvHtml +=     '            <div class="small-11 small-offset-1 columns" style="margin-top: 20px">';
-    lvHtml +=     '                <p>You can also search our directory at <a href="http://www.getbalu.org/app" target="_blank">getbalu.org/app</a></p>';
-    lvHtml +=     '            </div>';
+    lvHtml +=     '                </div>';
+    lvHtml +=     '              </div>';
 
+    lvHtml +=     '            </div>'; // Section to the right of the number 2
     lvHtml +=     '          </div>'; // numbered row (2)
 
     // Numberd row
@@ -410,10 +425,12 @@ function createOptionsPage(pvTabName,pvUserDetails){
         });
     } else {
         document.getElementById("logInUserButton").addEventListener('click', logInButton_listener);
+        document.getElementById("fieldLogInPassword").addEventListener('keydown', logInPasswordField_keydown_listener);
         document.getElementById("forgotPasswordLink").addEventListener('click', forgotPasswordLink_listener);
         document.getElementById("resetPasswordButton").addEventListener('click', resetPasswordButton_listener);
         document.getElementById("backToLoginLink").addEventListener('click', backToLoginLink_listener);
         document.getElementById("signUserUpButton").addEventListener('click', signUpButton_listener);
+        document.getElementById("fieldSignUpPasswordConfirm").addEventListener('keydown', signUpPasswordField_keydown_listener);
     }
 }
 
@@ -482,7 +499,6 @@ function createOptionsPage(pvTabName,pvUserDetails){
  * Listener Functions *
  **********************/
 
-
 function logOutButton_listener(){
     log(gvScriptName_OPMain + '.logOutButton_listener: Start','PROCS');
     chrome.extension.getBackgroundPage().logUserOut(function(){
@@ -502,6 +518,7 @@ function resetPasswordButton_listener(){
     });
 }
 
+function logInPasswordField_keydown_listener(event) {if (event.keyCode == 13) {logInButton_listener();}}
 function logInButton_listener(){
 
     log(gvScriptName_OPMain + '.logInButton_listener: Start','PROCS');
@@ -538,21 +555,28 @@ function backToLoginLink_listener(){
     document.getElementById('fieldLogInEmail').value = document.getElementById('fieldResetPasswordEmail').value;
 }
 
+function signUpPasswordField_keydown_listener(event) {if (event.keyCode == 13) {signUpButton_listener();}}
 function signUpButton_listener(){
 
     log(gvScriptName_OPMain + '.signUpButton_listener: Start','PROCS');
 
     var email = document.getElementById('fieldSignUpEmail').value;
     var password = document.getElementById('fieldSignUpPassword').value;
+    var passwordConfirm = document.getElementById('fieldSignUpPasswordConfirm').value;
 
-    chrome.extension.getBackgroundPage().signUserUp(null,email,password,function(pvErrorMessage){
-        if(pvErrorMessage !== null) {
-            document.getElementById('signUpErrorMessageDiv').style.display = "block";
-            document.getElementById('signUpErrorMessageSpan').innerHTML = pvErrorMessage;
-        } else { // successful sign up in
-            location.reload();
-        }
-    });
+    if(password !== passwordConfirm){
+        document.getElementById('signUpErrorMessageDiv').style.display = "block";
+        document.getElementById('signUpErrorMessageSpan').innerHTML = 'Passwords do not match';
+    } else {
+        chrome.extension.getBackgroundPage().signUserUp(null,email,password,function(pvErrorMessage){
+            if(pvErrorMessage !== null && typeof pvErrorMessage !== 'undefined') {
+                document.getElementById('signUpErrorMessageDiv').style.display = "block";
+                document.getElementById('signUpErrorMessageSpan').innerHTML = pvErrorMessage;
+            } else { // successful sign up in
+                location.reload();
+            }
+        });
+    }
 }
 
 function baluShowOrHide_listener(){
