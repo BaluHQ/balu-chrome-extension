@@ -679,17 +679,17 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
 
             var asos_bc = pvDOM.getElementsByClassName('breadcrumb');
             if(asos_bc.length === 0){
-                asos_bc = pvDOM.getElementsByClassName('breadcrumbs');
+                asos_bc = pvDOM.getElementsByClassName('bread-crumb');
             }
 
             if(asos_bc.length > 0){
                 lvBreadcrumbs = asos_bc[0].textContent.toLowerCase();
-                logMessage_extra += '  Breadcrumbs: found in class="breadcrumb"' + '\n';
+                logMessage_extra += '  Breadcrumbs: found in class="breadcrumb" or class="bread-crumb"' + '\n';
                 lvFoundBreadcrumbs = true;
             }
 
             if(!lvFoundBreadcrumbs){
-                logMessage_extra += '  Breadcrumbs: FAILED to find in class="breadcrumb" and class="breadcrumbs"' + '\n';
+                logMessage_extra += '  Breadcrumbs: FAILED to find in class="breadcrumb" and class="bread-crumb"' + '\n';
             }
 
             /************
@@ -737,17 +737,17 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
             /* Product page */
 
             if(!lvFoundResults) {
-                var asos_pn_prod_lblProductTitle = pvDOM.getElementById('ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle');
+                var asos_pn_prod_lblProductTitles = pvDOM.getElementsByClassName('product-hero');
 
-                if(asos_pn_prod_lblProductTitle !== null){
-                   lvProductNames.push(asos_pn_prod_lblProductTitle.textContent.toLowerCase().trim());
-                   logMessage_extra += '  Product Page: found in id="ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle"' + '\n';
+                if(asos_pn_prod_lblProductTitles.length > 0){
+                   lvProductNames.push(asos_pn_prod_lblProductTitles[0].querySelector('h1').textContent.toLowerCase().trim());
+                   logMessage_extra += '  Product Page: found in class="product-hero"' + '\n';
                    lvFoundProduct = true;
                }
             }
 
             if(!lvFoundProduct){
-                logMessage_extra += '  Product Page: FAILED To find in id="ctl00_ContentMainPage_ctlSeparateProduct_lblProductTitle"' + '\n';
+                logMessage_extra += '  Product Page: FAILED To find in class="product-hero"' + '\n';
             }
 
             /***********
@@ -2065,6 +2065,7 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
     } else {
         logMessage += 'FAILURE: Did not find necessary pvDOM elements to run search.' + '\n';
         logMessage += '    Failed to find: ' + logMessage_elementsNotFound + '\n';
+        logMessage += '    Extra detail: ' + logMessage_extra + '\n';
     }
 
     // If we did find everything we needed, then we're going to run the search. So let's

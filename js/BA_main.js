@@ -352,9 +352,9 @@ function showOptionsPageWindow_listener() {
 
     log(gvScriptName_BAMain + '.showOptionsPageWindow_listener: Start: ','PROCS');
     if(typeof(gvActiveTab) === 'undefined'){
-        gvBackground.showOptionsPageWindow(null);
+        gvBackground.showOptionsPageWindow(null,null);
     } else {
-        gvBackground.showOptionsPageWindow(gvActiveTab.tab.id);
+        gvBackground.showOptionsPageWindow(gvActiveTab.tab.id,null);
     }
 
 }

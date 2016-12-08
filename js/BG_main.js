@@ -7,7 +7,7 @@ gvScriptName_BGMain = 'BG_main';
 /*
  * Parse SDK Config
  */
-var gvParseServerURL = 'https://balu-parse-server-test.herokuapp.com/parse'; //'http://localhost:1337/parse'; // localhost
+var gvParseServerURL = 'https://balu-parse-server.herokuapp.com/parse'; //'http://localhost:1337/parse'; // localhost
 var gvAppId = 'mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu';
 
 /*
@@ -135,7 +135,8 @@ function chromeActivatedTabListener(activeInfo){
 function chromeInstalledExtensionListener(details){
 
     if (details.reason == "install") { //reason ( enum of "install", "update", or "chrome_update" )
-        chrome.tabs.create({url: "http://www.getbalu.org/welcome"});
+        chrome.tabs.create({url: chrome.runtime.getURL('options.html') + '#start-from-install'});
+        //chrome.runtime.openOptionsPage();
     }
 }
 
@@ -990,13 +991,17 @@ function markJoyrideAsNotDone(callback){
 
 }
 
-function showOptionsPageWindow(tabId){
+function showOptionsPageWindow(tabId, pvPage){
 
     log(gvScriptName_BGMain + '.showOptionsPageWindow: start','PROCS');
 
+    var lvPage = 'options.html';
+    if(pvPage !== null) {
+        lvPage = pvPage;
+    }
     // Note: the user log is created by the options page
 
-    chrome.tabs.create({'url': chrome.extension.getURL('options.html')}, function(tab) {});
+    chrome.tabs.create({'url': chrome.extension.getURL(lvPage)}, function(tab) {});
 
 }
 
@@ -1337,7 +1342,7 @@ function showPrivacyWindow(tabId){
     chrome.windows.create({'url': 'http://www.getbalu.org/webapp/privacy.html', 'type': 'popup', 'width': 450, 'height': 450, 'left': 300,'top': 100}, function(window) {});
 }
 
-// Log in sidebar
+// Log in
 
 function logUserIn(tabId,username,password,callback){
 
@@ -1360,7 +1365,7 @@ function logUserIn(tabId,username,password,callback){
                 lvErrorMessage = 'Incorrect email or password';
             }
             if(callback){
-                alert(lvErrorMessage);
+                callback(lvErrorMessage);
             } else {
                 refreshTab(tabId,lvErrorMessage);
             }
@@ -1384,10 +1389,11 @@ function signUserUp(tabId,username,password,callback){
             userLog(tabId,'USER_SIGNED_UP',{user: user});
         },
         error: function(user,error){
+            var lvErrorMessage = error.message;
             if(callback){
-                alert(error.message);
+                callback(lvErrorMessage);
             } else {
-                refreshTab(tabId,error.message);
+                refreshTab(tabId,lvErrorMessage);
             }
         }
     });
@@ -1445,7 +1451,9 @@ function resetPassword(email,callback){
         success: function(){
             callback();
         },
-        error: parseErrorUserSimple
+        error: function(error){
+            callback(error.message);
+        }
     });
 }
 
@@ -1647,37 +1655,67 @@ function addFeedbackPage(args) {
 
 function parseErrorSave(object,error) {
     var errorMsg = "Parse error on .save() request: " + error.code + " " + error.message;
-    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
-        chrome.browserAction.setBadgeText({text: "!"});
-    });
+    if(error.code === Parse.Error.INVALID_SESSION_TOKEN){
+        logUserOut(function(){
+            // do nothing. The user will get the log in sidebar the next time they navigate to an active website
+        });
+    } else {
+        chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+            chrome.browserAction.setBadgeText({text: "!"});
+        });
+    }
 }
 
 function parseErrorFind(error) {
     var errorMsg = "Parse error on .find() request: " + error.code + " " + error.message;
-    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
-        chrome.browserAction.setBadgeText({text: "!"});
-    });
+    if(error.code === Parse.Error.INVALID_SESSION_TOKEN){
+        logUserOut(function(){
+            // do nothing. The user will get the log in sidebar the next time they navigate to an active website
+        });
+    } else {
+        chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+            chrome.browserAction.setBadgeText({text: "!"});
+        });
+    }
 }
 
 function parseErrorUser(user,error) {
     var errorMsg = "Parse error on authentication request: " + error.code + " " + error.message;
-    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
-        chrome.browserAction.setBadgeText({text: "!"});
-    });
+    if(error.code === Parse.Error.INVALID_SESSION_TOKEN){
+        logUserOut(function(){
+            // do nothing. The user will get the log in sidebar the next time they navigate to an active website
+        });
+    } else {
+        chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+            chrome.browserAction.setBadgeText({text: "!"});
+        });
+    }
 }
 
 function parseErrorGet(user,error) {
     var errorMsg = "Parse error on .get() request: " + error.code + " " + error.message;
-    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
-        chrome.browserAction.setBadgeText({text: "!"});
-    });
+    if(error.code === Parse.Error.INVALID_SESSION_TOKEN){
+        logUserOut(function(){
+            // do nothing. The user will get the log in sidebar the next time they navigate to an active website
+        });
+    } else {
+        chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+            chrome.browserAction.setBadgeText({text: "!"});
+        });
+    }
 }
 
 function parseErrorUserSimple(error) {
     var errorMsg = "Parse error on user request: " + error.code + " " + error.message;
-    chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
-        chrome.browserAction.setBadgeText({text: "!"});
-    });
+    if(error.code === Parse.Error.INVALID_SESSION_TOKEN){
+        logUserOut(function(){
+
+        });
+    } else {
+        chrome.storage.local.set({'baluParseErrorMessage': errorMsg}, function(){
+            chrome.browserAction.setBadgeText({text: "!"});
+        });
+    }
 }
 
 // To do: remove these alerts and replace with a more user-friendly error catch.

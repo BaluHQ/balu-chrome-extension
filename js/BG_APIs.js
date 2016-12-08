@@ -65,9 +65,14 @@ function chromeMessageListener(msg, sender, callback){
             manualSearch(sender.tab.id, msg.data.searchTerm);
         break;
 
+        case 'CS_main | pleaseShowOptionsLogInPageWindow':
+            log(logMessage,'MESSG');
+            showOptionsPageWindow(sender.tab.id, msg.data.page);
+        break;
+
         case 'CS_main | pleaseShowOptionsPageWindow':
             log(logMessage,'MESSG');
-            showOptionsPageWindow(sender.tab.id);
+            showOptionsPageWindow(sender.tab.id, msg.data.page);
         break;
 
         case 'CS_main | pleaseShowWhyDoWeCareWindow':

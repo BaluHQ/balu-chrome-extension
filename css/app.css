@@ -11,6 +11,13 @@
      background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
      background-repeat: repeat-y;
    }
+   .logInSideBarText {
+       font-family: Noto Sans;
+       color: #6bd3c2;
+       font-weight: bolder;
+       font-size: 1.2rem;
+       /*color: #35b19c;*/  /* Darker than Balu Green */
+   }
 
  .sidebarBody {
    height: 99%; /* prevents scroll bar appearing until needed */
@@ -118,6 +125,10 @@
     color: #6bd3c2; /* Balu Green */
 }
 
+.signInScreenButtons:hover {
+    background-color: #6bd3c2;
+    color: #3C3B3B;/* Darker than Balu Grey */
+}
 .signInScreenButtons {
     border-radius: 3px;
     background-color: #6bd3c2; /* Balu Green */
@@ -126,7 +137,7 @@
 }
 
 .authError {
-    color: #6bd3c2;/* Balu Grey */
+    color: red;
     font-style:italic;
 
 }
@@ -220,10 +231,8 @@
 }
 
 .optionsBody {
-  min-width: 300px;
-  position: relative;
-  vertical-align: middle;
-  padding-left: 10px;
+    background-color: #706f6f; /* darker than Balu grey */
+    background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
 }
 
 .userSubmittedRecBody {
@@ -438,10 +447,15 @@
 }
 
 .banner_link {
-    color: #0066ba;
+    color: #6bd3c2;
     font-weight: bold;
 }
-
+.banner_link:hover {
+    color: #6bd3c2;
+}
+.banner_link:visited {
+    color: #6bd3c2;
+}
 .morePlus {
     font-size: 10px;
     color: #D2691E;
@@ -507,4 +521,96 @@
 
 .feedbackToolTips {
     width: 120px
+}
+
+
+/**************************************************************************
+ * This next section is taken from Zurb, for the tabs on the options page * http://zurb.com/building-blocks/dashboard-control-tabs
+ **************************************************************************/
+.secondary-tabs {
+    margin-top: 40px;
+}
+.secondary-tabs .tabs.top-tab {
+  text-align: center; }
+  .secondary-tabs .tabs.top-tab i {
+    font-size: 1.5rem;
+    margin-right: 1rem; }
+  .secondary-tabs .tabs.top-tab li {
+    width: 25%;}
+    .secondary-tabs .tabs.top-tab li:hover {
+      font-weight: bolder; }
+  .secondary-tabs .tabs.top-tab .tab-title > a {
+    background-color: #ffffff;
+    font-family: Noto Sans;
+    outline: none;
+    font-size: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
+    color: #35b19c;  /* Darker than Balu Green */}
+.secondary-tabs .tabs-content.top-tab {
+  border: 1px solid #999;
+  border-top: none;
+  background-color: #f2f2f2; /* very light grey */
+  background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
+}
+.secondary-tabs .tabs-content.top-tab h3 {
+    font-family: Noto Sans;
+    color: #35b19c;  /* Darker than Balu Green */}
+
+.secondary-tabs .tabs-content.top-tab div.content.top-tab-thin {
+  margin-left: 2.7rem;
+}
+.secondary-tabs .tabs-content.top-tab div.content.top-tab {
+  margin-left: 2.7rem;
+  margin-top: 1rem;
+}
+
+  .secondary-tabs .tabs-content.top-tab h5 {
+    color: #e74c3c;
+    margin-left: 2.7rem; }
+  .secondary-tabs .tabs-content.top-tab p {
+    margin-bottom: 0.2rem; }
+  .secondary-tabs .tabs-content.top-tab .switch {
+    margin-bottom: 1rem; }
+
+/* These are from the log-in-form example, http://www.codeply.com/go/1eK1ltMYAx */
+.tabs {
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    -moz-flex-direction: row;
+    flex-direction: row;
+}
+.tabs > li {
+    float: none;
+    -webkit-flex: 1;
+    -moz-flex: 1;
+    flex: 1;
+}
+.tabs > li > a {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+    overflow: hidden;
+}
+/* */
+.number-images {
+    width: 100px;
+    height: 85px;
+    fill: #6bd3c2
+}
+
+.website-tag {
+    background-color: #6bd3c2;  /* Balu Green */
+    padding: .2em .6em .3em;
+    font-size: 100%;
+    font-weight: 400;
+    line-height: 2.3;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em;
 }

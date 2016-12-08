@@ -64,7 +64,7 @@ function searchTrackedTabForRecommendation(trackedTab){
 /*
  * Force a sidebar with the given content onto the web page
  */
-function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow, authMessage) {
+function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow) {
 
     log(gvScriptName_CSMain + '.createSidebar: Start','PROCS');
 
@@ -155,14 +155,14 @@ function createSidebar(thenCreateSidebarContent,recommendationData, searchTerm, 
 
     }
 
-    createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow,authMessage);
+    createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow);
 
 }
 
 /*
  * @searchTerm: optional, passed through from manual search so we can re-populate the search field
  */
-function createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow, authMessage){
+function createSidebarTemplate(thenCreateSidebarContent,recommendationData, searchTerm, showJoyride, displayChristmasBanner, showTopRow){
 
     log(gvScriptName_CSMain + '.createSidebarTemplate: Start','PROCS');
 
@@ -232,7 +232,6 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         topRow += '</form>';
 
         // If our search results have triggered a banner, display it here
-/*
         if(displayChristmasBanner){
             topRow += '<div id="banner_container" class="banner_container">';
             topRow += '  <div class="row">';
@@ -242,7 +241,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
             topRow += '  </div>';
             topRow += '</div>';
         }
-*/
+
     }
 
     var content = '<div id="contentDiv" class="contentDiv"></div>';
@@ -372,11 +371,11 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
 
     // set the christmas banner background image
     if(displayChristmasBanner) {
-        var imgURL = chrome.extension.getURL("images/christmas_banner2.png");
+        var imgURL = chrome.extension.getURL("images/christmas_banner.jpg");
         gvIframe.contentWindow.document.getElementById("banner_container").style.backgroundImage = "url("+imgURL+")";
     }
 
-    thenCreateSidebarContent(recommendationData, showJoyride, addFinalScriptsToDOM, searchTerm, authMessage);
+    thenCreateSidebarContent(recommendationData, showJoyride, addFinalScriptsToDOM, searchTerm);
 }
 
 function addFinalScriptsToDOM(showJoyride) {
@@ -668,85 +667,28 @@ function waitForIframeThenExecute(counter,callback){
 
 /*
  * Create the content for the sign in / sign up sidebar
+ * This used to be a full log in screen, but now it's all contained within the
+ * options page, so the sidebar merely appears and points users towards the
+ * options page to login
+ * To do: Parameters are there because this function is called as a callback, where in other
+ * scenarios the callback could be a function that does need 4 params [!]
  */
-function createLogInSidebarContent(a,b,c,d,authMessage) {
+function createLogInSidebarContent(a,b,c,d) {
+    var lvFunctionName = 'createLogInSidebarContent';
+    log(gvScriptName_CSMain + '.' + lvFunctionName + ': Start','PROCS');
 
-    log(gvScriptName_CSMain + '.createLogInSidebarContent: Start','PROCS');
+    var lvHtml = '';
+    lvHtml += '<div class="row text-center" style="margin-top: 70px">';
+    lvHtml += '  <div class="small-10 small-centered columns">';
+    lvHtml += '    <p class="logInSideBarText">It\'s possible you were logged out as part of a <a style="color:#35b19c; text-decoration:underline" href="http://www.getbalu.org/migrating-balu-off-parse-dot-com" target="_blank">one-off migration</a>. Sorry.</p>';
+    lvHtml += '    <p class="logInSideBarText">Log in to Balu to see amazing ethical products while you shop</p>';
+    lvHtml += '    <a id="showLogInPageButton" class="button radius signInScreenButtons">Log in</a>';
+    lvHtml += '  </div>';
+    lvHtml += '</div>';
 
-    var userForm = '';
+    gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = lvHtml;
+    gvIframe.contentWindow.document.getElementById('showLogInPageButton').addEventListener('click',showOptionsLogInPageWindow_listener);
 
-    // Log in form
-
-    userForm += '<div class="row" style="margin-left: 10px">';
-    userForm += '  <div class="small-8 columns end">';
-    if(typeof authMessage !== 'undefined'){
-        userForm += '<p class="authError">' + authMessage + '</p>';
-    }
-    userForm += '    <h4 class="signInToBalu">Sign In to Balu</h4>';
-    userForm += '  </div>';
-    userForm += '</div>';
-    userForm += '<form id="logInUserForm">';
-    userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label class="loginFieldLabels">Email';
-    userForm += '        <input type="text" id="fieldLogInEmail" placeholder="Email" required="yes">';
-    userForm += '      </label>';
-    userForm += '    </div>';
-    userForm += '  </div>';
-    userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label class="loginFieldLabels">Password';
-    userForm += '        <input type="password" id="fieldLogInPassword" placeholder="Password" required="yes">';
-    userForm += '      </label>';
-    userForm += '    </div>';
-    userForm += '  </div>';
-    userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-12 columns end">';
-    userForm += '      <input id="logInUserButton" class="button radius signInScreenButtons" type="submit" value="Log In">';
-    userForm += '      <input id="passwordResetButton" class="button radius signInScreenButtons" type="submit" value="Reset password">';
-    userForm += '    </div>';
-    userForm += '  </div>';
-    userForm += '</form>';
-
-    // Sign up form
-
-    userForm += '<br />';
-    userForm += '<div class="row" style="margin-left: 10px">';
-    userForm += '  <div class="small-8 columns end">';
-    userForm += '    <h4 class="signInToBalu">Create a New Account</h4>';
-    userForm += '  </div>';
-    userForm += '</div>';
-    userForm += '<form id="signUserUpForm">';
-    userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label class="loginFieldLabels">Email';
-    userForm += '        <input type="text" id="fieldSignUpUsername" placeholder="Email" required="yes">';
-    userForm += '      </label>';
-    userForm += '    </div>';
-    userForm += '  </div>';
-    userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-8 columns end" style="margin-left: 10px">';
-    userForm += '      <label class="loginFieldLabels">Password';
-    userForm += '        <input type="password" id="fieldSignUpPassword" placeholder="Password" required="yes">';
-    userForm += '      </label>';
-    userForm += '    </div>';
-    userForm += '  </div>';
-    userForm += '  <div class="row" style="margin-left: 10px">';
-    userForm += '    <div class="small-4 columns end">';
-    userForm += '      <input id="signUserUpButton" class="button radius signInScreenButtons" type="submit" value="Sign Up">';
-    userForm += '    </div>';
-    userForm += '  </div>';
-    userForm += '</form>';
-
-    gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = userForm;
-
-    gvIframe.contentWindow.document.body.className = 'loginSidebarBody'; // a darker background, because there's light green text written directly on top of it
-    gvIframe.contentWindow.document.getElementById("fieldManualSearch").className = 'loginManualSearchField';
-
-    gvIframe.contentWindow.document.getElementById('logInUserButton').addEventListener('click',logUserIn_listener);
-    gvIframe.contentWindow.document.getElementById('passwordResetButton').addEventListener('click',passwordReset_listener);
-
-    gvIframe.contentWindow.document.getElementById('signUserUpButton').addEventListener('click',signUserUp_listener);
 }
 
 function hideSidebar(callback) {
@@ -781,9 +723,15 @@ function manualSearchSubmit_listener() {
     sendMessage('BG_main','pleaseRunManualSearch',{searchTerm: searchTerm});
 }
 
+function showOptionsLogInPageWindow_listener() {
+    var lvFunctionName = 'showOptionsLogInPageWindow_listener';
+    log(gvScriptName_CSMain + '.' + lvFunctionName + ': Start','LSTNR');
+    sendMessage('BG_main','pleaseShowOptionsLogInPageWindow',{page: 'options.html#start'});
+}
+
 function showOptionsPageWindow_listener() {
     log(gvScriptName_CSMain + '.showOptionsPageWindow_listener: Start','LSTNR');
-    sendMessage('BG_main','pleaseShowOptionsPageWindow');
+    sendMessage('BG_main','pleaseShowOptionsPageWindow',{page: 'options.html#settings'});
 }
 
 function showProductLinkWindow_listener() {
@@ -949,25 +897,4 @@ function showFAQWindow_listener() {
 function showPrivacyWindow_listener() {
     log(gvScriptName_CSMain + '.showPrivacyWindow_listener: Start','LSTNR');
     sendMessage('BG_main','pleaseShowPrivacyWindow');
-}
-
-// Log in sidebar
-
-function logUserIn_listener() {
-    log(gvScriptName_CSMain + '.logUserIn_listener: Start','LSTNR');
-    var username    = gvIframe.contentWindow.document.getElementById('fieldLogInEmail').value;
-    var password = gvIframe.contentWindow.document.getElementById('fieldLogInPassword').value;
-    sendMessage('BG_main','pleaseLogUserIn',{username: username,password: password});
-}
-
-function passwordReset_listener() {
-    log(gvScriptName_CSMain + '.passwordReset_listener: Start','LSTNR');
-    sendMessage('BG_main','pleaseShowOptionsPageWindow');
-}
-
-function signUserUp_listener() {
-    log(gvScriptName_CSMain + '.signUserUp_listener: Start','LSTNR');
-    var username    = gvIframe.contentWindow.document.getElementById('fieldSignUpUsername').value;
-    var password = gvIframe.contentWindow.document.getElementById('fieldSignUpPassword').value;
-    sendMessage('BG_main','pleaseSignUserUp',{username: username, password: password});
 }
