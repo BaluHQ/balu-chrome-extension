@@ -2062,6 +2062,7 @@ function getElements(tabURL,websiteURL,pvDOM,searchData,sexSearchCallback,produc
 
     if(lvFoundEverything){
         logMessage += 'SUCCESS: Found necessary pvDOM elements to run search.' + '\n';
+        logMessage += '    Extra detail: ' + logMessage_extra + '\n';
     } else {
         logMessage += 'FAILURE: Did not find necessary pvDOM elements to run search.' + '\n';
         logMessage += '    Failed to find: ' + logMessage_elementsNotFound + '\n';
@@ -2219,9 +2220,10 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
          }
 
          // Next, let's see whether there's a sex in the department list
+         // We check them all, otherwise Men's Shoes followed by Women's Shoes would end up with no women's results being displayed 
          if (pageElements.departments.length > 0) {
              for (i = 0; i < pageElements.departments.length; i++){
-                 if(!foundMen && !foundWomen) {
+                 if(!foundMen || !foundWomen) {
                      if ((new RegExp('\\b' + 'women' + '\\b','i').test(pageElements.departments[i])) ||
                          (new RegExp('\\b' + 'woman' + '\\b','i').test(pageElements.departments[i])) ||
                          (new RegExp('\\b' + 'lady' + '\\b','i').test(pageElements.departments[i])) ||
@@ -2230,14 +2232,12 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
                          (new RegExp('\\b' + 'female' + '\\b','i').test(pageElements.departments[i]))) {
                          logMessage += '    Identified a women indicator in a department (' + pageElements.departments[i] + ')' + '\n';
                          foundWomen = true;
-                         break;
                      } else if ((new RegExp('\\b' + 'men' + '\\b','i').test(pageElements.departments[i])) ||
                                 (new RegExp('\\b' + 'men\'s' + '\\b','i').test(pageElements.departments[i])) ||
                                 (new RegExp('\\b' + 'man' + '\\b','i').test(pageElements.departments[i])) ||
                                 (new RegExp('\\b' + 'male' + '\\b','i').test(pageElements.departments[i]))) {
                          logMessage += '    Identified a men indicator in a department (' + pageElements.departments[i] + ')' + '\n';
                          foundMen = true;
-                         break;
                      }
                  }
              }
