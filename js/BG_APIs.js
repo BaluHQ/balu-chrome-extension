@@ -175,10 +175,10 @@ function chromeMessageListener(msg, sender, callback){
         case 'CS_main | pleaseTrackThisTab':
             log(logMessage,'MESSG');
             if(gvTrackedTabs[sender.tab.id]){
-                log('Tab is being tracked, calling callback to search page',' INFO');
+                log(logMessage + ': Tab is being tracked, calling callback to search page',' INFO');
                 callback(gvTrackedTabs[sender.tab.id]);
             } else {
-                log('Tab is NOT being tracked, ending execution',' INFO');
+                log(logMessage + ': Tab is NOT being tracked, ending execution',' INFO');
             }
         break;
 

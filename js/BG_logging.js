@@ -79,6 +79,8 @@ function userLog(tabId, eventName, data) {
     // For the UserLog events that require no bespoke code...
     if(eventName === 'USER_LOG_IN' ||
        eventName === 'USER_LOG_OUT' ||
+       eventName === 'INIT_ON' ||
+       eventName === 'INIT_OFF' ||
        eventName === 'APP_LOAD' ||
        eventName === 'USER_PASSWORD_RESET' ||
        eventName === 'USER_SIGNED_UP' ||
@@ -96,7 +98,6 @@ function userLog(tabId, eventName, data) {
        eventName === 'OPTIONS: BALU_TURNED_OFF') {
 
         var UserLogOb = Parse.Object.extend("UserLog");
-        // to do: test, could user ever be null here?
         var userLogOb = new UserLogOb();
 
         userLogOb.set('eventName',eventName);
