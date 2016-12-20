@@ -8,7 +8,7 @@ gvScriptName_BGMain = 'BG_main';
  * Parse SDK Config
  */
 //var gvParseServerURL = 'http://localhost:1337/parse'; // localhost
-var gvParseServerURL = 'https://balu-parse-server-test.herokuapp.com/parse';
+var gvParseServerURL = 'https://balu-parse-server.herokuapp.com/parse';
 var gvAppId = 'mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu';
 
 /*

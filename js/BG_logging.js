@@ -73,7 +73,7 @@ function userLog(tabId, eventName, data) {
     // don't log for the dev / test user
     if(user){
         if(user.get('username') === 'dev.baluhq@gmail.com'){
-        //    return;
+            return;
         }
     }
     // For the UserLog events that require no bespoke code...
