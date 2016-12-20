@@ -55,7 +55,7 @@ function chromeMessageListener(msg, sender, callback){
 
         case 'CS_main | pleaseRetrieveRecommendations':
             log(logMessage,'MESSG');
-            getRecommendations(sender.tab.id,msg.data.searchResults,displayRecommendations);
+            getRecommendations(sender.tab.id,msg.data.productSearchResults,msg.data.websiteSearchResults,displayRecommendations);
         break;
 
         // Main sidebar functionality (called by CS_main listeners)
@@ -75,31 +75,16 @@ function chromeMessageListener(msg, sender, callback){
             showOptionsPageWindow(sender.tab.id, msg.data.page);
         break;
 
-        case 'CS_main | pleaseShowWhyDoWeCareWindow':
-            log(logMessage,'MESSG');
-            showWhyDoWeCareWindow(sender.tab.id,msg.data.whyDoWeCare);
-        break;
-
         case 'CS_main | pleaseShowProductLinkWindow':
             log(logMessage,'MESSG');
             showProductLinkWindow(sender.tab.id,msg.data.productURL,msg.data.recommendationId,msg.data.recProductName,msg.data.pageConfirmationSearch,msg.data.isManualSearch);
         break;
-
-        case 'CS_main | pleaseVoteProductUp':
-            log(logMessage,'MESSG');
-            voteProductUpOrDown(sender.tab.id,msg.data.recommendationId,'UP');
-        break;
-
-        case 'CS_main | pleaseVoteProductDown':
-            log(logMessage,'MESSG');
-            voteProductUpOrDown(sender.tab.id,msg.data.recommendationId,'DOWN');
-        break;
-
+/*
         case 'CS_main | pleaseShowTweetWindow':
             log(logMessage,'MESSG');
             showTweetWindow(sender.tab.id,msg.data.tweetContent);
         break;
-
+*/
         case 'CS_main | pleaseShowBlockBrandWindow':
             log(logMessage,'MESSG');
             msg.data.tabURL = sender.tab.url;

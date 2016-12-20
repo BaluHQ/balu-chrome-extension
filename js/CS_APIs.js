@@ -26,6 +26,8 @@ function chromeMessageListener(msg, sender, callback) {
 
     var logMessage = gvScriptName_CSMessaging + ' >> message <- ' + msg.sender + ': ' + msg.subject;
 
+    var lvArgs;
+
     switch (msg.sender + " | " + msg.subject) {
 
         // Core search functions
@@ -34,7 +36,11 @@ function chromeMessageListener(msg, sender, callback) {
             log(logMessage,'MESSG');
             // We handover to the search JS script to handle the search, and when done it will
             // request pleaseRetrieveRecommendations from BG_main
-            searchPage_master(msg.data.tabURL,msg.data.websiteURL,document,msg.data.searchData);
+            lvArgs = {productSearchData: msg.data.productSearchData,
+                      websiteSearchData: msg.data.websiteSearchData,
+                      tab:               msg.data.tab,
+                      dom:               document};
+            searchPage_master(lvArgs);
         break;
 
         case 'BG_main | pleaseDisplayRecommendations':
