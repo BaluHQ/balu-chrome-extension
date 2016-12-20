@@ -332,25 +332,6 @@
     position: relative;
 }
 
-.whyDoWeCare { /* the one that appears in the header */
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    font-size: 11px;
-}
-
-.whyDoWeCare_link {
-    color: white;
-    font-weight: lighter;
-}
-
-.whyDoWeCare_recBody {  /* the one that appears in the rec body */
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    font-size: 11px;
-}
-
 .altProductsBlock {
     padding: 0px 10px;
 }
