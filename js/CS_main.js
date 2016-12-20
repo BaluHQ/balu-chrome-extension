@@ -438,23 +438,19 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
 
     log(gvScriptName_CSMain + '.createResultsSidebarContent: Start', 'PROCS');
 
-    // variables to hold html as we build it
-    var sidebarContentHTML = '';
-    var productGroupHead = '';
-    var notVotedDownRecs = '';
-    var votedDownRecs = '';
+    // variable to hold html as we build it
+    var lvSidebarContentHTML = '';
 
     // Vars to control the flow through the ProductGroup loop
     var firstInProductGroup = true;
-    var lastInProductGroup = false;
     var prevProductGroupId = "";
     var thisProductGroupId = "";
 
     if(!recommendations || recommendations.length === 0) {
-        sidebarContentHTML += '<div class="origProductBlock">';
-        sidebarContentHTML += '  <p class="sideBarFreeText">We couldn\'t find anything. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"</p>';
-        sidebarContentHTML += '  <p class="sideBarFreeText"><b>Think we\'re missing something? <a class="showUserSubmittedRecWindow_text">Tell us about it!</a></b></p>';
-        sidebarContentHTML += '</div>';
+        lvSidebarContentHTML += '<div class="origProductBlock">';
+        lvSidebarContentHTML += '  <p class="sideBarFreeText">We couldn\'t find anything. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"</p>';
+        lvSidebarContentHTML += '  <p class="sideBarFreeText"><b>Think we\'re missing something? <a class="showUserSubmittedRecWindow_text">Tell us about it!</a></b></p>';
+        lvSidebarContentHTML += '</div>';
     }
 
     for (var i = 0; i < recommendations.length; i++) {
@@ -465,35 +461,16 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
             firstInProductGroup = true;
         }
 
-        if (i < recommendations.length-1){
-            if(thisProductGroupId != recommendations[i+1].productGroupId) {
-                lastInProductGroup = true;
-            } else{
-                lastInProductGroup = false;
-            }
-        } else{
-            lastInProductGroup = true;
-        }
-
-        // For the first recommendation in a new ProductGroup, set up a new ProductGroup header
+        // For the first recommendation in a new ProductGroup, set up a new ProductGroup section header
         if (firstInProductGroup) {
             firstInProductGroup = false;
-
-            productGroupHead += '<div class="origProductBlock">';
-            productGroupHead += '  <div class="row origProductHeaderStrip">';
-            productGroupHead += '    <div class="small-8 columns origProductHeaderStripText">' + recommendations[i].productGroupName + '</div>';
-            // We won't always have a whydowecare handle for manual search
-            /*
-            if(recommendations[i].whyDoWeCare !== '') {
-                productGroupHead += '    <div class="small-4 columns text-right origProductHeaderStripWhyCare">';
-                productGroupHead += '      <a class="whyCare_triggers" data-whydowecare="' + recommendations[i].whyDoWeCare + '">why care?</a>';
-                productGroupHead += '    </div>';
-            }
-            */
-            productGroupHead += '  </div>';
-            productGroupHead += '</div>';
+            lvSidebarContentHTML += '<div class="origProductBlock">';
+            lvSidebarContentHTML += '  <div class="row origProductHeaderStrip">';
+            lvSidebarContentHTML += '    <div class="small-8 columns origProductHeaderStripText">' + recommendations[i].sectionTitle + '</div>';
+            lvSidebarContentHTML += '  </div>';
+            lvSidebarContentHTML += '</div>';
         }
-
+/*
         // Before starting the recommendation block, let's build our twitter content for this recommendation
         var tweetContent =  'Just%20discovered%20' + recommendations[i].productName + '%20from%20';
         if(recommendations[i].twitterHandle){
@@ -502,139 +479,58 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
             tweetContent += recommendations[i].brandName;
         }
         tweetContent += '%20-%20found%20with%20%40BaluHQ. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects';
-
-        // build the rec itself into a variable that is then assigned to either the top set of responses or the bottom, the bottom
-        // being the ones voted down by this user
-        var recBlock = '';
+*/
 
         // If we're in manual search, make it clear in the products links so we can log it
-
         var searchTermHTML = '';
         if(searchTerm){
             searchTermHTML = 'data-fromsearch="true"';
         }
 
-        recBlock += '<div class="altProductsBlock">';
-        recBlock += '  <div class="row collapse altProductBlock productLinks" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        recBlock += '    <div class="small-5 columns">';
-        recBlock += '      <div class="row text-center">';
-        recBlock += '        <img class="altImage" src="' + recommendations[i].imageURL + '" />';
-        recBlock += '      </div>';
-        recBlock += '    </div>';
-        recBlock += '    <div class="small-7 columns altText">';
-        recBlock += '      <div class="altText-top">';
+        lvSidebarContentHTML += '<div class="altProductsBlock">';
+        lvSidebarContentHTML += '  <div class="row collapse altProductBlock productLinks" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
+        lvSidebarContentHTML += '    <div class="small-5 columns">';
+        lvSidebarContentHTML += '      <div class="row text-center">';
+        lvSidebarContentHTML += '        <img class="altImage" src="' + recommendations[i].imageURL + '" />';
+        lvSidebarContentHTML += '      </div>';
+        lvSidebarContentHTML += '    </div>';
+        lvSidebarContentHTML += '    <div class="small-7 columns altText">';
+        lvSidebarContentHTML += '      <div class="altText-top">';
         if(recommendations[i].baluFavourite){
-            recBlock += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
+            lvSidebarContentHTML += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
         }
-        //recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        recBlock += '          <span class="altProductBrandName">' + recommendations[i].brandName + '</span>';
-        //recBlock += '        </a>';
-        //recBlock += '        <a class="morePlus" id="showBrand_' + recommendations[i].brandId + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '">+</a>';
-        //recBlock += '        <a class="productLinks altProductLink" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
+        lvSidebarContentHTML += '          <span class="altProductBrandName">' + recommendations[i].brandName + '</span>';
         if(recommendations[i].productGroupName !== recommendations[i].productName){
-            recBlock += '<br /><span class="altProductProductName">' + recommendations[i].productName + '</span>';
+            lvSidebarContentHTML += '<br /><span class="altProductProductName">' + recommendations[i].productName + '</span>';
         }
-        //recBlock += '        </a>';
-        recBlock += '      </div>';
-        recBlock += '      <div style="position: absolute; top: 0px; right: 0px;">';
-        recBlock += '        <div class="qtip_tooltips">';
-        recBlock += '          <i class="fi-info brandSpielIcon" id="joyrideStop1"></i>';
-        recBlock += '        </div>';
-        recBlock += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="' + recommendations[i].brandName + '">' + recommendations[i].brandSpiel + '</div>';
-        recBlock += '        <div class="qtip_tooltips">';
-        recBlock += '          <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
-        recBlock += '        </div>';
-        recBlock += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="Block brand: ' + recommendations[i].brandName + '">I don\'t want to see recommendations from this brand again</div>';
-        recBlock += '      </div>';
-        recBlock += '    </div>';
+        lvSidebarContentHTML += '      </div>';
+        lvSidebarContentHTML += '      <div style="position: absolute; top: 0px; right: 0px;">';
+        lvSidebarContentHTML += '        <div class="qtip_tooltips">';
+        lvSidebarContentHTML += '          <i class="fi-info brandSpielIcon" id="joyrideStop1"></i>';
+        lvSidebarContentHTML += '        </div>';
+        lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="' + recommendations[i].brandName + '">' + recommendations[i].brandSpiel + '</div>';
+        lvSidebarContentHTML += '        <div class="qtip_tooltips">';
+        lvSidebarContentHTML += '          <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
+        lvSidebarContentHTML += '        </div>';
+        lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="Block brand: ' + recommendations[i].brandName + '">I don\'t want to see recommendations from this brand again</div>';
+        lvSidebarContentHTML += '      </div>';
+        lvSidebarContentHTML += '    </div>';
+        lvSidebarContentHTML += '    <div class="altText-bottom findOutMoreButton">Find Out More</div>';
+        lvSidebarContentHTML += '  </div>';
+        lvSidebarContentHTML += '</div>';
 
-
-        recBlock += '    <div class="altText-bottom findOutMoreButton">Find Out More</div>';
-
-        /*
-
-        // check whether this product has been voted up or down by the user (passed in to the rec array by getRecommendations) and
-        // style the arrows accordingly
-        var voteUpClass = 'voteClass_nothing';
-        var voteDownClass = 'voteClass_nothing';
-
-        if(recommendations[i].upOrDownOrNull === 'UP') {
-            voteUpClass = 'voteClass_voted';
-            voteDownClass = 'voteClass_notVoted';
-        } else if (recommendations[i].upOrDownOrNull === 'DOWN') {
-            voteUpClass = 'voteClass_notVoted';
-            voteDownClass = 'voteClass_voted';
-        }
-
-        var left = (screen.width/4)*3;
-        var top = (screen.height/4)*1;
-
-        recBlock += '      <a class="voteUp_icons" id="voteUp_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Like this recommendation"><i class="fi-like ' + voteUpClass + '" id="voteUpRec_upArrow_' + recommendations[i].recommendationId + '"></i></a>';
-        recBlock += '      <a class="voteDown_icons" id="voteDown_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" title="Dislike this recommendation"><i class="fi-dislike ' + voteDownClass + '" id="voteDownRec_downArrow_' + recommendations[i].recommendationId + '"></i></a>';
-        recBlock += '      <a class="twitterShareIcons" data-tweetcontent="' + tweetContent + '" title="Share on Twitter"><i class="fi-social-twitter twitterIcon"></i></a>';
-
-
-        //recBlock += '      <a href="#" title="Share..."><i class="fi-share altProdIcon"></i></a>';
-        recBlock += '    </div>';
-        */
-        recBlock += '  </div>';
-
-        if (!lastInProductGroup) {
-            recBlock += '</div>';
-        }
-
-        if(recommendations[i].upOrDownOrNull === 'DOWN') {
-            votedDownRecs += recBlock;
-        } else {
-            notVotedDownRecs += recBlock;
-        }
-
-         if(lastInProductGroup) {
-            sidebarContentHTML += productGroupHead;
-            sidebarContentHTML += notVotedDownRecs;
-            sidebarContentHTML += votedDownRecs;
-            //sidebarContentHTML += '  <hr class="hrClass"/>';
-            //sidebarContentHTML += '  <label style="font-size: 11px">Know of other great retailers of <i>' + recommendations[i].productGroupName + '</i>?<br />Get them <a class="showUserSubmittedRecWindow_text">added to Balu</a> so everybody can find them! </label>';
-            sidebarContentHTML += '</div>';
-
-            // clear the product loop variables ready for the next iteration
-            productGroupHead = '';
-            notVotedDownRecs = '';
-            votedDownRecs = '';
-        }
-
+        // Set our variables to control flow through the loop
         prevProductGroupId = thisProductGroupId;
 
-    } // end of primary loop, through recommendations
+    } // end of recommendations loop
 
-    gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = sidebarContentHTML;
+    gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = lvSidebarContentHTML;
 
     // Product link listeners
     var productLinks = gvIframe.contentWindow.document.getElementsByClassName("productLinks");
     for(var x = 0; x < productLinks.length; x++) {
         productLinks[x].addEventListener('click',showProductLinkWindow_listener);
     }
-
-    // Why care listeners
-    //var whyCareLinks = gvIframe.contentWindow.document.getElementsByClassName("whyCare_triggers");
-    //for(var a = 0; a < whyCareLinks.length; a++) {
-    //    whyCareLinks[a].addEventListener('click',showWhyDoWeCareWindow_listener);
-    //}
-
-
-    // Vote up/down listeners
-    //var voteUpIcons = gvIframe.contentWindow.document.getElementsByClassName("voteUp_icons");
-    //var voteDownIcons = gvIframe.contentWindow.document.getElementsByClassName("voteDown_icons");
-    //for(var z = 0; z < voteUpIcons.length; z++) {
-    //    voteUpIcons[z].addEventListener('click',voteUp_listener);
-    //    voteDownIcons[z].addEventListener('click',voteDown_listener);
-    //}
-
-    // Twitter share listeners
-    //var twitterShareIcons = gvIframe.contentWindow.document.getElementsByClassName("twitterShareIcons");
-    //for(var v = 0; v < twitterShareIcons.length; v++) {
-    //    twitterShareIcons[v].addEventListener('click',twitterShare_listener);
-    //}
 
     // Block brand listeners
     var blockBrandIcons = gvIframe.contentWindow.document.getElementsByClassName("blockBrand_icons");
@@ -749,62 +645,7 @@ function showProductLinkWindow_listener() {
                                                          recProductName:         productName,
                                                          isManualSearch:         isManualSearch});
 }
-/*
-function showWhyDoWeCareWindow_listener() {
-    log(gvScriptName_CSMain + '.showWhyDoWeCareWindow_listener: Start','LSTNR');
-    var whyDoWeCare = this.getAttribute('data-whydowecare');
-    sendMessage('BG_main','pleaseShowWhyDoWeCareWindow',{whyDoWeCare: whyDoWeCare});
-}
-*/
-/*
-function voteUp_listener() {
 
-    log(gvScriptName_CSMain + '.voteUp_listener: Start','LSTNR');
-
-    var recommendationId = this.getAttribute('data-recid');
-
-    // Set the arrow class correctly so the vote is reflected immediatly to the user
-    var voteDownArrow_container = gvIframe.contentWindow.document.getElementById('voteDown_icon_' + recommendationId);
-    var voteDownArrow = voteDownArrow_container.childNodes[0];
-    var voteUpArrow_container = gvIframe.contentWindow.document.getElementById('voteUp_icon_' + recommendationId);
-    var voteUpArrow = voteUpArrow_container.childNodes[0];
-    if(voteUpArrow.className === 'fi-like voteClass_voted') {
-        voteDownArrow.className = 'fi-dislike voteClass_nothing';
-        voteUpArrow.className = 'fi-like voteClass_nothing';
-    } else {
-        voteDownArrow.className = 'fi-dislike voteClass_notVoted';
-        voteUpArrow.className = 'fi-like voteClass_voted';
-    }
-
-    // Message extension to update DB
-    sendMessage('BG_main','pleaseVoteProductUp',{recommendationId: recommendationId});
-}
-*/
-/*
-function voteDown_listener() {
-
-    log(gvScriptName_CSMain + '.voteDown_listener: Start','LSTNR');
-
-    var recommendationId = this.getAttribute('data-recid');
-
-    // Set the arrow class correctly so the vote is reflected immediatly to the user
-    var voteDownArrow_container = gvIframe.contentWindow.document.getElementById('voteDown_icon_' + recommendationId);
-    var voteDownArrow = voteDownArrow_container.childNodes[0];
-    var voteUpArrow_container = gvIframe.contentWindow.document.getElementById('voteUp_icon_' + recommendationId);
-    var voteUpArrow = voteUpArrow_container.childNodes[0];
-    if(voteDownArrow.className === 'fi-dislike voteClass_voted') {
-        voteDownArrow.className = 'fi-dislike voteClass_nothing';
-        voteUpArrow.className = 'fi-like voteClass_nothing';
-    } else {
-        voteDownArrow.className = 'fi-dislike voteClass_voted';
-        voteUpArrow.className = 'fi-like voteClass_notVoted';
-    }
-
-    // Message extension to update DB
-    sendMessage('BG_main','pleaseVoteProductDown',{recommendationId: recommendationId});
-
-}
-*/
 /*
 function twitterShare_listener() {
 

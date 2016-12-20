@@ -95,7 +95,9 @@ function userLog(tabId, eventName, data) {
        eventName === 'OPTIONS: BALU_SET_TO_HIDE' ||
        eventName === 'OPTIONS: BALU_SET_TO_SHOW' ||
        eventName === 'OPTIONS: BALU_TURNED_ON' ||
-       eventName === 'OPTIONS: BALU_TURNED_OFF') {
+       eventName === 'OPTIONS: BALU_TURNED_OFF' ||
+       eventName === 'SHOW_LOG_IN_SIDEBAR' ||
+       eventName === 'SHOW_RESULTS_SIDEBAR') {
 
         var UserLogOb = Parse.Object.extend("UserLog");
         var userLogOb = new UserLogOb();
@@ -126,6 +128,25 @@ function userLog(tabId, eventName, data) {
         var searchProductIds = [];
 
         switch (eventName) {
+            case ('APP_LOAD_USER_STATUS'):
+
+                var UserLog_AppLoadUserStatus = Parse.Object.extend("UserLog_AppLoadUserStatus");
+                var userLog_AppLoadUserStatus = new UserLog_AppLoadUserStatus();
+
+                userLog_AppLoadUserStatus.set('eventName',eventName);
+                userLog_AppLoadUserStatus.set('user',user);
+                userLog_AppLoadUserStatus.set('isBaluOnOrOff',data.settings.isBaluOnOrOff);
+                userLog_AppLoadUserStatus.set('isBaluShowOrHide',data.settings.isBaluShowOrHide);
+                userLog_AppLoadUserStatus.setACL(acl);
+
+                userLog_AppLoadUserStatus.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
+            break;
+
             case ('SEARCH'):
 
 
@@ -231,6 +252,26 @@ function userLog(tabId, eventName, data) {
 
             break;
 
+            case 'RECOMMENDATIONS_WEBSITE_LEVEL_REC':
+
+                // Save the user log, with anonymisd tabURL
+
+                var UserLog_WebsiteLevelRecs = Parse.Object.extend("UserLog_WebsiteLevelRecs");
+                var userLog_WebsiteLevelRecs = new UserLog_WebsiteLevelRecs();
+                userLog_WebsiteLevelRecs.set('eventName',eventName);
+                userLog_WebsiteLevelRecs.set('user',user);
+                var lvCurrentDate = new Date();
+                userLog_WebsiteLevelRecs.set('lastTimeSidebarShown',lvCurrentDate);
+                userLog_WebsiteLevelRecs.set('website',{__type: "Pointer",className: "Website",objectId: gvTabs[tabId].website.websiteId});
+                acl.setReadAccess(user,true); // the user has to read this log on each app load, to determine when they last visited the Balu websites
+                userLog_WebsiteLevelRecs.setACL(acl);
+                userLog_WebsiteLevelRecs.save({
+                    success: function(){
+                    },
+                    error: parseErrorSave
+                });
+
+            break;
 
             case ('MANUAL_SEARCH' || 'MANUAL_SEARCH_EMPTY_STRING' || 'MANUAL_SEARCH_NO_RESULTS'):
 
@@ -373,26 +414,7 @@ function userLog(tabId, eventName, data) {
 
             break;
 
-            case 'WHY_CARE_CLICK':
-
-                var UserLog_WhyCare = Parse.Object.extend("UserLog_WhyCare");
-                var userLog_WhyCare = new UserLog_WhyCare();
-
-                userLog_WhyCare.set('eventName',eventName);
-                userLog_WhyCare.set('tabURL',tabURL_anonymised);
-                userLog_WhyCare.set('user',user);
-                userLog_WhyCare.set('whyDoWeCareURLName',data.whyDoWeCareURLName);
-
-                userLog_WhyCare.setACL(acl);
-
-                userLog_WhyCare.save({
-                    success: function(){
-                    },
-                    error: parseErrorSave
-                });
-
-            break;
-
+/*
             case 'SHOW_TWEET_WINDOW':
 
                 var UserLog_TweetWindow = Parse.Object.extend("UserLog_TweetWindow");
@@ -412,7 +434,7 @@ function userLog(tabId, eventName, data) {
                 });
 
             break;
-
+*/
             case 'USER_BLOCK_BRAND':
 
                 var UserLog_BlockBrand = Parse.Object.extend("UserLog_BlockBrand");

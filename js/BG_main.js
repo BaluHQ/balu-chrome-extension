@@ -7,7 +7,8 @@ gvScriptName_BGMain = 'BG_main';
 /*
  * Parse SDK Config
  */
-var gvParseServerURL = 'https://balu-parse-server.herokuapp.com/parse'; //'http://localhost:1337/parse'; // localhost
+//var gvParseServerURL = 'http://localhost:1337/parse'; // localhost
+var gvParseServerURL = 'https://balu-parse-server.herokuapp.com/parse';
 var gvAppId = 'mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu';
 
 /*
@@ -18,16 +19,23 @@ var gvIsBaluOnOrOff;
 var gvIsBaluShowOrHide;
 var gvIsBaluShowOrHide_untilRestart = 'SHOW';
 var gvIsBaluShowOrHide_tempOverride = 'HIDE'; // allows the popup to force the sidebar to display when we have recommendations but gvIsBaluShowOrHide is 'HIDE'
-var gvWebsites;
+
 var gvSearchProducts;
+var gvSearchWebsites;
+var gvBlockBrandParams;
+var gvRecentlyVisitedWebsites; // websites that are currently "off" for this user (for website-level rec), because they've recently visited the page
+var gvDelayBetweenWebsiteRecs = 5; // How long we wait before display website level recs again
+
 var gvTabs = [];
 var gvTrackedTabs = []; // These are tabs we've opened from the extension that we want to track for a bit
+
 var gvShowJoyride;
+
 
 /*
  * Global variables for param passing to popup windows
  */
-var gvBlockBrandParams;
+
 
 /*
  * Every time the browser starts up (or the extension is updated) the background script initialises
@@ -43,13 +51,13 @@ var gvBlockBrandParams;
 (function initialise(){
 
     setLoggingControl(gvParseServerURL);
-
-    log(gvScriptName_BGMain + '.initialise: Start','INITS');
+    var lvFunctionName = 'initialise';
+    log(gvScriptName_BGMain + '.' + lvFunctionName + ': Start','INITS');
 
     Parse.initialize(gvAppId);
     Parse.serverURL = gvParseServerURL;
 
-    log(gvScriptName_BGMain + '.initialised Balu\'s Parse Server at ' + gvParseServerURL,' INFO');
+    log(gvScriptName_BGMain + '.' + lvFunctionName + ': Initalised Balu\'s Parse Server at ' + gvParseServerURL,' INFO');
 
     // Listeners //
 
@@ -63,7 +71,7 @@ var gvBlockBrandParams;
         // Listen for the install event, to display a welcome page
         chrome.runtime.onInstalled.addListener(chromeInstalledExtensionListener);
     } catch(err){
-        log(gvScriptName_BGMain + '.initialise: Extension background script failed to create all necessary listeners. Error: ' + err.message,'ERROR');
+        log(gvScriptName_BGMain + '.' + lvFunctionName + ': Extension background script failed to create all necessary listeners. Error: ' + err.message,'ERROR');
     }
 
     // Initalise extension //
@@ -83,7 +91,7 @@ var gvBlockBrandParams;
             }
         });
     } catch(err){
-        log(gvScriptName_BGMain + '.initialise: failed to initalise extension (getBaluSettings/turnBaluOn/etc). Error: ' + err.message,'ERROR');
+        log(gvScriptName_BGMain + '.' + lvFunctionName + ': failed to initalise extension (getBaluSettings/turnBaluOn/etc). Error: ' + err.message,'ERROR');
     }
 
 })();
@@ -102,8 +110,7 @@ function turnBaluOn(){
     // Load the website and search data from Parse. After these functions the background script
     // stops until a content script requests a tab initialisation. There are wait functions on
     // the tab init to ensure that website and searchProduct data are present first.
-    getWebsiteData();
-    getSearchProductData();
+    getSearchData();
 }
 
 /**********************
@@ -193,58 +200,128 @@ function getBaluSettings(callback){
  }
 
 /*
+ * This function populates three global variables with all the necessary data to identify when
+ * to display the Balu Sidebar, and what content to display in it
  *
- */
-function getWebsiteData(callback){
-
-    log(gvScriptName_BGMain + '.getWebsiteData: Start','PROCS');
-
-    // gvWebsites is our global variable that we need to populate
-    gvWebsites = [];
-
-    var Website = Parse.Object.extend("Website");
-    var websiteQuery = new Parse.Query(Website);
-    websiteQuery.notEqualTo('websiteURL','balutestwebsite.html');
-    websiteQuery.ascending('websiteURL');
-
-    websiteQuery.find({
-        success: function(websites){
-            for (var i = 0; i < websites.length; i++) {
-                gvWebsites.push({websiteId:        websites[i].id,
-                                 websiteURL:       websites[i].get('websiteURL'),
-                                 isWebsiteOnOrOff: websites[i].get('isWebsiteOnOrOff')});
-            }
-            log(gvScriptName_BGMain + '.getWebsiteData: website data fetched from Parse DB', 'PROCS');
-        },
-        error: parseErrorFind
-    });
-}
-
-/*
- * This function populates a global variable with all the necessary data to search
- * users' webpages for "unethical" products. That means we need:
- *   - The SearchProduct name and search terms
- *   - The SearchProduct's SearchCategory
- *   - The active websites for the SearchCategories
+ * The three datasets are gvSearchProducts, gvSearchWebsites and gvRecentlyVisitedWebsites
  *
- * One SearchProduct can only have one SearchCategory [so far, this probably needs to change] but one
- * SearchCategory can be active on many websites. Hence the resulting SearchProduct dataset
- * will contain duplicates, one for every active website.
+ * gvSearchWebsites has:
+ *  - A list of all websites, with one row per website / "search level"
+ *  - The search level is a concept that is  held on categoryWebsiteJoin, where a value of TRUE
+ *    in isWebsiteLevelRec indicates it's website-level and a value of FALSE or undefined
+ *    indicates it's product-level (which is kind of the default).
+ *  - To have one website do both product-level and website-level at the same time (say,
+ *    for example, we land on a search results page of Tesco which has website-level
+ *    generic grocery recommendations but product-level chutney recommendations), you would
+ *    need to enter two rows into categoryWebsiteJoin, one tesco.com | TRUE    and one   tesco.com | FALSE
+ *  - Alternatively, blacks.co.uk only has website-level recs, so will have only one row: blacks.co.uk | TRUE
+ *  - It's also possible to turn a website off entirely, for product-level and website-level search
+ *    This is is configured at the Website grain, so because each website will be repeated multiple times in
+ *    gvSearchWebsites, every row for any given website will have its isWebsiteOnOrOff value repeated too.
  *
- * In addition to the above, we also need the ProductGroup. This will allow us to identify
- * matching recommendations after the page search is complete (the "join" between search products
- * and recommendations is through the product groups)
+ * gvRecentlyVisitedWebsites has:
+ *  - All website-level rec websites the user has visited in the last gvDelayBetweenWebsiteRecs days, in an associative array indexed by website id
  *
- * This function is run as part of the app initialisation - i.e. the ProductSearch dataset will
+ * gvSearchProducts has:
+ *   - The SearchProduct name and search terms, listed for every categoryWebsiteJoin they are relevant to
+ *   - The ProductGroup. This will allow us to identify matching recommendations after the page search
+ *     is complete (the "join" between search products and recommendations is through the product groups)
+ *
+ * This function is run as part of the app initialisation - i.e. these datasets will
  * not refresh without a browser or extension restart.
  *
  */
-function getSearchProductData() {
+function getSearchData() {
 
-    log(gvScriptName_BGMain + '.getSearchProductData: Start','PROCS');
+    var lvFunctionName = 'getSearchData';
+    log(gvScriptName_BGMain + '.' + lvFunctionName + ': Start','PROCS');
 
-    // gvSearchProducts is our global variable that we need to populate
+    // These are our global variables we need to populate
+    gvSearchWebsites = [];
     gvSearchProducts = [];
+    gvRecentlyVisitedWebsites = {};
+
+    // We can populate these in parallel because the sidebar will wait for both
+    // to be populated before it can initialise itself.
+
+    /********************
+     * gvSearchWebsites *
+     ********************/
+
+    /* First, get all SearchCategory-Website pairs */
+
+    var CategoryWebsiteJoin = Parse.Object.extend('CategoryWebsiteJoin');
+    var categoryWebsiteJoinQuery = new Parse.Query(CategoryWebsiteJoin);
+    categoryWebsiteJoinQuery.limit(1000);
+    categoryWebsiteJoinQuery.include('searchCategory');
+    categoryWebsiteJoinQuery.include('website');
+    categoryWebsiteJoinQuery.find({
+        success: function(pvCategoryWebsiteJoins){
+            if(pvCategoryWebsiteJoins.length >= 1000) {
+                log(gvScriptName_model + '.' + lvFunctionName + ': categoryWebsiteJoinQuery.find() is exceeding Parse Server row limit. Code needs upgrading otherwise data will be ignored!','ERROR');
+            }
+            for(var l = 0; l < pvCategoryWebsiteJoins.length; l++) {
+                // If websiteLevelRec is set, then it's website level. Otherwise it's prodcuct level
+                var lvIsProductLevelRec = true;
+                var lvIsWebsiteLevelRec = false;
+                if(pvCategoryWebsiteJoins[l].get('isWebsiteLevelRec')) {
+                    lvIsProductLevelRec = false;
+                    lvIsWebsiteLevelRec = true;
+                }
+                gvSearchWebsites.push({// Search Category
+                                       searchCategoryId:              pvCategoryWebsiteJoins[l].get('searchCategory').id,
+                                       searchCategoryName:            pvCategoryWebsiteJoins[l].get('searchCategory').get('categoryName'),
+                                       departments:                   pvCategoryWebsiteJoins[l].get('departments_LC'),
+                                       whyDoWeCare:                   pvCategoryWebsiteJoins[l].get('searchCategory').get('whyDoWeCare'), // obsolete. still held in DB, but not used in code
+                                       // Website
+                                       websiteId:                     pvCategoryWebsiteJoins[l].get('website').id,
+                                       websiteURL:                    pvCategoryWebsiteJoins[l].get('website').get('websiteURL'),
+                                       isWebsiteOnOrOff:              pvCategoryWebsiteJoins[l].get('website').get('isWebsiteOnOrOff'),
+                                       isWebsiteLevelRec:             lvIsWebsiteLevelRec,
+                                       isProductLevelRec:             lvIsProductLevelRec});
+            }
+            log(gvScriptName_BGMain + '.' + lvFunctionName + ': ' + gvSearchWebsites.length + ' rows of gvSearchWebsites data fetched from Parse DB', 'PROCS');
+        },
+        error: parseErrorFind
+    });
+
+    /*****************************
+     * gvRecentlyVisitedWebsites *
+     *****************************/
+
+    // we want to exclude any that the user has seen in the last gvDelayBetweenWebsiteRecs days
+    // We can only do this if we're logged in, of course
+    if(Parse.User.current()){
+        var lvDateLimit = new Date();
+        lvDateLimit.setDate(lvDateLimit.getDate() - gvDelayBetweenWebsiteRecs);
+
+        var UserLog_WebsiteLevelRecs = Parse.Object.extend('UserLog_WebsiteLevelRecs');
+        var userLog_WebsiteLevelRecsQuery = new Parse.Query(UserLog_WebsiteLevelRecs);
+        userLog_WebsiteLevelRecsQuery.include('website');
+        userLog_WebsiteLevelRecsQuery.greaterThanOrEqualTo('lastTimeSidebarShown',lvDateLimit);
+        userLog_WebsiteLevelRecsQuery.equalTo('user',Parse.User.current()); // although the ACL would deal with this anyway
+        userLog_WebsiteLevelRecsQuery.find({
+            success: function(pvUserLog_websiteLevelRecs) {
+                if(pvUserLog_websiteLevelRecs.length >= 1000) {
+                    log(gvScriptName_model + '.' + lvFunctionName + ': userLog_WebsiteLevelRecsQuery.find() is exceeding Parse Server row limit. Code needs upgrading otherwise data will be ignored!','ERROR');
+                }
+
+                var lvCounter = 0;
+                for(var m = 0; m < pvUserLog_websiteLevelRecs.length; m++) {
+                    if(!gvRecentlyVisitedWebsites[pvUserLog_websiteLevelRecs[m].get('website').id]){
+                        lvCounter++;
+                        gvRecentlyVisitedWebsites[pvUserLog_websiteLevelRecs[m].get('website').id] = true; // doesn't really matter what value is here. The fact that we found it means it's to be excluded
+                    }
+                }
+                log(gvScriptName_BGMain + '.' + lvFunctionName + ': ' + lvCounter + ' rows of gvRecentlyVisitedWebsites data fetched from Parse DB (for this user, logged within the last ' + gvDelayBetweenWebsiteRecs + ' days)', 'PROCS');
+            },
+            error: parseErrorFind
+        });
+    }
+
+    /********************
+     * gvSearchProducts *
+     ********************/
 
     // First get all SearchProducts, and their Categories and ProductGroups
 
@@ -253,20 +330,7 @@ function getSearchProductData() {
     searchProductQuery.include('searchCategories');
     searchProductQuery.include('productGroups');
     searchProductQuery.ascending('productGroup_sort, productName');
-
-    // Deal with Parse row limit
-    var limit = 1000; // 1000 is max!
-    searchProductQuery.limit(limit);
-
-    searchProductQuery.count({
-        success: function(count){
-            if(count > limit){
-                logError('PARSE_ROW_LIMIT_ERROR',{message: 'searchProducts contain ' + count + ' rows but query limit set to ' + limit});
-            }
-        }
-    });
-
-
+    searchProductQuery.limit(1000);
     searchProductQuery.find({
         success: function(searchProducts) {
             // Then get all SearchCategory-Website pairs
@@ -327,7 +391,7 @@ function getSearchProductData() {
                         }
                     }
 
-                    log(gvScriptName_BGMain + '.getSearchProductData: productSearch data fetched from Parse DB', 'PROCS');
+                    log(gvScriptName_BGMain + '.' + lvFunctionName + ': ' + gvSearchProducts.length + ' rows of gvSearchProducts data fetched from Parse DB', 'PROCS');
                 },
                 error: parseErrorFind
             });
@@ -366,9 +430,9 @@ function waitForExtensionInitThenInitialiseTab(tab,counter){
 
     var hasExtensionInitialisd = false;
 
-    if(typeof gvWebsites !== 'undefined' && typeof gvSearchProducts !== 'undefined' && typeof gvIsBaluOnOrOff !== 'undefined'){
-        if(gvWebsites.length > 0 && gvSearchProducts.length > 0 && gvIsBaluOnOrOff !== null){
-            log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Ending wait: gvWebsites (' + gvWebsites.length + '), gvSearchProducts (' + gvSearchProducts.length + ') and gvIsBaluOnOrOff (' + gvIsBaluOnOrOff + ') are set','PROCS');
+    if(typeof gvSearchWebsites !== 'undefined' && typeof gvSearchProducts !== 'undefined' && typeof gvIsBaluOnOrOff !== 'undefined'){
+        if(gvSearchProducts.length > 0 && gvSearchWebsites.length > 0 && gvIsBaluOnOrOff !== null){
+            log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Ending wait: gvSearchProducts (' + gvSearchProducts.length + '), gvSearchWebsites (' + gvSearchWebsites.length + ') and gvIsBaluOnOrOff (' + gvIsBaluOnOrOff + ') are set','PROCS');
             if(tab !== null) {
                 initialiseTab(tab);
             } else {
@@ -384,7 +448,7 @@ function waitForExtensionInitThenInitialiseTab(tab,counter){
 
     if(!hasExtensionInitialisd) {
         if (counter > 200) { // time out after ten seconds
-            log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Ending wait: counter reached ' + counter + ' before gvWebsites, gvSearchProducts and/or gvIsBaluOnOrOff were set',' INFO');
+            log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Ending wait: counter reached ' + counter + ' before gvSearchProducts, gvSearchWebsites and/or gvIsBaluOnOrOff were set',' INFO');
             if(!gvHaveWeAlreadyTriedToReconnectSinceLastTabRefresh){
                 log(gvScriptName_BGMain + '.waitForExtensionInitThenInitialiseTab: Attmepting to reconnect app and init tab again','PROCS');
                 gvHaveWeAlreadyTriedToReconnectSinceLastTabRefresh = true;
@@ -407,56 +471,102 @@ function initialise_allTabs(){
     for(var tab in gvTabs) {initialiseTab(gvTabs[tab].tab);}
 }
 function initialiseTab(tab){
+    var lvFunctionName = 'initialiseTab';
+    log(gvScriptName_BGMain + '.' + lvFunctionName + ': Start','PROCS');
 
-   log(gvScriptName_BGMain + '.initialiseTab: Start','PROCS');
+    /* Save some details about the current tab for easy access later */
 
-   // Note, it is possible that a tab URL could match more than one Balu website.
-   // (e.g. http://marketplace.asos.com/ would match asos.com and marketplace.asos.com)
-   // If this is the case, the first website to match (they are in alphabetical order) wins.
-   // In theory, this wouldn't matter too much: asos and asos marketplace will have very similar
-   // search categories activated.
+    // A website is active if it is configured for either product-level or website-level search,
+    // which is set at the categoryWebsiteJoins grain. It might be configured for product-level search
+    // on X searchCategories, and website-level search on another Y searchCategories. But all we
+    // are going to store about the current tab is whether it's configured for one or more websites.
+    // I.e. we're aggregating all that detail up to the website grain, and storing it against the tab
+    // If the user navigates to an active website, we will reference gvSearchWebsites and get back down
+    // to the details.
 
-   var website;
-   var isWebsiteOnOrOff = 'OFF';
+    // We're going to create a gvTabs record regardless, so these default
+    // values are what we get for gvTabs records that /don't/ match to a website in gvSearchWebsites
+    var lvWebsite = null;
+    var lvIsWebsiteOnOrOff = 'OFF';
+    var lvIsProductLevelRec = false;
+    var lvIsWebsiteLevelRec = false;
+    var lvHasUserVisitedWebsiteRecently = false;
 
-   for (i = 0; i < gvWebsites.length; i++) {
-       if (tab.url.indexOf(gvWebsites[i].websiteURL) != -1) {
-           website = gvWebsites[i];
-           isWebsiteOnOrOff = gvWebsites[i].isWebsiteOnOrOff; // So we can easily tell whether website is on/off without checking gvtabs.website for null
-           break;
-       }
-   }
+    for (i = 0; i < gvSearchWebsites.length; i++) {
+        if (tab.url.indexOf(gvSearchWebsites[i].websiteURL) !== -1) {
+            // Note, and to do?, it is possible that a tab URL could match more than one Balu website.
+            // (e.g. http://marketplace.asos.com/ would match asos.com and marketplace.asos.com)
+            // If this is the case, the last website to match (they are in alphabetical order and we loop
+            // through the whole lot) wins. In theory, this wouldn't matter too much: asos and asos
+            // marketplace will have very similar search categories activated.
 
-   // Do we need to show the joyride. To do: might be better for it not to be here. must be a scenario where you can get the joyride to reappear by triggering a refresh tab, without re-init the app.
+            /* The website record (see getSearchData()) */
+
+            lvWebsite = gvSearchWebsites[i];
+
+            // Beacuse gvTabs.website can be null, we would have to check it every time we
+            // reference the website on/off etc variables. So let's create them directly inside gvTabs as well.
+
+            /* isWebsiteOnOrOff */
+
+            lvIsWebsiteOnOrOff = gvSearchWebsites[i].isWebsiteOnOrOff;
+
+            /* isWebsiteLevelRec */
+
+            // A website configured for product-level and website-level search will appear multiple times
+            // in gvSearchWebsites, so we want to make sure we don't end up with this being incorretly false
+            // (i.e. we only need one positive match to leave us on a positive)
+            if(!lvIsProductLevelRec && gvSearchWebsites[i].isProductLevelRec) {
+                lvIsProductLevelRec = true;
+            }
+            if(!lvIsWebsiteLevelRec && gvSearchWebsites[i].isWebsiteLevelRec) {
+                lvIsWebsiteLevelRec = true;
+            }
+
+            /* hasUserVisitedWebsiteRecently */
+
+            // Just the existence of this website in gvRecentlyVisitedWebsites tells us all we need to know.
+            if(gvRecentlyVisitedWebsites[gvSearchWebsites[i].websiteId]){
+                lvHasUserVisitedWebsiteRecently = true;
+            }
+        }
+    }
+
+    /* Add our gvTabs record */
+
+    gvTabs[tab.id] = {tab:                           tab, // Chrome's original tab object
+                      website:                       lvWebsite, // can be null, so for ease of programming, let's pull out the key values below
+                      //
+                      isWebsiteOnOrOff:              lvIsWebsiteOnOrOff,
+                      isProductLevelRec:             lvIsProductLevelRec,
+                      isWebsiteLevelRec:             lvIsWebsiteLevelRec,
+                      hasUserVisitedWebsiteRecently: lvHasUserVisitedWebsiteRecently,
+                      //
+                      isBaluShowOrHide_untilRefresh: 'SHOW', // A setting available on every sidebar; will always be SHOW right after refresh
+                      recommendationCount:           0,
+                      recommendationCount_manual:    0,
+                      productGroupIdsArray:          []};
+
+   /* Do we need to show the joyride? */
 
    var currentUser = Parse.User.current();
-   var joyrideStatus;
-
+   var lvJoyrideStatus;
    if(currentUser){
-       joyrideStatus = currentUser.get('joyrideStatus');
+       lvJoyrideStatus = currentUser.get('joyrideStatus');
    }
-
    gvShowJoyride = false;
-   if(currentUser && (typeof joyrideStatus === 'undefined' || joyrideStatus === 'NOT DONE')){
+   if(currentUser && (typeof lvJoyrideStatus === 'undefined' || lvJoyrideStatus === 'NOT DONE')){
        gvShowJoyride = true;
-
    }
 
-   gvTabs[tab.id] = {tab:                           tab, // Chrome's original tab object
-                     isBaluShowOrHide_untilRefresh: 'SHOW', // A setting available on every sidebar; will always be SHOW right after refresh
-                     isWebsiteOnOrOff:              isWebsiteOnOrOff,
-                     website:                       website,
-                     recommendationCount:           0,
-                     recommendationCount_manual:    0,
-                     productGroupIdsArray:          []};
+   /* Log it */
 
-   var logText =  website ? 'website valid' : 'website not valid';
-   log(gvScriptName_BGMain + '.initialiseTab: ' + gvTabs[tab.id].tab.id + ' saved; ' + logText + '; isWebsiteOnOrOff == ' + isWebsiteOnOrOff,' INFO');
+   log(gvScriptName_BGMain + '.' + lvFunctionName + ': tab ' + tab.id + ' saved; lvIsWebsiteOnOrOff == ' + lvIsWebsiteOnOrOff + ', isWebsiteLevelRec == ' + lvIsWebsiteLevelRec,' INFO');
 
-   if (gvIsBaluOnOrOff === 'ON' && isWebsiteOnOrOff === 'ON') {
-       hideSidebar(tab.id,function(){refreshTab(tab.id);});
+   if (gvIsBaluOnOrOff === 'ON' && lvIsWebsiteOnOrOff === 'ON') {
+       hideSidebar(tab.id,function(){refreshTab(tab.id);}); // the call to hideSidebar first is just to secure the code against unexpected combinations of events. In theory, this should just be refreshTab here.
    } else {
-       log(gvScriptName_BGMessaging + '.onMessage: gvIsBaluOnOrOff == ' + gvIsBaluOnOrOff + ' and isWebsiteOnOrOff == ' + isWebsiteOnOrOff + ', so doing nothing',' INFO');
+       log(gvScriptName_BGMessaging + '.onMessage: gvIsBaluOnOrOff == ' + gvIsBaluOnOrOff + ' and isWebsiteOnOrOff == ' + lvIsWebsiteOnOrOff + ', so doing nothing',' INFO');
    }
 
 }
@@ -469,7 +579,7 @@ function initialiseTab(tab){
  */
 function refreshTab_allTabs(){
     log(gvScriptName_BGMain + '.refreshTab_allTabs: Start','PROCS');
-    for(var tab in gvTabs) {refreshTab(gvTabs[tab].tab.id);}
+    for(var tab in gvTabs) {refreshTab(tab.id);}
 }
 function refreshTab(tabId,authMessage){
 
@@ -485,11 +595,12 @@ function refreshTab(tabId,authMessage){
         // Depending whether user is logged in, determines whether we show sign sidebar or run a search
         var user = Parse.User.current();
         if(user) {
-            sendMessage(tabId,'pleaseSearchThePage',{searchData:  gvSearchProducts,
-                                                     tabURL:      gvTabs[tabId].tab.url,
-                                                     websiteURL:  gvTabs[tabId].website.websiteURL});
+            sendMessage(tabId,'pleaseSearchThePage',{productSearchData:  gvSearchProducts,
+                                                     websiteSearchData:  gvSearchWebsites,
+                                                     tab:                gvTabs[tabId]});
         } else {
             sendMessage(tabId,'pleaseDisplayLogInSidebar',{authMessage: authMessage});
+            userLog(tabId,'SHOW_LOG_IN_SIDEBAR');
         }
     }
 
@@ -520,31 +631,30 @@ function refreshTab(tabId,authMessage){
 /*
  *
  */
-function displayRecommendations(tabId,recommendationData,searchTerm,displayChristmasBanner,productGroupIdsArray){
+function displayRecommendations(pvArgs){
 
     log(gvScriptName_BGMain + '.displayRecommendations: start','PROCS');
 
     // Get the rec count and display it on the browser action
-
-    if(searchTerm){
-        gvTabs[tabId].recommendationCount_manual = recommendationData.length;
+    if(pvArgs.searchTerm){
+        gvTabs[pvArgs.tabId].recommendationCount_manual = pvArgs.recommendationData.length;
     } else {
-        gvTabs[tabId].recommendationCount = recommendationData.length;
+        gvTabs[pvArgs.tabId].recommendationCount = pvArgs.recommendationData.length;
     }
 
     var badgeText;
-    if(gvTabs[tabId].recommendationCount === 0) {
+    if(gvTabs[pvArgs.tabId].recommendationCount === 0) {
         badgeText = '';
     } else {
-        badgeText = "" + gvTabs[tabId].recommendationCount + "";
+        badgeText = "" + gvTabs[pvArgs.tabId].recommendationCount + "";
     }
 
-    chrome.browserAction.setBadgeText({text: badgeText,tabId: tabId});
+    chrome.browserAction.setBadgeText({text: badgeText,tabId: pvArgs.tabId});
 
     // Save the productGroupIdsArray into the gvTab record
     // We do this because the Feedback Page feature needs to know the IDs.
     // Arguably, though, we should be storing the entire rec set on the tab - would probably help many features. Too late though; too much of a rewrite to make the most of it
-    gvTabs[tabId].productGroupIdsArray = productGroupIdsArray;
+    gvTabs[pvArgs.tabId].productGroupIdsArray = pvArgs.productGroupIdsArray;
 
     // We only want to display the sidebar if:
     //   1) Balu is set to SHOW (gvIsBaluShowOrHide)
@@ -557,15 +667,19 @@ function displayRecommendations(tabId,recommendationData,searchTerm,displayChris
 
     if((gvIsBaluShowOrHide === 'SHOW' &&
         gvIsBaluShowOrHide_untilRestart === 'SHOW' &&
-        gvTabs[tabId].isBaluShowOrHide_untilRefresh === 'SHOW') ||
-       searchTerm ||
-       gvIsBaluShowOrHide_tempOverride === 'SHOW') {
+        gvTabs[pvArgs.tabId].isBaluShowOrHide_untilRefresh === 'SHOW') ||
+        pvArgs.searchTerm ||
+        gvIsBaluShowOrHide_tempOverride === 'SHOW') {
         gvIsBaluShowOrHide_tempOverride = 'HIDE';
 
-        sendMessage(tabId,'pleaseDisplayRecommendations',{recommendationData:     recommendationData,
-                                                          searchTerm:             searchTerm,
-                                                          showJoyride:            gvShowJoyride,
-                                                          displayChristmasBanner: displayChristmasBanner});
+        if(pvArgs.websiteLevelRecs) {
+            recordRecentVisitToWebsite(pvArgs.tabId);
+        }
+        userLog(pvArgs.tabId,'SHOW_RESULTS_SIDEBAR');
+        sendMessage(pvArgs.tabId,'pleaseDisplayRecommendations',{recommendationData:     pvArgs.recommendationData,
+                                                                 searchTerm:             pvArgs.searchTerm,
+                                                                 showJoyride:            gvShowJoyride,
+                                                                 displayChristmasBanner: pvArgs.displayChristmasBanner});
     }
 }
 
@@ -579,52 +693,98 @@ function displayRecommendations(tabId,recommendationData,searchTerm,displayChris
  * Everytime the content_script searches the page (and finds something) it will re-request recommendations
  * from this function.
  *
- * @SearchResults is an array created by the content_scripts during the page search. It is simply an array
- * of elements from the SearchProducts array created in the above (getSearchProductData) function. The only
- * difference is the @SearchResults array only contains the elements that were found in the user's webpage
+ * There are two ways we determine which recommendations to pull. The first is by filtering on productGroup,
+ * which is for the product-level search. The seond is by filtering on searchCategory, which is for the
+ * website-level search
  *
- * We also pull the user's rec ratings here and add them to the recs being returnedso we can correctly order
+ * @pvProductSearchResults is an array created by the content_scripts during the page search. It is simply an array
+ * of elements from the gvSearchProducts array created in the above (getSearchData) function. The only
+ * difference is the pvProductSearchResults array only contains the elements that were found in the user's webpage
+ *
+ * @pvWebsiteSearchResults is an array created by the content_scripts, a subset of gvSearchWebsites, only containing the
+ * categoryWebsiteJoin rows that are relevant for the website we're currently on
+ *
+ * We also pull the user's rec ratings here and add them to the recs being returned so we can correctly order
  * and flag in the sidebar
+ *
+ * To do, the product-level/website-level split has been hacked in here a little untidily. Could do with a refactor.
  */
-function getRecommendations(tabId,searchResults,callback_displayRecommendations) {
+function getRecommendations(tabId,pvProductSearchResults,pvWebsiteSearchResults,callback_displayRecommendations) {
 
     log(gvScriptName_BGMain + '.getRecommendations: start','PROCS');
 
-    // To get the recommendations, the only part of searchResults we're interested in is the ProductGroup.
+    // Filters for the recommendation query
+    var ProductGroup = Parse.Object.extend('ProductGroup');
+    productGroupQuery = new Parse.Query(ProductGroup);
+    var SearchCategory = Parse.Object.extend('SearchCategory');
+    searchCategoryQuery = new Parse.Query(SearchCategory);
+
+    // Used when we construct the recommendations array
+    var productGroups = {};
+
+    /************************
+     * Product-level filter *
+     ************************/
+
+    // To get the recommendations, the only part of pvProductSearchResults we're interested in is the ProductGroup.
     // If the content_script found products A, B and C on the user's webpage, and products A, B and C belong
     // to ProductGroups X, X and Y respectively, then we need to recommend ALL recommendation products that
     // belong to ProductGroups X & Y.
 
     // Our first step is to create an array of productGroup IDs to feed into the Parse query
-    // At the same time, we will produce an associative array of {productGroupId, hitCount, whyDoWeCare} objects,
+    // At the same time, we will produce an associative array of {productGroupId, hitCount} objects,
     // indexed by the productGroupId so that, after we have our recommendations back from Parse,
-    // we can quickly add the hitCounts and whyDoWeCares in.
+    // we can quickly add the hitCounts in.
     // We need to pick out the max hit count because, to sort asc, we need to "flip" the hitCounts
 
-    var productGroups = {};
-    var maxHitCount = 0;
-    var productGroupIdsArray = [];
-    var displayChristmasBanner = false;
-    for (var i = 0; i < searchResults.length; i++) {
-        if(!productGroups[searchResults[i].productGroupId]) {
-            productGroups[searchResults[i].productGroupId] = {productGroupId: searchResults[i].productGroupId,
-                                                              hitCount:       0,
-                                                              whyDoWeCare:    searchResults[i].whyDoWeCare};
+    // We might have no pvProductSearchResults if it's for a website that's only configured for website-level search (or if we didn't find any product matches)
+    if(pvProductSearchResults !== null) {
+        var maxHitCount = 0;
+        var productGroupIdsArray = [];
+        var displayChristmasBanner = false;
+        for (var i = 0; i < pvProductSearchResults.length; i++) {
+            // If this is the first time we've come across this productGroup, add it to our two arrays
+            if(!productGroups[pvProductSearchResults[i].productGroupId]) {
+                productGroups[pvProductSearchResults[i].productGroupId] = {productGroupId: pvProductSearchResults[i].productGroupId,
+                                                                           hitCount:       pvProductSearchResults[i].numberOfSearchHits || 0};
+                productGroupIdsArray.push(pvProductSearchResults[i].productGroupId);
+            } else {
+                // Otherwise, increment the hitCount for this product group
+                productGroups[pvProductSearchResults[i].productGroupId].hitCount += pvProductSearchResults[i].numberOfSearchHits;
+            }
+            // Check to see whether we've got a new maxHitCount
+            if (productGroups[pvProductSearchResults[i].productGroupId].hitCount > maxHitCount) {
+                maxHitCount = productGroups[pvProductSearchResults[i].productGroupId].hitCount;
+            }
+        }
 
-            productGroupIdsArray.push(searchResults[i].productGroupId);
-        }
-        productGroups[searchResults[i].productGroupId].hitCount = searchResults[i].numberOfSearchHits + (productGroups[searchResults[i].productGroupId].hitCount || 0);
-        if (productGroups[searchResults[i].productGroupId].hitCount > maxHitCount) {
-            maxHitCount = productGroups[searchResults[i].productGroupId].hitCount;
-        }
+        // Now we can define the filter on the Parse query (which we will use below to filter the Recommendation query
+        productGroupQuery.containedIn('objectId',productGroupIdsArray);
+    } else {
+        // If we don't have any productSearchResults, then force this query to return nothing
+        productGroupQuery.equalTo('objectId','not an object');
     }
 
-    // Now we can create a Parse query for these ProductGroups and use that
-    // to filter the Recommendation query
+    /************************
+     * Website-level filter *
+     ************************/
 
-    var ProductGroup = Parse.Object.extend('ProductGroup');
-    var productGroupQuery = new Parse.Query(ProductGroup);
-    productGroupQuery.containedIn('objectId',productGroupIdsArray);
+    // As above, we might have no pvWebsiteSearchResults if it's for a website that's only configured for product-level search
+    if(pvWebsiteSearchResults !== null) {
+        var lvSearchCategoryIdsArray = [];
+        for (var j = 0; j < pvWebsiteSearchResults.length; j++) {
+            lvSearchCategoryIdsArray.push(pvWebsiteSearchResults[j].searchCategoryId);
+        }
+        // Now we can define the filter on the Parse query (which we will use below to filter the Recommendation query
+        searchCategoryQuery.containedIn('objectId',lvSearchCategoryIdsArray);
+    } else {
+        // If we don't have any pvWebsiteSearchResults, then force this query to return nothing
+        searchCategoryQuery.equalTo('objectId','not an object');
+    }
+
+    /************************************
+     * Query the reccommendations table *
+     ************************************/
 
     // Before retrieveing recommendations, we need to pull the user's blocked brands
     var UserBlockedBrand = Parse.Object.extend('UserBlockedBrand');
@@ -637,19 +797,27 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
             for(b = 0; b < blockedBrands.length; b++){
                 userBlockedBrandsArray.push({__type: "Pointer",className: "EthicalBrand",objectId: blockedBrands[b].get('ethicalBrand').id});
             }
-
+            // Set up two queries, which we'll OR together when we fire it off to Parse
             var Recommendation = Parse.Object.extend('Recommendation');
-            var recommendationQuery = new Parse.Query(Recommendation);
-            recommendationQuery.matchesQuery('productGroups',productGroupQuery);
+            var recommendationQuery_productGroup = new Parse.Query(Recommendation);
+            var recommendationQuery_searchCategory = new Parse.Query(Recommendation);
+
+            recommendationQuery_productGroup.matchesQuery('productGroups',productGroupQuery);
+            recommendationQuery_productGroup.notContainedIn('ethicalBrand',userBlockedBrandsArray);
+
+            recommendationQuery_searchCategory.matchesQuery('searchCategory',searchCategoryQuery);
+            recommendationQuery_searchCategory.notContainedIn('ethicalBrand',userBlockedBrandsArray);
+
+            var recommendationQuery = Parse.Query.or(recommendationQuery_productGroup,recommendationQuery_searchCategory);
             recommendationQuery.include('productGroups');
             recommendationQuery.include('ethicalBrand');
-            recommendationQuery.notContainedIn('ethicalBrand',userBlockedBrandsArray);
+            recommendationQuery.include('searchCategory');
+
             var recommendationsArray = [];
             var userRecommendationRatingsArray = {};
 
             recommendationQuery.find({
                 success: function(recommendations) {
-
                     // Because we need to sort the ratingScore asc, we need to know the max and min, so
                     // we need to (annoyingly) loop through the recs now, get the max/min, and then
                     // loop through them again later to build our results set
@@ -672,93 +840,110 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
                         negativeOffset = Math.abs(minRatingScore);
                     }
 
-                    var UserRecommendationRating = Parse.Object.extend('UserRecommendationRating');
-                    userRecommendationRatingQuery = new Parse.Query(UserRecommendationRating);
-                    userRecommendationRatingQuery.include('user');
-                    userRecommendationRatingQuery.include('recommendation');
-                    userRecommendationRatingQuery.equalTo('user',Parse.User.current());
-                    // to do: can't easily filter to only relevant recs, because it creates a ref loops and stack overflow on Parse.
+                    var lvDidWeGetAnyWebsiteLevelRecs = false; // we need to register this here and pass it through to display func, so we can log it iff the sidebar is active
+                    for (var j = 0; j < recommendations.length; j++) {
 
-                    //userRecommendationRatingQuery.matches('recommendation',recommendationQuery);
+                        // Load the imageURL separately in case there isn't one
+                        var lvImageURL = "";
+                        if(recommendations[j].get('image')){
+                            lvImageURL = recommendations[j].get('image').url();
+                        }
 
-                    userRecommendationRatingQuery.find({
-                        success: function(userRecommendationRatings){
-                            // Push each recommendationRating into an array, indexed by the recommendation ID, and then
-                            // use the array to efficiently add it to the recommendationsArray in the next step.
-                            for (var k = 0; k < userRecommendationRatings.length; k++){
-                                userRecommendationRatingsArray[userRecommendationRatings[k].get('recommendation').id] = userRecommendationRatings[k].get('upOrDownOrNull');
+                        var currentProductGroupId;
+                        var lvSortOrder;
+                        var lvProductGroupId;
+                        var lvProductGroupName;
+                        var lvSectionTitle;
+
+                        // On the sidebar we want the product-level recommendations sorted as follows:
+
+                        // For product-level search results...
+
+                        //   1) Product Group sections sorted by hit count
+                        //   2) .. then by product group name (and ID) (to ensure the recs of product groups with matching hit counts remain grouped!)
+                        //   3) Within the product group sections, sort recs by ratingScore
+                        //   4) .. then by rec productName (for aesthetic purposes)
+                        //  *** Note that any recs with negative votes (made by this user) will be dealt with at the point of rendering the HTML (and shoved at the bottom of their respective product groups) ***
+
+                        // For the numbers, flip them so sort asc works, then turn them into strings of fixed length with leading zeros
+                        //   15 leading 0s, plus the number itself tagged on the end, trimmed back to 15 (I think. Whatever -pad.length does!)
+
+                        // But now taking into account website-level recs....
+
+                        // There's an intractable problem here, because in rare cases, where we have recs configured as both product-level and website-level,
+                        // we lose the ability to differentiate them (because we return a discreet list of recs from a single query).
+                        // We default to putting recs in the productLevel block if one (that matches on ProductGroup) exists
+
+                        // confused here about the different ways this can be populated, so covering all bases
+                        if(typeof recommendations[j].get('productGroups') !== 'undefined' && typeof recommendations[j].get('productGroups').id !== 'undefined' && typeof productGroups[recommendations[j].get('productGroups').id] !== 'undefined') {
+                            currentProductGroupId = recommendations[j].get('productGroups').id;
+                            var currentProductGroupName = recommendations[j].get('productGroups').get('productGroupName');
+                            var pad = '000000000000000';
+                            var productGroupHitCount_asString = (pad + (maxHitCount - productGroups[currentProductGroupId].hitCount)).slice(-pad.length);
+                            var ratingScore_asString = (pad + (maxRatingScore - (recommendations[j].get('ratingScore')+negativeOffset))).slice(-pad.length);
+                            lvSortOrder = productGroupHitCount_asString + '_' + currentProductGroupName + '_' + currentProductGroupId + '_' + ratingScore_asString + '_' + recommendations[j].get('productName');
+
+                            lvProductGroupId = recommendations[j].get('productGroups').id;
+                            lvProductGroupName = recommendations[j].get('productGroups').get('productGroupName');
+                            lvSectionTitle = lvProductGroupName;
+                        } else {
+                            // website-level recs
+                            lvSortOrder = j;
+                            lvSectionTitle = recommendations[j].get('searchCategory').get('categoryName');
+                            lvProductGroupId = null;
+                            lvDidWeGetAnyWebsiteLevelRecs = true;
+                            // by putting this here, and logging website-level recs in the following display func, we ensure that a user doesn't get
+                            // logged as a recent visitor unless they not only saw website-level recs, but saw them under a generic guise: i.e. with no
+                            // matching products on the screen. This is all rare case anyway.
+                        }
+
+                        recommendationsArray.push({productGroupId:         lvProductGroupId,
+                                                   sectionTitle:           lvSectionTitle,
+                                                   productGroupName:       lvProductGroupName,
+                                                   recommendationId:       recommendations[j].id,
+                                                   productName:            recommendations[j].get('productName'),
+                                                   pageConfirmationSearch: recommendations[j].get('pageConfirmationSearch'),
+                                                   productURL:             recommendations[j].get('productURL'),
+                                                   brandName:              recommendations[j].get('ethicalBrand').get('brandName'),
+                                                   brandId:                recommendations[j].get('ethicalBrand').id,
+                                                   baluFavourite:          recommendations[j].get('ethicalBrand').get('baluFavourite'),
+                                                   imageURL:               lvImageURL,
+                                                   twitterHandle:          recommendations[j].get('ethicalBrand').get('twitterHandle'),
+                                                   brandSpiel:             recommendations[j].get('ethicalBrand').get('brandSpiel').replace(/(\r\n|\n|\r)/g,"<br />"),
+                                                   sortOrder:              lvSortOrder});
+
+                        // If the recommendaiton we've just added is flagged to display the Christmas banner, then set the variable
+                        if(typeof recommendations[j].get('productGroups') !== 'undefined') {
+                            if(recommendations[j].get('productGroups').get('christmasBanner') === true){
+                                displayChristmasBanner = true;
                             }
+                        }
+                    } // loop through recommendations
 
-                            // Push each recommendation into a recommendationsArray with all the extra data required to displaly on sidebar
-                            for (var j = 0; j < recommendations.length; j++) {
-
-                                // If they haven't rated this product it's userRecRating entry will be undefined
-                                var userRecommendationRating = userRecommendationRatingsArray[recommendations[j].id] || 0;
-
-                                // Load the imageURL separately in case there isn't one
-                                var imageURL = "";
-                                if(recommendations[j].get('image')){
-                                    imageURL = recommendations[j].get('image').url();
-                                }
-
-                                // On the sidebar we want the recommendations sorted as follows:
-                                //   1) Product Group sections sorted by hit count
-                                //   2) .. then by product group name (and ID) (to ensure the recs of product groups with matching hit counts remain grouped!)
-                                //   3) Within the product group sections, sort recs by ratingScore
-                                //   4) .. then by rec productName (for aesthetic purposes)
-                                //  *** Note that any recs with negative votes (made by this user) will be dealt with at the point of rendering the HTML (and shoved at the bottom of their respective product groups) ***
-
-                                // For the numbers, flip them so sort asc works, then turn them into strings of fixed length with leading zeros
-                                //   15 leading 0s, plus the number itself tagged on the end, trimmed back to 15 (I think. Whatever -pad.length does!)
-                                var currentProductGroupId = recommendations[j].get('productGroups').id;
-                                var currentProductGroupName = recommendations[j].get('productGroups').get('productGroupName');
-                                var pad = '000000000000000';
-                                var productGroupHitCount_asString = (pad + (maxHitCount - productGroups[currentProductGroupId].hitCount)).slice(-pad.length);
-                                var ratingScore_asString = (pad + (maxRatingScore - (recommendations[j].get('ratingScore')+negativeOffset))).slice(-pad.length);
-                                var sortOrder = productGroupHitCount_asString + '_' + currentProductGroupName + '_' + currentProductGroupId + '_' + ratingScore_asString + '_' + recommendations[j].get('productName');
-
-                                recommendationsArray.push({productGroupId:         recommendations[j].get('productGroups').id,
-                                                           productGroupName:       recommendations[j].get('productGroups').get('productGroupName'),
-                                                           recommendationId:       recommendations[j].id,
-                                                           productName:            recommendations[j].get('productName'),
-                                                           pageConfirmationSearch: recommendations[j].get('pageConfirmationSearch'),
-                                                           productURL:             recommendations[j].get('productURL'),
-                                                           brandName:              recommendations[j].get('ethicalBrand').get('brandName'),
-                                                           brandId:                recommendations[j].get('ethicalBrand').id,
-                                                           baluFavourite:          recommendations[j].get('ethicalBrand').get('baluFavourite'),
-                                                           imageURL:               imageURL,
-                                                           twitterHandle:          recommendations[j].get('ethicalBrand').get('twitterHandle'),
-                                                           brandSpiel:             recommendations[j].get('ethicalBrand').get('brandSpiel').replace(/(\r\n|\n|\r)/g,"<br />"),
-                                                           upOrDownOrNull:         userRecommendationRating,
-                                                           whyDoWeCare:            productGroups[currentProductGroupId].whyDoWeCare,
-                                                           sortOrder:              sortOrder});
-
-                                // If the recommendaiton we've just added is flagged to display the Christmas banner, then set the variable
-                                if(recommendations[j].get('productGroups').get('christmasBanner') === true){
-                                    displayChristmasBanner = true;
-                                }
-                            }
-
-                            if (recommendationsArray.length > 0){
-                                recommendationsArray = recommendationsArray.sort(function(a,b){
-                                    return a.sortOrder.localeCompare(b.sortOrder);
-                                });
-                                callback_displayRecommendations(tabId,recommendationsArray,null,displayChristmasBanner,productGroupIdsArray);
-                                userLog(tabId,'RECOMMENDATIONS_FOUND',{recommendationsArray: recommendationsArray});
-                            } else {
-                                // Because there should be a recommendation for every productGroup of every searchProduct,
-                                // this eventuality is unlikely to happen.
-                                // It should only happen if the user has blocked brands.
-                                // And it is, of course, possible that the user will block the only brand left on the sidebar,
-                                // which means we need to do a cautious call to hideSidebar (even though it may not be displayed)
-                                hideSidebar(tabId);
-                                gvTabs[tabId].recommendationCount = 0;
-                                chrome.browserAction.setBadgeText({text: '',tabId: tabId});
-                                userLog(tabId,'RECOMMENDATIONS_NOT_FOUND');
-                            }
-                        },
-                        error: parseErrorFind
-                    }); // userRecommendationRatingQuery
+                    if (recommendationsArray.length > 0){
+                        recommendationsArray = recommendationsArray.sort(function(a,b){
+                            return a.sortOrder.localeCompare(b.sortOrder);
+                        });
+                        // Build up the parameters that we'll pass through to the displayRecommendations function
+                        var lvArgs_displayRecs = {tabId: tabId,
+                                                  recommendationData: recommendationsArray,
+                                                  searchTerm: null,
+                                                  displayChristmasBanner: displayChristmasBanner,
+                                                  productGroupIdsArray: productGroupIdsArray,
+                                                  websiteLevelRecs: lvDidWeGetAnyWebsiteLevelRecs};
+                        callback_displayRecommendations(lvArgs_displayRecs);
+                        userLog(tabId,'RECOMMENDATIONS_FOUND',{recommendationsArray: recommendationsArray});
+                    } else {
+                        // Because there should be a recommendation for every productGroup of every searchProduct,
+                        // this eventuality is unlikely to happen.
+                        // It should only happen if the user has blocked brands.
+                        // And it is, of course, possible that the user will block the only brand left on the sidebar,
+                        // which means we need to do a cautious call to hideSidebar (even though it may not be displayed)
+                        hideSidebar(tabId);
+                        gvTabs[tabId].recommendationCount = 0;
+                        chrome.browserAction.setBadgeText({text: '',tabId: tabId});
+                        userLog(tabId,'RECOMMENDATIONS_NOT_FOUND');
+                    }
                 },
                 error: parseErrorFind
             }); // recommendationQuery
@@ -773,32 +958,40 @@ function getRecommendations(tabId,searchResults,callback_displayRecommendations)
  * I can't see an obvious way to integrate this with the existing search functions,
  * so repeating the code here.
  */
-function manualSearch(tabId, searchTerm) {
+function manualSearch(pvTabId, pvSearchTerm) {
 
-    log(gvScriptName_BGMain + '.manualSearch: Start >>> tabId == ' + tabId + ', searchTerm == ' + searchTerm,'PROCS');
+    log(gvScriptName_BGMain + '.manualSearch: Start >>> pvTabId == ' + pvTabId + ', pvSearchTerm == ' + pvSearchTerm,'PROCS');
 
-    var recommendationsArray = [];
-    var displayChristmasBanner = false;
+    // Build up the parameters that we'll pass through to the displayRecommendations function
+    var lvArgs_displayRecs = {tabId: pvTabId,
+                              recommendationData: [],
+                              searchTerm: pvSearchTerm,
+                              displayChristmasBanner: false,
+                              productGroupIdsArray: []};
 
-    if(searchTerm === ''){
-        displayRecommendations(tabId,recommendationsArray, searchTerm,displayChristmasBanner,[]);
-        userLog(tabId,'MANUAL_SEARCH_EMPTY_STRING');
+    if(pvSearchTerm === ''){
+        displayRecommendations(lvArgs_displayRecs);
+        userLog(pvTabId,'MANUAL_SEARCH_EMPTY_STRING');
     } else{
 
-        userLog(tabId,'MANUAL_SEARCH',{searchTerm: searchTerm});
+        userLog(pvTabId,'MANUAL_SEARCH',{searchTerm: pvSearchTerm});
 
-        var searchTerm_LC = searchTerm.toLowerCase();
+        var lvSearchTerm_LC = pvSearchTerm.toLowerCase();
         var isMenInSearchTerm = false;
         var isWomenInSearchTerm = false;
 
         // We really don't want "men's ---" to return product's with "women's ---" in the name, so we have to do a little manual hack to fix this
         // While we're at it, we may as well match both "women" and "men" on sex
-        if(searchTerm_LC.indexOf('men') === 0 || searchTerm_LC.indexOf(' men') !== -1 || searchTerm_LC.indexOf('man') === 0 || searchTerm_LC.indexOf(' man') !== -1) {
+        if(lvSearchTerm_LC.indexOf('men') === 0 || lvSearchTerm_LC.indexOf(' men') !== -1 || lvSearchTerm_LC.indexOf('man') === 0 || lvSearchTerm_LC.indexOf(' man') !== -1) {
             isMenInSearchTerm = true;
         }
-        if(searchTerm_LC.indexOf('women') !== -1 || searchTerm_LC.indexOf('woman') !== -1 || searchTerm_LC.indexOf('lady') !== -1 || searchTerm_LC.indexOf('ladies') !== -1) {
+        if(lvSearchTerm_LC.indexOf('women') !== -1 || lvSearchTerm_LC.indexOf('woman') !== -1 || lvSearchTerm_LC.indexOf('lady') !== -1 || lvSearchTerm_LC.indexOf('ladies') !== -1) {
             isWomenInSearchTerm = true;
         }
+
+        /******************************************************************
+         * Hit the searchProducts with a whole bunch of different filters *
+         ******************************************************************/
 
         var SearchProduct = Parse.Object.extend('SearchProduct');
 
@@ -812,15 +1005,15 @@ function manualSearch(tabId, searchTerm) {
         var searchProductQuery_searchTerm6  = new Parse.Query(SearchProduct);
         var searchProductQuery_productGroupName = new Parse.Query(SearchProduct);
 
-        searchProductQuery_productName.contains('productName_LC',searchTerm_LC);
-        searchProductQuery_brand.contains('brand_LC',searchTerm_LC);
-        searchProductQuery_searchTerm1.contains('searchTerm1_LC',searchTerm_LC);
-        searchProductQuery_searchTerm2.contains('searchTerm2_LC',searchTerm_LC);
-        searchProductQuery_searchTerm3.contains('searchTerm3_LC',searchTerm_LC);
-        searchProductQuery_searchTerm4.contains('searchTerm4_LC',searchTerm_LC);
-        searchProductQuery_searchTerm5.contains('searchTerm5_LC',searchTerm_LC);
-        searchProductQuery_searchTerm6.contains('searchTerm6_LC',searchTerm_LC);
-        searchProductQuery_productGroupName.contains('productGroup_sort',searchTerm_LC);
+        searchProductQuery_productName.contains('productName_LC',lvSearchTerm_LC);
+        searchProductQuery_brand.contains('brand_LC',lvSearchTerm_LC);
+        searchProductQuery_searchTerm1.contains('searchTerm1_LC',lvSearchTerm_LC);
+        searchProductQuery_searchTerm2.contains('searchTerm2_LC',lvSearchTerm_LC);
+        searchProductQuery_searchTerm3.contains('searchTerm3_LC',lvSearchTerm_LC);
+        searchProductQuery_searchTerm4.contains('searchTerm4_LC',lvSearchTerm_LC);
+        searchProductQuery_searchTerm5.contains('searchTerm5_LC',lvSearchTerm_LC);
+        searchProductQuery_searchTerm6.contains('searchTerm6_LC',lvSearchTerm_LC);
+        searchProductQuery_productGroupName.contains('productGroup_sort',lvSearchTerm_LC);
 
         // To do: the negative search terms?
 
@@ -837,9 +1030,6 @@ function manualSearch(tabId, searchTerm) {
         searchProductCompoundQuery.include('searchCategories');
         searchProductCompoundQuery.find({
             success: function(searchProducts){
-
-                var productGroupIDsArray = [];
-                var productGroups = {};
                 for (var i = 0; i < searchProducts.length; i++) {
                     var includeThisProduct = true;
                     if(isMenInSearchTerm && isWomenInSearchTerm) {
@@ -853,37 +1043,48 @@ function manualSearch(tabId, searchTerm) {
                         }
                     }
                     if(includeThisProduct) {
-                        productGroupIDsArray.push(searchProducts[i].get('productGroups').id);
-                        productGroups[searchProducts[i].get('productGroups').id] = {whyDoWeCare: searchProducts[i].get('searchCategories').get('whyDoWeCare')};
+                        lvArgs_displayRecs.productGroupIdsArray.push(searchProducts[i].get('productGroups').id);
                     }
                 }
 
-                var ProductGroup = Parse.Object.extend('ProductGroup');
-                var productGroupQuery = new Parse.Query(ProductGroup);
-                productGroupQuery.containedIn('objectId',productGroupIDsArray);
-
-                var EthicalBrand = Parse.Object.extend('EthicalBrand');
-                var ethicalBrandQuery_brandName = new Parse.Query(EthicalBrand);
-                //var ethicalBrandQuery_twitterHandle = new Parse.Query(EthicalBrand); // can't do this, search for shirt and you get @allriot_tshirts, which do hoodies too!
-                ethicalBrandQuery_brandName.contains('brandName_LC',searchTerm_LC);
-                //ethicalBrandQuery_twitterHandle.contains('twitterHandle_LC',searchTerm_LC);
-                var ethicalBrandCompoundQuery = Parse.Query.or(ethicalBrandQuery_brandName);
-                // Assuming we don't want to search the brand spiel too
-                //
+                /*******************************************************************
+                 * Hit the recommendations with a whole bunch of different filters *
+                 *******************************************************************/
 
                 var Recommendation = Parse.Object.extend('Recommendation');
 
+                // Product-level recs have productGroups
+                var ProductGroup = Parse.Object.extend('ProductGroup');
+                var productGroupQuery = new Parse.Query(ProductGroup);
+                productGroupQuery.containedIn('objectId',lvArgs_displayRecs.productGroupIdsArray);
                 var recommendationQuery_productGroups = new Parse.Query(Recommendation);
-                var recommendationQuery_ethicalBrand = new Parse.Query(Recommendation);
-                var recommendationQuery_productName = new Parse.Query(Recommendation);
-                var recommendationQuery_productURL = new Parse.Query(Recommendation);
-
                 recommendationQuery_productGroups.matchesQuery('productGroups',productGroupQuery);
-                recommendationQuery_ethicalBrand.matchesQuery('ethicalBrand',ethicalBrandCompoundQuery);
-                recommendationQuery_productName.contains('productName_LC',searchTerm_LC);
-                recommendationQuery_productURL.contains('productURL',searchTerm_LC);
 
+                // Website-level recs have SearchCategories
+                var SearchCategory = Parse.Object.extend('SearchCategory');
+                var searchCategoryQuery = new Parse.Query(SearchCategory);
+                searchCategoryQuery.contains('categoryName_LC',lvSearchTerm_LC);
+                var recommendationQuery_searchCategory = new Parse.Query(Recommendation);
+                recommendationQuery_searchCategory.matchesQuery('ethicalBrand',searchCategoryQuery);
+
+                // All recs have a brand
+                var EthicalBrand = Parse.Object.extend('EthicalBrand');
+                var ethicalBrandQuery = new Parse.Query(EthicalBrand);
+                ethicalBrandQuery.contains('brandName_LC',lvSearchTerm_LC);
+                var recommendationQuery_ethicalBrand = new Parse.Query(Recommendation);
+                recommendationQuery_ethicalBrand.matchesQuery('ethicalBrand',ethicalBrandQuery);
+
+                // Also search on productName ...
+                var recommendationQuery_productName = new Parse.Query(Recommendation);
+                recommendationQuery_productName.contains('productName_LC',lvSearchTerm_LC);
+
+                // ... and productURL
+                var recommendationQuery_productURL = new Parse.Query(Recommendation);
+                recommendationQuery_productURL.contains('productURL',lvSearchTerm_LC);
+
+                // Compound the whole lot together
                 var recommendationCompoundQuery = Parse.Query.or(recommendationQuery_productGroups,
+                                                                 recommendationQuery_searchCategory,
                                                                  recommendationQuery_ethicalBrand,
                                                                  recommendationQuery_productName,
                                                                  recommendationQuery_productURL);
@@ -897,67 +1098,54 @@ function manualSearch(tabId, searchTerm) {
 
                 recommendationCompoundQuery.find({
                     success: function(recommendations){
+                        var lvProductGroupId;
+                        var lvProductGroupName;
+                        var lvSectionTitle;
+                        for (var j = 0; j < recommendations.length; j++) {
+                            var imageURL = "";
+                            if(recommendations[j].get('image')){
+                                imageURL = recommendations[j].get('image').url();
+                            }
+                            // confused here about the different ways this can be populated, so covering all bases
+                            if(typeof recommendations[j].get('productGroups') !== 'undefined' && typeof recommendations[j].get('productGroups').id !== 'undefined') {
+                                lvProductGroupId = recommendations[j].get('productGroups').id;
+                                lvProductGroupName = recommendations[j].get('productGroups').get('productGroupName');
+                                lvSectionTitle = lvProductGroupName;
+                            } else {
+                                // website-level recs
+                                lvSectionTitle = recommendations[j].get('searchCategory').get('categoryName');
+                                lvProductGroupId = null;
+                            }
 
-                        var UserRecommendationRating = Parse.Object.extend('UserRecommendationRating');
-                        userRecommendationRatingQuery = new Parse.Query(UserRecommendationRating);
-                        userRecommendationRatingQuery.include('user');
-                        userRecommendationRatingQuery.include('recommendation');
-                        userRecommendationRatingQuery.equalTo('user',Parse.User.current());
-                        // to do: can't easily filter to only relevant recs, because it creates a ref loops and stack overflow on Parse.
-                        //userRecommendationRatingQuery.matches('recommendation',recommendationCompoundQuery);
+                            lvArgs_displayRecs.recommendationData.push({productGroupId:         lvProductGroupId,
+                                                                        sectionTitle:           lvSectionTitle,
+                                                                        productGroupName:       lvProductGroupName,
+                                                                        recommendationId:       recommendations[j].id,
+                                                                        productName:            recommendations[j].get('productName'),
+                                                                        pageConfirmationSearch: recommendations[j].get('pageConfirmationSearch'),
+                                                                        productURL:             recommendations[j].get('productURL'),
+                                                                        brandName:              recommendations[j].get('ethicalBrand').get('brandName'),
+                                                                        brandId:                recommendations[j].get('ethicalBrand').id,
+                                                                        baluFavourite:          recommendations[j].get('ethicalBrand').get('baluFavourite'),
+                                                                        imageURL:               imageURL,
+                                                                        twitterHandle:          recommendations[j].get('ethicalBrand').get('twitterHandle'),
+                                                                        brandSpiel:             recommendations[j].get('ethicalBrand').get('brandSpiel').replace(/(\r\n|\n|\r)/g,"<br />")});
 
-                        userRecommendationRatingQuery.find({
-                            success: function(userRecommendationRatings){
+                           // If the recommendation we've just added is flagged to display the Christmas banner, then set the variable
+                           if(typeof recommendations[j].get('productGroups') !== 'undefined') {
+                               if(recommendations[j].get('productGroups').get('christmasBanner') === true){
+                                   lvArgs_displayRecs.displayChristmasBanner = true;
+                               }
+                           }
+                        }
 
-                                // Push each recommendationRating into an array, indexed by the recommendation ID, and then
-                                // use the array to efficiently add it o the recommendationsArray in the next step
-                                var userRecommendationRatingsArray = {};
-                                for (var k = 0; k < userRecommendationRatings.length; k++){
-                                    var key = userRecommendationRatings[k].get('recommendation').id;
-                                    userRecommendationRatingsArray[key] = userRecommendationRatings[k].get('upOrDownOrNull');
-                                }
-
-                                for (var j = 0; j < recommendations.length; j++) {
-                                    var imageURL = "";
-                                    if(recommendations[j].get('image')){
-                                        imageURL = recommendations[j].get('image').url();
-                                    }
-
-                                    // We might not have a corresponding searchProduct, in which case we won't have a search category and hence no why do we care handle
-                                    var whyDoWeCare = '';
-                                    if(productGroups[recommendations[j].get('productGroups').id]) {
-                                        whyDoWeCare = productGroups[recommendations[j].get('productGroups').id].whyDoWeCare;
-                                    }
-
-                                    recommendationsArray.push({productGroupId:         recommendations[j].get('productGroups').id,
-                                                               productGroupName:       recommendations[j].get('productGroups').get('productGroupName'),
-                                                               recommendationId:       recommendations[j].id,
-                                                               productName:            recommendations[j].get('productName'),
-                                                               productURL:             recommendations[j].get('productURL'),
-                                                               pageConfirmationSearch: recommendations[j].get('pageConfirmationSearch'),
-                                                               brandName:              recommendations[j].get('ethicalBrand').get('brandName'),
-                                                               brandId:                recommendations[j].get('ethicalBrand').id,
-                                                               imageURL:               imageURL,
-                                                               twitterHandle:          recommendations[j].get('ethicalBrand').get('twitterHandle'),
-                                                               brandSpiel:             recommendations[j].get('ethicalBrand').get('brandSpiel').replace(/(\r\n|\n|\r)/g,"<br />"),
-                                                               upOrDownOrNull:         userRecommendationRatingsArray[recommendations[j].id],
-                                                               whyDoWeCare:            whyDoWeCare});
-                                   // If the recommendation we've just added is flagged to display the Christmas banner, then set the variable
-                                   if(recommendations[j].get('productGroups').get('christmasBanner') === true){
-                                       displayChristmasBanner = true;
-                                   }
-                                }
-
-                                // Note, the content_script will catch no-results and display the empty side bar
-                                // But we also want to log no results separately, because these could be products we should be adding to Balu
-                                if(!recommendations || recommendationsArray.length === 0) {
-                                    userLog(tabId,'MANUAL_SEARCH_NO_RESULTS',{searchTerm: searchTerm});
-                                }
-                                displayRecommendations(tabId,recommendationsArray,searchTerm,displayChristmasBanner,productGroupIDsArray);
-                                userLog(tabId,'MANUAL_SEARCH_RECOMMENDATIONS_RETURNED',{searchTerm: searchTerm, recommendationsArray: recommendationsArray});
-                            },
-                            error: parseErrorFind
-                        });
+                        // Note, the content_script will catch no-results and display the empty side bar
+                        // But we also want to log no results separately, because these could be products we should be adding to Balu
+                        if(!recommendations || lvArgs_displayRecs.recommendationData.length === 0) {
+                            userLog(pvTabId,'MANUAL_SEARCH_NO_RESULTS',{searchTerm: pvSearchTerm});
+                        }
+                        displayRecommendations(lvArgs_displayRecs);
+                        userLog(pvTabId,'MANUAL_SEARCH_RECOMMENDATIONS_RETURNED',{searchTerm: pvSearchTerm, recommendationsArray: lvArgs_displayRecs.recommendationData});
                     },
                     error: parseErrorFind
                 });
@@ -966,7 +1154,25 @@ function manualSearch(tabId, searchTerm) {
         });
     }
 }
-// to do: remove search function when not logged in
+
+/*
+ *
+ */
+function recordRecentVisitToWebsite(tabId) {
+
+    var lvFunctionName = 'recordRecentVisitToWebsite';
+    log(gvScriptName_BGMain + '.' + lvFunctionName + ': Start','PROCS');
+
+    // I need to hold the recent visits in memory, loaded on app load
+    // and stored as an associative array so they can be easily checked and updated
+    // everytime we refresh a website-level page
+    if(gvRecentlyVisitedWebsites[gvTabs[tabId].website.websiteId]) {
+        // do nothing, it's already in there
+    } else {
+        gvRecentlyVisitedWebsites[gvTabs[tabId].website.websiteId] = true;
+        userLog(tabId,'RECOMMENDATIONS_WEBSITE_LEVEL_REC'); // written to the DB, so on the next app load we bring it into gvRecentlyVisitedWebsites
+    }
+}
 
 function markJoyrideAsDone(){
 
@@ -1005,18 +1211,6 @@ function showOptionsPageWindow(tabId, pvPage){
 
     chrome.tabs.create({'url': chrome.extension.getURL(lvPage)}, function(tab) {});
 
-}
-
-function showWhyDoWeCareWindow(tabId,whyDoWeCareURLName){
-
-    log(gvScriptName_BGMain + '.showWhyDoWeCareWindow: start','PROCS');
-
-    userLog(tabId,'WHY_CARE_CLICK',{whyDoWeCareURLName: whyDoWeCareURLName});
-
-    var lvURL = 'http://www.getbalu.org/why-do-we-care/' + whyDoWeCareURLName;
-
-    chrome.tabs.create({'url': lvURL}, function(tab){
-        trackNewTab(tab,lvURL,null,whyDoWeCareURLName);});
 }
 
 function showProductLinkWindow(tabId,productURL,recommendationId, recProductName, pageConfirmationSearch, isManualSearch){
@@ -1062,7 +1256,7 @@ function showProductLinkWindow(tabId,productURL,recommendationId, recProductName
         });
     }
 }
-
+/*
 function voteProductUpOrDown(tabId,recommendationId,upOrDown){
 
     log(gvScriptName_BGMain + '.voteProductUpOrDown: start','PROCS');
@@ -1138,6 +1332,7 @@ function voteProductUpOrDown(tabId,recommendationId,upOrDown){
         error: parseErrorGet
     });
 }
+*/
 
 function showTweetWindow(tabId,tweetContent){
 
@@ -1724,5 +1919,3 @@ function parseErrorUserSimple(error) {
         });
     }
 }
-
-// To do: remove these alerts and replace with a more user-friendly error catch.
