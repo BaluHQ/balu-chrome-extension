@@ -77,16 +77,17 @@ var gvShowJoyride;
     // Initalise extension //
 
     try {
-        getBaluSettings(function(settings){
-            userLog(null,'APP_LOAD_USER_STATUS',{settings: settings});
-            if(settings.isBaluOnOrOff === 'ON') {
-                log(gvScriptName_BGMain + '.' + lvFunctionName + ': turning Balu on and loading data. App is initialised when gvSearchProducts, gvSearchWebsites and gvRecentlyVisitedWebsites have all been loaded',' INFO');
-                turnBaluOn();
-                userLog(0,'APP_LOAD');
+        getBaluSettings(function(){
+
+            if(gvIsBaluOnOrOff === 'ON') {
+                log(gvScriptName_BGMain + '.initialise: settings.isBaluOnOrOff == ON',' INFO');
+                userLog(0,'INIT_ON');
+                turnBaluOn(); // Split this out so we can call it separately (e.g. from options screen when turning Balu on)
             } else {
+                log(gvScriptName_BGMain + '.initialise: settings.isBaluOnOrOff !== ON',' INFO');
                 // Set the browser icon to the inactive version
                 chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
-
+                userLog(0,'INIT_OFF');
             }
         });
     } catch(err){
@@ -102,6 +103,9 @@ function turnBaluOn(){
     // Set the browser icon to the active version
     chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action.png')});
     chrome.browserAction.setBadgeText({text: ""});
+
+    // Log it up
+    userLog(0,'APP_LOAD');
 
     // Load the website and search data from Parse. After these functions the background script
     // stops until a content script requests a tab initialisation. There are wait functions on
@@ -160,39 +164,36 @@ function getBaluSettings(callback){
 
      log(gvScriptName_BGMain + '.getBaluSettings: Start','PROCS');
 
-     var settings = {isBaluOnOrOff: 'OFF',
-                     isBaluShowOrHide: 'HIDE'};
+     gvIsBaluShowOrHide = 'HIDE';
+     gvIsBaluOnOrOff = 'OFF';
+     gvIsBaluShowOrHide_untilRestart = 'SHOW';
+
+     // ShowHide and OnOff are held in chrome.storage, as strings
 
      chrome.storage.sync.get('isBaluShowOrHide',function(obj2){
-
          if(obj2.isBaluShowOrHide){
-             settings.isBaluShowOrHide = obj2.isBaluShowOrHide;
+             gvIsBaluShowOrHide = obj2.isBaluShowOrHide;
          } else {
-             settings.isBaluShowOrHide = 'SHOW'; // If nothing was found in Chrome storage then assume first use of app and default to sidebar visible
-             chrome.storage.sync.set({'isBaluShowOrHide': settings.isBaluShowOrHide}, function(){
-                 log(gvScriptName_BGMain + '.getBaluSettings: storage.sync.isBaluShowOrHide set to ' + settings.isBaluShowOrHide, ' INFO');
+             gvIsBaluShowOrHide = 'SHOW'; // If nothing was found in Chrome storage then assume first use of app and default to sidebar visible
+             chrome.storage.sync.set({'isBaluShowOrHide': gvIsBaluShowOrHide}, function(){
+                 log(gvScriptName_BGMain + '.getBaluSettings: Nothing found in storage; storage.sync.isBaluShowOrHide set to ' + gvIsBaluShowOrHide, ' INFO');
              }); // Let this run asynchronously, because we're not going to need it again unless the extension is restarted
          }
 
          chrome.storage.sync.get('isBaluOnOrOff',function (obj1) {
              if(obj1.isBaluOnOrOff){
-                 settings.isBaluOnOrOff = obj1.isBaluOnOrOff;
+                 gvIsBaluOnOrOff = obj1.isBaluOnOrOff;
              } else {
-                 settings.isBaluOnOrOff = 'ON'; // If nothing was found in Chrome storage then assume first use of app and turn on
-                 chrome.storage.sync.set({'isBaluOnOrOff': settings.isBaluOnOrOff}, function(){
-                     log(gvScriptName_BGMain + '.getBaluSettings: storage.sync.isBaluOnOrOff set to ' + settings.isBaluOnOrOff, ' INFO');
+                 gvIsBaluOnOrOff = 'ON'; // If nothing was found in Chrome storage then assume first use of app and turn on
+                 chrome.storage.sync.set({'isBaluOnOrOff': gvIsBaluOnOrOff}, function(){
+                     log(gvScriptName_BGMain + '.getBaluSettings: Nothing found in storage; storage.sync.isBaluOnOrOff set to ' + gvIsBaluOnOrOff, ' INFO');
                  }); // Let this run asynchronously, because we're not going to need it again unless the extension is restarted
              }
 
-             log(gvScriptName_BGMain + '.getBaluSettings: isBaluOnOrOff == ' + settings.isBaluOnOrOff + ', isBaluShowOrHide == ' + settings.isBaluShowOrHide,' INFO');
-
-             gvIsBaluOnOrOff = settings.isBaluOnOrOff;
-             gvIsBaluShowOrHide = settings.isBaluShowOrHide;
-             gvIsBaluShowOrHide_untilRestart = 'SHOW';
-
+             log(gvScriptName_BGMain + '.getBaluSettings: isBaluOnOrOff == ' + gvIsBaluOnOrOff + ', isBaluShowOrHide == ' + gvIsBaluShowOrHide,' INFO');
              log(gvScriptName_BGMain + '.getBaluSettings: settings fetched from Chrome storage', 'PROCS');
 
-             callback(settings);
+             callback();
 
          });
      });
