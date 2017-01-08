@@ -97,7 +97,7 @@ function createOptionsPage(pvTabName,pvUserDetails){
     lvHtml +=     '            </div>';
     if(pvUserDetails.isUserLoggedIn) {
         lvHtml += '            <div class="small-11 columns">';
-        lvHtml += '              <h3 style="margin-left: 0">Log in - you\'re already logged in and ready to go</h3>';
+        lvHtml += '              <h3 style="margin-left: 0">You\'re already logged in and ready to go</h3>';
         lvHtml += '              <p>Your username is ' + pvUserDetails.email + '. Head over to the settings tab to manage your account.</p>';
         lvHtml += '            </div>';
         lvHtml += '          </div>'; // numbered row (1)
