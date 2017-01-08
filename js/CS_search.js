@@ -94,7 +94,7 @@ function searchPage_master(pvArgs){
     }
     if(pvArgs.tab.isWebsiteLevelRec) {
         if(pvArgs.tab.hasUserVisitedWebsiteRecently) {
-            log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for websiteLevelSearch but we will ignore for this user',' INFO');
+            log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for websiteLevelSearch and has been visited recently',' INFO');
         } else {
             log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for websiteLevelSearch',' INFO');
         }
@@ -111,7 +111,7 @@ function searchPage_master(pvArgs){
     // what searchCategories it's valid for. That's what the next loop is for. We need to save out any valid search
     // categories, which will be used to determine the website-level recs that will get returned.
     var lvWebsiteSearchResults = [];
-    if(pvArgs.tab.isWebsiteLevelRec && !pvArgs.tab.hasUserVisitedWebsiteRecently) {
+    if(pvArgs.tab.isWebsiteLevelRec) {
         for(var j = 0; j < pvArgs.websiteSearchData.length; j++){
             if(pvArgs.tab.tab.url.indexOf(pvArgs.websiteSearchData[j].websiteURL) !== -1) {
                 if(pvArgs.websiteSearchData[j].isWebsiteLevelRec) {

@@ -495,6 +495,7 @@ function initialiseTab(tab){
 
     for (i = 0; i < gvSearchWebsites.length; i++) {
         if (tab.url.indexOf(gvSearchWebsites[i].websiteURL) !== -1) {
+
             // Note, and to do?, it is possible that a tab URL could match more than one Balu website.
             // (e.g. http://marketplace.asos.com/ would match asos.com and marketplace.asos.com)
             // If this is the case, the last website to match (they are in alphabetical order and we loop
@@ -661,6 +662,7 @@ function displayRecommendations(pvArgs){
     //   1) Balu is set to SHOW (gvIsBaluShowOrHide)
     //   2) The sidebar has not been temporarily hidden across all tabs (gvIsBaluShowOrHide_untilRestart)
     //   3) The sidebar has not been temporarily hidden on this tab (tab.isBaluShowOrHide_untilRefresh)
+    //   4) The user hasn't recently seen this (website-level) rec
     // OR
     //   3) it is a manual search
     // OR
@@ -668,12 +670,14 @@ function displayRecommendations(pvArgs){
 
     if((gvIsBaluShowOrHide === 'SHOW' &&
         gvIsBaluShowOrHide_untilRestart === 'SHOW' &&
-        gvTabs[pvArgs.tabId].isBaluShowOrHide_untilRefresh === 'SHOW') ||
+        gvTabs[pvArgs.tabId].isBaluShowOrHide_untilRefresh === 'SHOW' &&
+        !gvTabs[pvArgs.tabId].hasUserVisitedWebsiteRecently) ||
         pvArgs.searchTerm ||
         gvIsBaluShowOrHide_tempOverride === 'SHOW') {
+
         gvIsBaluShowOrHide_tempOverride = 'HIDE';
 
-        if(pvArgs.websiteLevelRecs) {
+        if(pvArgs.websiteLevelRecs && !gvTabs[pvArgs.tabId].hasUserVisitedWebsiteRecently /* we might have overridden this, but don't want to log again */) {
             recordRecentVisitToWebsite(pvArgs.tabId);
         }
         userLog(pvArgs.tabId,'SHOW_RESULTS_SIDEBAR');

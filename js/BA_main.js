@@ -118,6 +118,9 @@ function buildPopupHTML(){
                 if(gvActiveTab.isBaluShowOrHide_untilRefresh === 'SHOW') {
                     isSidebarVisibleOnThisTab = true;
                 }
+                if(gvActiveTab.hasUserVisitedWebsiteRecently){
+                    isSidebarVisibleOnThisTab = false;
+                }
                 if(gvActiveTab.recommendationCount > 0) {
                     isThereAnyRecommendationsForThisTab = true;
                 }
