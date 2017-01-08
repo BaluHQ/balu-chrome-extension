@@ -241,7 +241,7 @@ function createOptionsPage(pvTabName,pvUserDetails){
     // Website list
     lvHtml +=     '              <div class="row">';
     lvHtml +=     '                <div class="small-12 columns">';
-    lvHtml +=     '                  <p>Balu will work automatically on any of these websites...</p>';
+    lvHtml +=     '                  <p>Try Balu out on any of these websites...</p>';
     lvHtml +=     '                </div>';
     lvHtml +=     '                <div id="listOfWebsitesDiv" class="small-12 columns" style="padding-right: 150px">';
     // We'll attach the list of websites here later (so as not to slow the page load down)
@@ -381,6 +381,8 @@ function createOptionsPage(pvTabName,pvUserDetails){
     var websiteQuery = new Parse.Query(Website);
     websiteQuery.ascending('websiteURL');
     websiteQuery.notEqualTo('websiteURL',gvTestWebsiteURL);
+    // We don't want to flood this list with the website-level recs. Unfortunatley, for now, it's just easier to hardcode some IDs :(
+    websiteQuery.containedIn('objectId',['oP7HiJWoYm','ywtqZEts1Z','4HT1XJ5wJA','9d35Fvstfi','F6dt1RRTVO','rp5hruJH3E','qroSmnHwT1','cW3RTvOuEl','9NPYVKQ5pa','QtF5WJmtk8','sON2FJIqwT','yiK5CEFikh','30LBvKbG4Z','7VqH5Qi93R']);
     websiteQuery.find({
         success: function(websites){
             for (var i = 0; i < websites.length; i++) {
