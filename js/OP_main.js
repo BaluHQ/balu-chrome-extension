@@ -234,7 +234,7 @@ function createOptionsPage(pvTabName,pvUserDetails){
     lvHtml +=     '                  <a id="asosExampleButton" href="http://www.asos.com/men/t-shirts/cat/?cid=7616" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Check out Balu on ASOS</a>';
     lvHtml +=     '                </div>';
     lvHtml +=     '                <div class="small-3 columns end">';
-    lvHtml +=     '                  <a id="directoryButton" href="http://getbalu.org/app/" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Search the Directory</a>';
+    lvHtml +=     '                  <a id="directoryButton" href="http://balu-directory.herokuapp.com/" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Search the Directory</a>';
     lvHtml +=     '                </div>';
     lvHtml +=     '              </div>';
 
