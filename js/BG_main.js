@@ -814,6 +814,7 @@ function getRecommendations(tabId,pvProductSearchResults,pvWebsiteSearchResults,
             recommendationQuery_searchCategory.notContainedIn('ethicalBrand',userBlockedBrandsArray);
 
             var recommendationQuery = Parse.Query.or(recommendationQuery_productGroup,recommendationQuery_searchCategory);
+            recommendationQuery.notEqualTo('isArchived',true);
             recommendationQuery.include('productGroups');
             recommendationQuery.include('ethicalBrand');
             recommendationQuery.include('searchCategory');
