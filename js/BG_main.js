@@ -893,7 +893,7 @@ function getRecommendations(tabId,pvProductSearchResults,pvWebsiteSearchResults,
                             lvSectionTitle = lvProductGroupName;
                         } else {
                             // website-level recs
-                            lvSortOrder = j;
+                            lvSortOrder = 'z' + j; // force it to be a string
                             lvSectionTitle = recommendations[j].get('searchCategory').get('categoryName');
                             lvProductGroupId = null;
                             lvDidWeGetAnyWebsiteLevelRecs = true;
