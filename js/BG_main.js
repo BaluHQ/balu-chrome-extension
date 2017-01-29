@@ -1077,6 +1077,7 @@ function manualSearch(pvTabId, pvSearchTerm) {
                 var EthicalBrand = Parse.Object.extend('EthicalBrand');
                 var ethicalBrandQuery = new Parse.Query(EthicalBrand);
                 ethicalBrandQuery.contains('brandName_LC',lvSearchTerm_LC);
+                ethicalBrandQuery.notEqualTo('isArchived',true);
                 var recommendationQuery_ethicalBrand = new Parse.Query(Recommendation);
                 recommendationQuery_ethicalBrand.matchesQuery('ethicalBrand',ethicalBrandQuery);
 
@@ -1097,6 +1098,9 @@ function manualSearch(pvTabId, pvSearchTerm) {
 
                 recommendationCompoundQuery.include('productGroups');
                 recommendationCompoundQuery.include('ethicalBrand');
+
+                // And remove the archived recs
+                recommendationCompoundQuery.notEqualTo('isArchived',true);
 
                 // The sort order is important, otherwise the ProductGroups will not
                 // form up correctly on the sidebar
