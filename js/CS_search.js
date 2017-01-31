@@ -2236,11 +2236,11 @@ function getElements(pvArgs) {
 
         if(lvFoundEverything){
             logMessage += 'SUCCESS: Found necessary pvDOM elements to run search.' + '\n';
-            logMessage += '    Extra detail: ' + logMessage_extra + '\n';
+            logMessage += '\n' + 'Extra detail: ' + '\n' + logMessage_extra + '\n';
         } else {
             logMessage += 'FAILURE: Did not find necessary pvDOM elements to run search.' + '\n';
-            logMessage += '    Failed to find: ' + logMessage_elementsNotFound + '\n';
-            logMessage += '    Extra detail: ' + logMessage_extra + '\n';
+            logMessage += '\n' + 'Failed to find: ' + logMessage_elementsNotFound + '\n';
+            logMessage += 'Extra detail: ' + logMessage_extra + '\n';
         }
 
         // If we did find everything we needed, then we're going to run the search. So let's
