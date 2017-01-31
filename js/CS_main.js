@@ -500,9 +500,9 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
             lvSidebarContentHTML += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
         }
         lvSidebarContentHTML += '          <span class="altProductBrandName">' + recommendations[i].brandName + '</span>';
-        if(recommendations[i].productGroupName !== recommendations[i].productName){
+        //if(recommendations[i].productGroupName !== recommendations[i].productName){
             lvSidebarContentHTML += '<br /><span class="altProductProductName">' + recommendations[i].productName + '</span>';
-        }
+        //}
         lvSidebarContentHTML += '      </div>';
         lvSidebarContentHTML += '      <div style="position: absolute; top: 0px; right: 0px;">';
         lvSidebarContentHTML += '        <div class="qtip_tooltips">';
