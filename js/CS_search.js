@@ -842,6 +842,99 @@ function getElements(pvArgs) {
 
             break;
 
+            case 'boohoo.com':
+
+                runSexSearch = true;
+
+                /***************
+                 * Departments *
+                 ***************/
+
+                 // No departments on boohoo
+
+                /**********
+                 * Gender *
+                 **********/
+
+                // Gender is not always there, if you go through menu it doesn't show tick boxes
+
+                var boohoo_dep_womenCheckbox = $(pvDOM).find('a[data-value="Women"][data-checked="true"]');
+                var boohoo_dep_menCheckbox = $(pvDOM).find('a[data-value="Men"][data-checked="true"]');
+                if(boohoo_dep_womenCheckbox.length > 0){
+                    lvWomenFilter = 'WOMEN';
+                    lvFoundGender = true;
+                }
+                if(boohoo_dep_menCheckbox.length > 0){
+                    lvMenFilter = 'MEN';
+                    lvFoundGender = true;
+                }
+                if(lvFoundGender) {
+                    logMessage_extra += '  Gender: found in find(a[data-value="Women/Men"][data-checked="true"]' + '\n';
+                }
+                if(!lvFoundGender){
+                    logMessage_extra += '  Gender: FAILED to find in find(a[data-value="Women/Men"][data-checked="true"]' + '\n';
+                }
+
+                /***************
+                 * Breadcrumbs *
+                 ***************/
+
+                 // FYI, breadcrumbs only appear on product pages
+
+                 var boohoo_bc = $(pvDOM).find('p.crumbtrail a').each(function(){
+                     lvBreadcrumbs += $(this).text().toLowerCase() + ' ';
+                     lvFoundBreadcrumbs = true;
+                 });
+
+                if(lvFoundBreadcrumbs){
+                    logMessage_extra += '  Breadcrumbs: found in find(p.crumbtrail a)' + '\n';
+                } else if(!lvFoundBreadcrumbs){
+                    logMessage_extra += '  Breadcrumbs: failed to find in find(p.crumbtrail a) (Note, Boohoo doesn\'t have breadcrumbs on results page)' + '\n';
+                }
+
+                /************
+                 * Products *
+                 ************/
+
+                /* Results page */
+
+                $(pvDOM).find('ul#fsm-prod-list h3.prod-name a').each(function() {
+                    lvProductNames.push($(this).html().toLowerCase().trim());
+                    lvFoundResults = true;
+                });
+
+                if(lvFoundResults) {
+                    logMessage_extra += '  Search Results: found in find(ul#fsm-prod-list h3.prod-name a)' + '\n';
+                } else if(!lvFoundResults){
+                    logMessage_extra += '  Search Results: FAILED to find in find(ul#fsm-prod-list h3.prod-name a)' + '\n';
+                }
+
+                /* Product page */
+
+                if(!lvFoundResults) {
+                    $(pvDOM).find('.productdetail h1.show-for-small').each(function(){
+                        lvProductNames.push($(this).text().toLowerCase().trim());
+                        lvFoundProduct = true;
+                    });
+                    if(lvFoundProduct){
+                        logMessage_extra += '  Product Page: found in first(#productdetail h1)' + '\n';
+                    }
+                }
+                if(!lvFoundProduct){
+                   logMessage_extra += '  Product Page: failed to find in first(#productdetail h1)' + '\n';
+                }
+
+                /***********
+                 * Wrap Up *
+                 ************/
+
+                // Did we find what we needed (remember, no departments, gender not always there, breadcrumbs only on product page)
+                if(lvFoundResults || (lvFoundProduct && lvFoundBreadcrumbs)) {
+                    lvFoundEverything = true;
+                }
+
+            break;
+
             case 'www.debenhams.com':
 
                 runSexSearch = true;
@@ -2289,6 +2382,7 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
          if (pageElements.breadcrumbs) {
              if(!foundMen && !foundWomen) {
                  if ((new RegExp('\\b' + 'women' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                     (new RegExp('\\b' + 'womens' + '\\b','i').test(pageElements.breadcrumbs)) ||
                      (new RegExp('\\b' + 'woman' + '\\b','i').test(pageElements.breadcrumbs)) ||
                      (new RegExp('\\b' + 'lady' + '\\b','i').test(pageElements.breadcrumbs)) ||
                      (new RegExp('\\b' + 'female' + '\\b','i').test(pageElements.breadcrumbs))) {
@@ -2297,6 +2391,7 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
                      foundWomen = true;
 
                  } else if ((new RegExp('\\b' + 'men' + '\\b','i').test(pageElements.breadcrumbs)) ||
+                            (new RegExp('\\b' + 'mens' + '\\b','i').test(pageElements.breadcrumbs)) ||
                             (new RegExp('\\b' + 'man' + '\\b','i').test(pageElements.breadcrumbs)) ||
                             (new RegExp('\\b' + 'male' + '\\b','i').test(pageElements.breadcrumbs))) {
 
