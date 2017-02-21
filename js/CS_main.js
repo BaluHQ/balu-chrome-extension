@@ -577,7 +577,6 @@ function createLogInSidebarContent(a,b,c,d) {
     var lvHtml = '';
     lvHtml += '<div class="row text-center" style="margin-top: 70px">';
     lvHtml += '  <div class="small-10 small-centered columns">';
-    lvHtml += '    <p class="logInSideBarText">It\'s possible you were logged out as part of a <a style="color:#35b19c; text-decoration:underline" href="http://www.getbalu.org/migrating-balu-off-parse-com" target="_blank">one-off migration</a>. Sorry.</p>';
     lvHtml += '    <p class="logInSideBarText">Log back in to Balu to see amazing ethical products while you shop</p>';
     lvHtml += '    <a id="showLogInPageButton" class="button radius signInScreenButtons">Log in</a>';
     lvHtml += '  </div>';
