@@ -19,6 +19,7 @@ var gvIsBaluOnOrOff;
 var gvIsBaluShowOrHide;
 var gvIsBaluShowOrHide_untilRestart = 'SHOW';
 var gvIsBaluShowOrHide_tempOverride = 'HIDE'; // allows the popup to force the sidebar to display when we have recommendations but gvIsBaluShowOrHide is 'HIDE'
+var gvUninstallURL = 'http://balu-directory.herokuapp.com/thanks';
 
 var gvSearchProducts;
 var gvSearchWebsites;
@@ -70,6 +71,14 @@ var gvShowJoyride;
         chrome.tabs.onActivated.addListener(chromeActivatedTabListener);
         // Listen for the install event, to display a welcome page
         chrome.runtime.onInstalled.addListener(chromeInstalledExtensionListener);
+        // Set the app to redirect to the directory when the user uninstalls the extension. This code is repeated in the login function, so we get the user's ID
+
+        if(Parse.User.current()){
+            chrome.runtime.setUninstallURL(gvUninstallURL + '?u=' + Parse.User.current().id,null);
+        } else {
+            chrome.runtime.setUninstallURL(gvUninstallURL,null);
+        }
+
     } catch(err){
         log(gvScriptName_BGMain + '.' + lvFunctionName + ': Extension background script failed to create all necessary listeners. Error: ' + err.message,'ERROR');
     }
@@ -1559,6 +1568,10 @@ function logUserIn(tabId,username,password,callback){
         success: function(user) {
             userLog(tabId,'USER_LOG_IN',{user: user});
             chrome.extension.getBackgroundPage().waitForExtensionInitThenInitialiseTab(null,1);
+
+            // Reset the uninstall redirect URL (this is originally set in the initialise function, but if the user installs the app, logs in, and then uninstalls, we won't get the user ID unless
+            // we update the URL here at point on login)
+            chrome.runtime.setUninstallURL(gvUninstallURL + '?u=' + Parse.User.current().id,null);
 
             // If we're logging in from the options page we have a callback to refresh the page
             // If we're logging in from the sidebar we dont need a callback because refreshTab takes care of everything
