@@ -191,7 +191,7 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     // Inject jquery script into page
     var jqueryScript = document.createElement('script');
     jqueryScript.type="text/javascript";
-    jqueryScript.src = chrome.extension.getURL('js/externalJS/jquery-2.1.4.min.js');
+    jqueryScript.src = chrome.extension.getURL('js/externalJS/jquery-3.2.1.min.js');
     docHead.appendChild(jqueryScript);
 
     // Inject qtip CSS script

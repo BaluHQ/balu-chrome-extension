@@ -28,7 +28,7 @@
         "js":         ["js/CS_APIs.js",
                        "js/CS_search.js",
                        "js/CS_main.js",
-                       "js/externalJS/jquery-2.1.4.min.js"],
+                       "js/externalJS/jquery-3.2.1.min.js"],
         "run_at":     "document_end"
     }],
 
@@ -43,7 +43,7 @@
 
         "js/IF_main.js",
 
-        "js/externalJS/jquery-2.1.4.min.js",
+        "js/externalJS/jquery-3.2.1.min.js",
         "js/externalJS/jquery.qtip.min.js",
         "js/externalJS/vendor/modernizr.js",
         "js/externalJS/vendor/fastclick.js",
