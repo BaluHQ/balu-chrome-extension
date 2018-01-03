@@ -6,9 +6,11 @@ gvScriptName_BGMain = 'BG_main';
 
 /*
  * Parse SDK Config
+ *   For Prod: https://balu-parse-server.herokuapp.com/parse
+ *   For Test: https://balu-parse-server-test.herokuapp.com/parse
+ *   For LocalHost: http://localhost:1337/parse
  */
-//var gvParseServerURL = 'http://localhost:1337/parse'; // localhost
-var gvParseServerURL = 'https://balu-parse-server.herokuapp.com/parse';
+var gvParseServerURL = 'http://localhost:1337/parse';
 var gvAppId = 'mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu';
 
 /*
@@ -94,8 +96,7 @@ var gvShowJoyride;
                 userLog(0,'APP_LOAD');
             } else {
                 log(gvScriptName_BGMain + '.initialise: settings.isBaluOnOrOff !== ON',' INFO');
-                // Set the browser icon to the inactive version
-                chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
+                setBrowserActionIcon('OFF');
                 userLog(0,'INIT_OFF');
             }
         });
@@ -109,11 +110,7 @@ function turnBaluOn(){
 
     log(gvScriptName_BGMain + '.turnBaluOn: Start','PROCS');
 
-    // Set the browser icon to the active version
-    chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action.png')});
-    chrome.browserAction.setBadgeText({text: ""});
-
-    // Log it up
+    setBrowserActionIcon('ON');
     userLog(0,'APP_LOAD');
 
     // Load the website and search data from Parse. After these functions the background script
@@ -122,6 +119,39 @@ function turnBaluOn(){
     getSearchData();
 }
 
+/*
+ * Six different icons depending on whether we're pointing at prod, test or localhost parse server,
+ * and then whether the extension is ON or OFF
+ */
+function setBrowserActionIcon(pvOnOrOff){
+    log(gvScriptName_BGMain + '.setBrowserActionIcon: Start','PROCS');
+
+    if(pvOnOrOff === 'ON') {
+        if(gvParseServerURL.includes('balu-parse-server-test')) {
+            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/test-icon-browser_action.png')});
+            chrome.browserAction.setBadgeText({text: "Test"});
+        } else if (gvParseServerURL.includes('localhost')){
+            // Set the browser icon to the active version
+            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/local-icon-browser_action.png')});
+            chrome.browserAction.setBadgeText({text: "localhost"});
+        } else {
+            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action.png')});
+            chrome.browserAction.setBadgeText({text: ""});
+        }
+    } else {
+        if(gvParseServerURL.includes('balu-parse-server-test')) {
+            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/test-icon-browser_action-off.png')});
+            chrome.browserAction.setBadgeText({text: "Test"});
+        } else if (gvParseServerURL.includes('localhost')){
+            // Set the browser icon to the active version
+            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/local-icon-browser_action-off.png')});
+            chrome.browserAction.setBadgeText({text: "localhost"});
+        } else {
+            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
+            chrome.browserAction.setBadgeText({text: ""});
+        }
+    }
+}
 /**********************
  * Listener Functions *
  **********************/

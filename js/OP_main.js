@@ -604,7 +604,6 @@ function baluOnOrOff_listener(){
     if (document.getElementById("baluOn").checked) {
         chrome.extension.getBackgroundPage().gvIsBaluOnOrOff = 'ON';
         chrome.storage.sync.set({'isBaluOnOrOff': 'ON'}, function(){
-            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action.png')});
             chrome.extension.getBackgroundPage().turnBaluOn();
             chrome.extension.getBackgroundPage().waitForExtensionInitThenInitialiseTab(null,1);
             log(gvScriptName_OPMain + '.baluOnOrOffListener: baluOn checked, storage.sync.isBaluOnOrOff set to ON','DEBUG');
@@ -614,7 +613,7 @@ function baluOnOrOff_listener(){
     if (document.getElementById("baluOff").checked) {
         chrome.extension.getBackgroundPage().gvIsBaluOnOrOff = 'OFF';
         chrome.storage.sync.set({'isBaluOnOrOff': 'OFF'}, function(){
-            chrome.browserAction.setIcon({path: chrome.extension.getURL('images/icon-browser_action-off.png')});
+            chrome.extension.getBackgroundPage().setBrowserActionIcon('OFF');
             chrome.extension.getBackgroundPage().refreshTab_allTabs();
             log(gvScriptName_OPMain + '.baluOnOrOffListener: baluOff checked, storage.sync.isBaluOnOrOff set to OFF','DEBUG');
         });
