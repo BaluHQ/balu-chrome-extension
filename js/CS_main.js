@@ -509,7 +509,7 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         lvSidebarContentHTML += '          <i class="fi-info brandSpielIcon" id="joyrideStop1"></i>';
         lvSidebarContentHTML += '        </div>';
         lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="' + recommendations[i].brandName + '">' + recommendations[i].brandSpiel + '</div>';
-        lvSidebarContentHTML += '        <div class="qtip_tooltips">';
+        lvSidebarContentHTML += '        <div>';
         lvSidebarContentHTML += '          <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
         lvSidebarContentHTML += '        </div>';
         lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="Block brand: ' + recommendations[i].brandName + '">I don\'t want to see recommendations from this brand again</div>';
