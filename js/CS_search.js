@@ -736,25 +736,20 @@ function getElements(pvArgs) {
                  * Breadcrumbs *
                  ***************/
 
-                var asos_bc = pvDOM.getElementById('chrome-breadcrumb');
+                var asos_bc = pvDOM.getElementById('breadcrumb');
+                if(asos_bc === null) {
+                    asos_bc = pvDOM.getElementById('chrome-breadcrumb');
+                }
+
                 if(asos_bc !== null){
                     lvBreadcrumbs = asos_bc.textContent.toLowerCase().trim();
-                    logMessage_extra += '  Breadcrumbs: found in id="chrome-breadcrumb"' + '\n';
+                    console.log(lvBreadcrumbs);
+                    logMessage_extra += '  Breadcrumbs: found in id="chrome-breadcrumb" or id="breadcrumb"' + '\n';
                     lvFoundBreadcrumbs = true;
                 }
                 if(!lvFoundBreadcrumbs){
-                    logMessage_extra += '  Breadcrumbs: FAILED to find in id="chrome-breadcrumb"' + '\n';
+                    logMessage_extra += '  Breadcrumbs: FAILED to find in id="chrome-breadcrumb" and id="breadcrumb"' + '\n';
                 }
-
-                /**********
-                 * Gender *
-                 **********/
-
-                // There are no gender filters on ASOS anymore. There is a top-level menu that is always selected
-                // as one or the other, but we ignore this because it doesn't change when you search
-                // But sex appears neatly in the URL a lot, and in the breadcrumbs, so the search functions at the
-                // end should pick it up easily.
-
 
                 /************
                  * Products *
@@ -778,7 +773,57 @@ function getElements(pvArgs) {
                 }
 
                 if(!lvFoundResults){
-                    logMessage_extra += '  Search Results: FAILED to find in class="product-list" or class="category-items"' + '\n';
+                    logMessage_extra += '  Search Results: FAILED to find in data-auto-id="productList"' + '\n';
+                }
+
+                /* Product Page */
+
+                if(!lvFoundResults){
+                    var asos_pn_product = pvDOM.getElementsByClassName('product-hero');
+                    if(asos_pn_product.length > 0){
+                        var asos_pn_product_h1 = asos_pn_product[0].getElementsByTagName('h1');
+                        if(asos_pn_product_h1.length > 0){
+                            lvProductNames.push(asos_pn_product_h1[0].textContent.toLowerCase().trim());
+                        }
+                        logMessage_extra += '  Product Page: found in class="product-hero"' + '\n';
+                        lvFoundProduct = true;
+                    }
+                }
+
+                if(!lvFoundProduct){
+                    logMessage_extra += '  Product Page: FAILED to find in class="product-hero"' + '\n';
+                }
+
+                /**********
+                 * Gender *
+                 **********/
+
+                // There are no gender filters on ASOS anymore. There is a top-level menu that is always selected
+                // as one or the other, but we ignore this on search results because it doesn't change until you
+                // click on an item
+                // Note that the sex appears neatly in the URL a lot, and in the breadcrumbs, so the search functions at the
+                // end should pick it up easily in most cases. So we won't worry if we don't get the gender (see "wrap up, below")
+                // because I'm worried about that auto-genereated class name
+
+                if(lvFoundProduct) {
+                    var asos_women = $(pvDOM).find('a._2O3Pt9j[data-testid="women-floor"]');
+                    var asos_men = $(pvDOM).find('a._2O3Pt9j[data-testid="men-floor"]');
+                    if(asos_women.length > 0){
+                        lvWomenFilter = 'WOMEN';
+                        lvFoundGender = true;
+                    }
+                    if(asos_men.length > 0){
+                        lvMenFilter = 'MEN';
+                        lvFoundGender = true;
+                    }
+                    if(lvFoundGender) {
+                        logMessage_extra += '  Gender: found in find(a[data-testid="women/men-floor"]#_2O3Pt9j) (not critical))' + '\n';
+                    }
+                    if(!lvFoundGender){
+                        logMessage_extra += '  Gender: FAILED to find in find(a[data-testid="women/men-floor"]#_2O3Pt9j) (not critical)' + '\n';
+                    }
+                } else {
+                    lvFoundGender = false;
                 }
 
                 /***********
@@ -786,7 +831,7 @@ function getElements(pvArgs) {
                  ************/
 
                 // Did we find what we needed (remember, no departments and no gender checkboxes)
-                if(lvFoundBreadcrumbs && lvFoundResults) {
+                if(lvFoundBreadcrumbs && (lvFoundResults || lvFoundProduct)) {
                     lvFoundEverything = true;
                 }
 
