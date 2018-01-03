@@ -34,12 +34,6 @@ var gvTrackedTabs = []; // These are tabs we've opened from the extension that w
 
 var gvShowJoyride;
 
-
-/*
- * Global variables for param passing to popup windows
- */
-
-
 /*
  * Every time the browser starts up (or the extension is updated) the background script initialises
  *
