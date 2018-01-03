@@ -732,46 +732,29 @@ function getElements(pvArgs) {
 
                 // No departments needed. ASOS does fashion only.
 
-                /**********
-                 * Gender *
-                 **********/
-
-                var asos_dep_womenCheckbox = pvDOM.querySelector('li[data-name="WOMEN"][data-checked="true"]');
-                var asos_dep_menCheckbox = pvDOM.querySelector('li[data-name="MEN"][data-checked="true"]');
-                if(asos_dep_womenCheckbox !== null){
-                    lvWomenFilter = 'WOMEN';
-                    lvFoundGender = true;
-                }
-                if(asos_dep_menCheckbox !== null){
-                    lvMenFilter = 'MEN';
-                    lvFoundGender = true;
-                }
-                if(lvFoundGender) {
-                    logMessage_extra += '  Gender: found"' + '\n';
-                }
-
-                if(!lvFoundGender){
-                    logMessage_extra += '  Gender: FAILED to find' + '\n';
-                }
-
                 /***************
                  * Breadcrumbs *
                  ***************/
 
-                var asos_bc = pvDOM.getElementsByClassName('breadcrumb');
-                if(asos_bc.length === 0){
-                    asos_bc = pvDOM.getElementsByClassName('bread-crumb');
-                }
-
-                if(asos_bc.length > 0){
-                    lvBreadcrumbs = asos_bc[0].textContent.toLowerCase();
-                    logMessage_extra += '  Breadcrumbs: found in class="breadcrumb" or class="bread-crumb"' + '\n';
+                var asos_bc = pvDOM.getElementById('chrome-breadcrumb');
+                if(asos_bc !== null){
+                    lvBreadcrumbs = asos_bc.textContent.toLowerCase().trim();
+                    logMessage_extra += '  Breadcrumbs: found in id="chrome-breadcrumb"' + '\n';
                     lvFoundBreadcrumbs = true;
                 }
-
                 if(!lvFoundBreadcrumbs){
-                    logMessage_extra += '  Breadcrumbs: FAILED to find in class="breadcrumb" and class="bread-crumb"' + '\n';
+                    logMessage_extra += '  Breadcrumbs: FAILED to find in id="chrome-breadcrumb"' + '\n';
                 }
+
+                /**********
+                 * Gender *
+                 **********/
+
+                // There are no gender filters on ASOS anymore. There is a top-level menu that is always selected
+                // as one or the other, but we ignore this because it doesn't change when you search
+                // But sex appears neatly in the URL a lot, and in the breadcrumbs, so the search functions at the
+                // end should pick it up easily.
+
 
                 /************
                  * Products *
@@ -779,64 +762,31 @@ function getElements(pvArgs) {
 
                 /* Results page */
 
-                // There are two pages, the normal one (from most searches) and
-                // "category pages" too (google ASOS T-shirt and click the top (unsponsored) sponsored link)
-                // These category pages have a different container div class
+                // There are two page types: categories and search results
+                // Both have the same structure
+                var asos_pn_results = pvDOM.querySelectorAll('[data-auto-id="productList"]');
 
-                var asos_pn_results_productList = pvDOM.getElementsByClassName('product-list');
-
-                if(asos_pn_results_productList.length > 0) {
-                    var asos_pn_results_spans = asos_pn_results_productList[0].getElementsByTagName('span');
-                    for (i = 0; i < asos_pn_results_spans.length; i++) {
-                        if(asos_pn_results_spans[i].className === 'name'){
-                            lvProductNames.push(asos_pn_results_spans[i].innerHTML.toLowerCase().trim());
-                        }
+                if(asos_pn_results.length > 0) {
+                    var asos_pn_titles_divs = asos_pn_results[0].querySelectorAll('[data-auto-id="productTileDescription"]');
+                    for (i = 0; i < asos_pn_titles_divs.length; i++) {
+                        lvProductNames.push(asos_pn_titles_divs[i].querySelectorAll('p')[0].innerHTML.toLowerCase().trim());
                     }
-                    if(asos_pn_results_spans.length > 0) {
-                        logMessage_extra += '  Search Results: found in class="product-list"' + '\n';
+                    if(asos_pn_titles_divs.length > 0) {
+                        logMessage_extra += '  Search Results: found in data-auto-id="productList"' + '\n';
                         lvFoundResults = true;
                     }
                 }
 
-                if(!lvFoundResults) {
-                    var asos_pn_results_categoryItems = pvDOM.getElementsByClassName('category-items');
-                    if(asos_pn_results_categoryItems.length > 0){
-                        var asos_pn_results_links = asos_pn_results_categoryItems[0].querySelectorAll('a.desc');
-                        for (i = 0; i < asos_pn_results_links.length; i++) {
-                            lvProductNames.push(asos_pn_results_links[i].textContent.toLowerCase().trim());
-                        }
-                        if(asos_pn_results_links.length > 0){
-                            logMessage_extra += '  Search Results: found in class="category-items"' + '\n';
-                            lvFoundResults = true;
-                        }
-                    }
-                }
                 if(!lvFoundResults){
                     logMessage_extra += '  Search Results: FAILED to find in class="product-list" or class="category-items"' + '\n';
-                }
-
-                /* Product page */
-
-                if(!lvFoundResults) {
-                    var asos_pn_prod_lblProductTitles = pvDOM.getElementsByClassName('product-hero');
-
-                    if(asos_pn_prod_lblProductTitles.length > 0){
-                       lvProductNames.push(asos_pn_prod_lblProductTitles[0].querySelector('h1').textContent.toLowerCase().trim());
-                       logMessage_extra += '  Product Page: found in class="product-hero"' + '\n';
-                       lvFoundProduct = true;
-                   }
-                }
-
-                if(!lvFoundProduct){
-                    logMessage_extra += '  Product Page: FAILED To find in class="product-hero"' + '\n';
                 }
 
                 /***********
                  * Wrap Up *
                  ************/
 
-                // Did we find what we needed (remember, no departments)
-                if(lvFoundBreadcrumbs && (lvFoundResults || lvFoundProduct)) {
+                // Did we find what we needed (remember, no departments and no gender checkboxes)
+                if(lvFoundBreadcrumbs && lvFoundResults) {
                     lvFoundEverything = true;
                 }
 
