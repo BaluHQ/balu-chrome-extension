@@ -10,7 +10,7 @@ gvScriptName_BGMain = 'BG_main';
  *   For Test: https://balu-parse-server-test.herokuapp.com/parse
  *   For LocalHost: http://localhost:1337/parse
  */
-var gvParseServerURL = 'http://localhost:1337/parse';
+var gvParseServerURL = 'https://balu-parse-server.herokuapp.com/parse';
 var gvAppId = 'mmhyD9DKGeOanjpRLHCR3bX8snue22oOd3NGfWKu';
 
 /*
