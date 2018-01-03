@@ -88,19 +88,19 @@ function searchPage_master(pvArgs){
      *************************************************************/
 
     if(pvArgs.tab.isProductLevelRec) {
-        log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for productLevelSearch',' INFO');
+        log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website (' + pvArgs.tab.website.websiteURL + ') is configured for productLevelSearch',' INFO');
     } else {
-        log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is NOT configured for productLevelSearch',' INFO');
+        log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website (' + pvArgs.tab.website.websiteURL + ') is NOT configured for productLevelSearch',' INFO');
     }
     if(pvArgs.tab.isWebsiteLevelRec) {
         if(pvArgs.tab.hasUserVisitedWebsiteRecently) {
-            log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for websiteLevelSearch and has been visited recently',' INFO');
+            log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website (' + pvArgs.tab.website.websiteURL + ') is configured for websiteLevelSearch and has been visited recently',' INFO');
         } else {
-            log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for websiteLevelSearch',' INFO');
+            log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website (' + pvArgs.tab.website.websiteURL + ') is configured for websiteLevelSearch',' INFO');
         }
     }
     if(!pvArgs.tab.isProductLevelRec && !pvArgs.tab.isWebsiteLevelRec) {
-        log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is NOT configured for websiteLevelSearch or productLevelSearch',' INFO');
+        log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website (' + pvArgs.tab.website.websiteURL + ') is NOT configured for websiteLevelSearch or productLevelSearch',' INFO');
     }
 
     /************************
@@ -115,7 +115,7 @@ function searchPage_master(pvArgs){
         for(var j = 0; j < pvArgs.websiteSearchData.length; j++){
             if(pvArgs.tab.tab.url.indexOf(pvArgs.websiteSearchData[j].websiteURL) !== -1) {
                 if(pvArgs.websiteSearchData[j].isWebsiteLevelRec) {
-                    log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website is configured for websiteLevelSearch for "' + pvArgs.websiteSearchData[j].searchCategoryName + '"','DEBUG');
+                    log(gvScriptName_CSSearch + '.' + lvFunctionName + ': This website (' + pvArgs.tab.website.websiteURL + ') is configured for websiteLevelSearch for "' + pvArgs.websiteSearchData[j].searchCategoryName + '"','DEBUG');
                     lvWebsiteSearchResults.push({searchCategoryId:   pvArgs.websiteSearchData[j].searchCategoryId,
                                                  searchCategoryName: pvArgs.websiteSearchData[j].searchCategoryName});
                 }
@@ -168,7 +168,7 @@ function getElements(pvArgs) {
 
     if(pvArgs.isTabActive_productLevel) {
 
-        log(gvScriptName_CSSearch + '.getElements: Starting product-level getElements. attemptCount == ' + attemptCount,' INFO');
+        log(gvScriptName_CSSearch + '.getElements: Starting product-level getElements for ' + websiteURL + '. attemptCount == ' + attemptCount,' INFO');
 
         /*************
          * Variables *
