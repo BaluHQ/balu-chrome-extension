@@ -582,8 +582,9 @@ function initialiseTab(tab){
                       recommendationCount_manual:    0,
                       productGroupIdsArray:          []};
 
-   /* Do we need to show the joyride? */
-
+   // Joyride lost in foundation 6 :(
+   gvShowJoyride = false;
+   /*
    var currentUser = Parse.User.current();
    var lvJoyrideStatus;
    if(currentUser){
@@ -593,6 +594,7 @@ function initialiseTab(tab){
    if(currentUser && (typeof lvJoyrideStatus === 'undefined' || lvJoyrideStatus === 'NOT DONE')){
        gvShowJoyride = true;
    }
+   */
 
    /* Log it */
 

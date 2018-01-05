@@ -118,14 +118,6 @@ function iFrameListener(msg) {
 
     switch (msg.data.sender + " | " + msg.data.subject) {
 
-        //
-
-        case 'IF_main | pleaseRegisterIframeAsReady':
-            log(logMessage,'MESSG');
-            // A recursive wait function will be waiting for this var to go to true
-            gvIsIframeReady = true;
-        break;
-
         case 'IF_main | pleaseMarkJoyrideAsDone':
             log(logMessage,'MESSG');
             sendMessage('BG_main','pleaseMarkJoyrideAsDone',msg.data);

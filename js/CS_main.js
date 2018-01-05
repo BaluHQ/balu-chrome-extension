@@ -11,7 +11,11 @@
 var gvScriptName_CSMain = 'CS_main';
 
 var gvIframe;
+
 var gvIsIframeReady = false;
+var gvIsJQueryReady = false;
+var gvIsFoundationReady = false;
+var gvIsQTipsReady = false;
 
 var gvRecommendationCount = '';
 var gvRecommendationCount_manual = '';
@@ -171,11 +175,6 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     docHeadHTML += '<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
     docHeadHTML += '<title>Balu</title>';
 
-    docHeadHTML += '<link type="text/css" rel="stylesheet" href="' + chrome.extension.getURL('css/foundation.css') + '" />';
-    docHeadHTML += '<link type="text/css" rel="stylesheet" href="' + chrome.extension.getURL('css/app.css') + '" />';
-    docHeadHTML += '<link type="text/css" rel="stylesheet" href="' + chrome.extension.getURL('css/foundation-icons.css') + '" />';
-    docHeadHTML += '<link type="text/css" rel="stylesheet" href="' + chrome.extension.getURL('css/app-icons.css') + '" />';
-
     // Attach to the iFrame document
     var docHead = gvIframe.contentWindow.document.head;
     docHead.class = 'no-js';
@@ -185,14 +184,36 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     // Inject modernizr script into page
     var modernizrScript = document.createElement('script');
     modernizrScript.type="text/javascript";
-    modernizrScript.src = chrome.extension.getURL('js/externalJS/vendor/modernizr.js');
+    modernizrScript.src = chrome.extension.getURL('js/externalJS/modernizr.js');
     docHead.appendChild(modernizrScript);
 
-    // Inject jquery script into page
-    var jqueryScript = document.createElement('script');
-    jqueryScript.type="text/javascript";
-    jqueryScript.src = chrome.extension.getURL('js/externalJS/jquery-3.2.1.min.js');
-    docHead.appendChild(jqueryScript);
+    // Inject foundation CSS script
+    var foundationCSS  = document.createElement('link');
+    foundationCSS.type = "text/css";
+    foundationCSS.rel  = "stylesheet";
+    foundationCSS.href = chrome.extension.getURL('css/foundation.min.css');
+    docHead.appendChild(foundationCSS);
+
+    // Inject app CSS script
+    var appCSS  = document.createElement('link');
+    appCSS.type = "text/css";
+    appCSS.rel  = "stylesheet";
+    appCSS.href = chrome.extension.getURL('css/app.css');
+    docHead.appendChild(appCSS);
+
+    // Inject foundation-icons CSS script
+    var foundationIconsCSS  = document.createElement('link');
+    foundationIconsCSS.type = "text/css";
+    foundationIconsCSS.rel  = "stylesheet";
+    foundationIconsCSS.href = chrome.extension.getURL('css/foundation-icons.css');
+    docHead.appendChild(foundationIconsCSS);
+
+    // Inject app-icons CSS script
+    var appIconsCSS  = document.createElement('link');
+    appIconsCSS.type = "text/css";
+    appIconsCSS.rel  = "stylesheet";
+    appIconsCSS.href = chrome.extension.getURL('css/app-icons.css');
+    docHead.appendChild(appIconsCSS);
 
     // Inject qtip CSS script
     var qtipCSS  = document.createElement('link');
@@ -200,6 +221,19 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     qtipCSS.rel  = "stylesheet";
     qtipCSS.href = chrome.extension.getURL('css/jquery.qtip.min.css');
     docHead.appendChild(qtipCSS);
+
+    // Inject jquery script into page
+    var jqueryScript = document.createElement('script');
+    jqueryScript.type="text/javascript";
+    jqueryScript.onload = function() {
+        // Before we inject the other scripts (addFinalScriptsToDOM()), we need to make sure
+        // jquery has loaded. But we can't inject the other sripts here, because the rest of
+        // the page hasn't loaded.
+        // So we're going to set a global variable and check it in addFinalScriptsToDOM()
+        gvIsJQueryReady = true;
+    };
+    jqueryScript.src = chrome.extension.getURL('js/externalJS/jquery-3.2.1.min.js');
+    docHead.appendChild(jqueryScript);
 
     var topRow = '';
 
@@ -214,14 +248,14 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         }
 
         topRow += '<form>';
-        topRow += '  <div class="row sidebar_topRow">';
-        topRow += '    <div class="small-12 columns text-center">';
+        topRow += '  <div class="grid-x grid-padding-x sidebar_topRow">';
+        topRow += '    <div class="small-12 cell text-center">';
         topRow += '      <span class="sidebarLogoHeader">BALU</span>';
         topRow += '      <a href="' + chrome.extension.getURL("options.html") + '#settings" target="_blank"><i id="settingsCog_icon" class="fi-widget settingsCogIcon"></i></a>';
         topRow += '    </div>';
         topRow += '  </div>'; // Top row
-        topRow += '  <div class="row sidebar_searchBarRow">';
-        topRow += '    <div class="small-12 column text-center manualSearchDiv">';
+        topRow += '  <div class="grid-x grid-padding-x sidebar_searchBarRow">';
+        topRow += '    <div class="small-12 cell text-center manualSearchDiv">';
         topRow += '      <div class="manualSearchDiv" id="joyrideStop4">';
         topRow += '        <i id="manualSearchSubmit_icon" class="fi-magnifying-glass manualSearchIcon"></i>';
         topRow += '        <input id="fieldManualSearch" ' + searchTermString + ' class="manualSearchField" />';
@@ -234,8 +268,8 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         // If our search results have triggered a banner, display it here
         if(displayChristmasBanner){
             topRow += '<div id="banner_container" class="banner_container">';
-            topRow += '  <div class="row">';
-            topRow += '    <div class="small-12 columns banner">';
+            topRow += '  <div class="grid-x grid-padding-x">';
+            topRow += '    <div class="small-12 cell banner">';
             topRow += '      <a target="_blank" class="banner_link" href="http://www.getbalu.org/christmas">Balu\'s Guide to Christmas!</a>';
             topRow += '    </div>';
             topRow += '  </div>';
@@ -249,58 +283,58 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     var bottomRow = '';
 
 /*
-    bottomRow += '<div class="row sidebarFeedbackRow">';
-    bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
+    bottomRow += '<div class="grid-x grid-padding-x  sidebarFeedbackRow">';
+    bottomRow += '  <div class="small-4 sidebarFeedbackColumn cell">';
     //bottomRow += '    <i class="fi-arrow-down"></i>';
     bottomRow += '    <a id="btsMissingRecs_a" class="qtip_tooltips_feedback"><i id="btsMissingRecs_icon" class="fi-page-delete feedbackIcon"></i></a>';
     bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom left" data-position-at="top right">I\'m not seeing the recommendations I expect</div>';
     bottomRow += '  </div>';
-    bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
+    bottomRow += '  <div class="small-4 sidebarFeedbackColumn cell">';
     bottomRow += '    <a id="btsFalsePositives_a" class="qtip_tooltips_feedback"><i id="btsFalsePositives_icon" class="fi-page-multiple feedbackIcon"></i></a>';
     bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom center" data-position-at="top center">I\'m seeing products that don\'t make sense</div>';
     bottomRow += '  </div>';
-    bottomRow += '  <div class="small-4 sidebarFeedbackColumn columns">';
+    bottomRow += '  <div class="small-4 sidebarFeedbackColumn cell">';
     bottomRow += '    <a id="btsBangOn_a" class="qtip_tooltips_feedback"><i id="btsBangOn_icon" class="fi-check feedbackIcon"></i></a>';
     bottomRow += '    <div style="position: fixed" class="feedbackTooltipHidden" data-qtiptitle="Feedback..." data-position-my="bottom right" data-position-at="top left">Results look all good to me!</div>';
     bottomRow += '  </div>';
     bottomRow += '</div>';
 */
-    bottomRow += '<div class="row footer"><div class="small-12 columns">';
+    bottomRow += '<div class="grid-x grid-padding-x footer"><div class="small-12 cell">';
 /*
-    bottomRow += '<div class="row collapse">';
-    bottomRow += '  <div class="small-12 columns bottomNavDiv">';
-    bottomRow += '    <div class="row collapse">';
-    bottomRow += '      <div class="small-2 columns text-center" style="background-color: white">';
+    bottomRow += '<div class="grid-x grid-padding-x collapse">';
+    bottomRow += '  <div class="small-12 cell bottomNavDiv">';
+    bottomRow += '    <div class="grid-x grid-padding-x collapse">';
+    bottomRow += '      <div class="small-2 cell text-center" style="background-color: white">';
     //bottomRow += '        <a id=""><i class="fi-home navIcon"></i></a>';
     bottomRow += '        <i class="fi-home navIcon"></i>';
     bottomRow += '      </div>';
-    bottomRow += '      <div class="small-2 columns text-center">';
+    bottomRow += '      <div class="small-2 cell text-center">';
     //bottomRow += '        <a id=""><i class="fi-torsos-all navIcon"></i></a>';
     bottomRow += '      </div>';
-    bottomRow += '      <div class="small-2 columns"></div>';
-    bottomRow += '      <div class="small-2 columns"></div>';
-    bottomRow += '      <div class="small-2 columns end"></div>';
+    bottomRow += '      <div class="small-2 cell"></div>';
+    bottomRow += '      <div class="small-2 cell"></div>';
+    bottomRow += '      <div class="small-2 cell end"></div>';
     bottomRow += '    </div>';
     bottomRow += '  </div>';
     bottomRow += '</div>';
 */
-    bottomRow += '<div class="row collapse footerDivs">';
-    bottomRow += '  <div class="small-12 columns footerDivs">';
-    bottomRow += '    <div class="row collapse">';
-    bottomRow += '      <div class="small-3 columns text-left footerDivs">';
-    bottomRow += '        <div class="row footerDivs">';
-    bottomRow += '          <div class="small-3 columns text-left footerDivs"">';
+    bottomRow += '<div class="grid-x grid-padding-x collapse footerDivs">';
+    bottomRow += '  <div class="small-12 cell footerDivs">';
+    bottomRow += '    <div class="grid-x grid-padding-x collapse">';
+    bottomRow += '      <div class="small-3 cell text-left footerDivs">';
+    bottomRow += '        <div class="grid-x grid-padding-x footerDivs">';
+    bottomRow += '          <div class="small-3 cell text-left footerDivs"">';
     bottomRow += '            <a id="hideSidebarUntilRefresh_icon"><i id="joyrideStop3" class="fi-play minimiseBaluIcon" title="Hide Balu on this tab (until page refresh)"></i></a>';
     bottomRow += '          </div>';
-    bottomRow += '          <div class="small-3 columns end text-left footerDivs">';
+    bottomRow += '          <div class="small-3 cell end text-left footerDivs">';
     bottomRow += '            <a id="hideSidebarUntilRestart_icon"><i class="fi-fast-forward minimiseBaluIcon" title="Hide Balu on all tabs (until browser restart)"></i></a>';
     bottomRow += '          </div>';
     bottomRow += '        </div>';
     bottomRow += '      </div>';
-    bottomRow += '      <div class="small-4 columns text-center footerDivs">';
+    bottomRow += '      <div class="small-4 cell text-center footerDivs">';
     //bottomRow += '        <p class="feedbackLink">Feedback</p>';
     bottomRow += '      </div>';
-    bottomRow += '      <div class="small-5 columns text-right footerDivs">';
+    bottomRow += '      <div class="small-5 cell text-right footerDivs">';
     bottomRow += '        <span class="footerText"><a id="showInfoWindow_link">Info</a>&nbsp;|&nbsp;<a id="showFAQWindow_link">FAQs</a>&nbsp;|&nbsp;<a id="showPrivacyWindow_link">Privacy</a></span>';
     bottomRow += '      </div>';
     bottomRow += '    </div>';
@@ -381,45 +415,60 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
 
 function addFinalScriptsToDOM(showJoyride) {
 
-    log(gvScriptName_CSMain + '.addFinalScriptsToDOM: Start','PROCS');
+    waitForScriptsThenExecute('jquery',0,function(){
+        log(gvScriptName_CSMain + '.addFinalScriptsToDOM: Start','PROCS');
 
-    var docBody = gvIframe.contentWindow.document.body;
+        var docBody = gvIframe.contentWindow.document.body;
 
-    // Append fastclick script to body
-    var fastclickScript = document.createElement('script');
-    fastclickScript.type="text/javascript";
-    fastclickScript.src = chrome.extension.getURL('js/externalJS/vendor/fastclick.js');
-    docBody.appendChild(fastclickScript);
+        // Append fastclick script to body
+        var fastclickScript = document.createElement('script');
+        fastclickScript.type="text/javascript";
+        fastclickScript.src = chrome.extension.getURL('js/externalJS/fastclick.js');
+        docBody.appendChild(fastclickScript);
 
-    // Append foundation script to body
-    var foundationScript = document.createElement('script');
-    foundationScript.type="text/javascript";
-    foundationScript.src = chrome.extension.getURL('js/externalJS/foundation.min.js');
-    docBody.appendChild(foundationScript);
+        // Append foundation script to body
+        var foundationScript = document.createElement('script');
+        foundationScript.type="text/javascript";
+        foundationScript.onload = function() {
+            gvIsFoundationReady = true;
+        };
+        foundationScript.src = chrome.extension.getURL('js/externalJS/foundation.min.js');
+        docBody.appendChild(foundationScript);
 
-    // Inject qtip script into page
-    var qtipScript = document.createElement('script');
-    qtipScript.type="text/javascript";
-    qtipScript.src = chrome.extension.getURL('js/externalJS/jquery.qtip.min.js');
-    docBody.appendChild(qtipScript);
+        // Inject qtip script into page
+        var qtipScript = document.createElement('script');
+        qtipScript.type="text/javascript";
+        qtipScript.onload = function() {
+            gvIsQTipsReady = true;
+        };
+        qtipScript.src = chrome.extension.getURL('js/externalJS/jquery.qtip.min.js');
+        docBody.appendChild(qtipScript);
 
-    // Inject iframe script into page
-    var iframeScript = document.createElement('script');
-    iframeScript.type="text/javascript";
-    iframeScript.src = chrome.extension.getURL('js/IF_main.js');
-    docBody.appendChild(iframeScript);
+        // Inject iframe script into page
+        var iframeScript = document.createElement('script');
+        iframeScript.type="text/javascript";
+        iframeScript.onload = function() {
+            gvIsIframeReady = true;
+        };
+        iframeScript.src = chrome.extension.getURL('js/IF_main.js');
+        docBody.appendChild(iframeScript);
 
-    // Tell the iframe script to activate the QTips (tooltips)
-    waitForIframeThenExecute(0,function(){
-        sendMessage('IF_main','pleaseActivateQTips',{});
-    });
-
-    // Tell the iframe script to activate the joyride
-    if(showJoyride){
-        waitForIframeThenExecute(0,function(){
-            sendMessage('IF_main','pleaseActivateJoyride',{});
+        // Tell the iframe script to activate the QTips (tooltips)
+        waitForScriptsThenExecute('qtips',0,function(){
+            waitForScriptsThenExecute('iframe',0,function(){
+                sendMessage('IF_main','pleaseActivateQTips',{});
+            });
         });
-    }
+
+        // Tell the iframe script to activate the joyride
+        if(showJoyride){
+            waitForScriptsThenExecute('foundation',0,function(){
+                waitForScriptsThenExecute('iframe',0,function(){
+                    sendMessage('IF_main','pleaseActivateJoyride',{});
+                });
+            });
+        }
+    });
 }
 /*
  * Create the content for the search result sidebar
@@ -465,8 +514,8 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         if (firstInProductGroup) {
             firstInProductGroup = false;
             lvSidebarContentHTML += '<div class="origProductBlock">';
-            lvSidebarContentHTML += '  <div class="row origProductHeaderStrip">';
-            lvSidebarContentHTML += '    <div class="small-8 columns origProductHeaderStripText">' + recommendations[i].sectionTitle + '</div>';
+            lvSidebarContentHTML += '  <div class="grid-x grid-padding-x origProductHeaderStrip">';
+            lvSidebarContentHTML += '    <div class="small-8 cell origProductHeaderStripText">' + recommendations[i].sectionTitle + '</div>';
             lvSidebarContentHTML += '  </div>';
             lvSidebarContentHTML += '</div>';
         }
@@ -488,13 +537,13 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         }
 
         lvSidebarContentHTML += '<div class="altProductsBlock">';
-        lvSidebarContentHTML += '  <div class="row collapse altProductBlock productLinks" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        lvSidebarContentHTML += '    <div class="small-5 columns">';
-        lvSidebarContentHTML += '      <div class="row text-center">';
+        lvSidebarContentHTML += '  <div class="grid-x grid-padding-x collapse altProductBlock productLinks" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
+        lvSidebarContentHTML += '    <div class="small-5 cell">';
+        lvSidebarContentHTML += '      <div class="grid-x grid-padding-x text-center">';
         lvSidebarContentHTML += '        <img class="altImage" src="' + recommendations[i].imageURL + '" />';
         lvSidebarContentHTML += '      </div>';
         lvSidebarContentHTML += '    </div>';
-        lvSidebarContentHTML += '    <div class="small-7 columns altText">';
+        lvSidebarContentHTML += '    <div class="small-7 cell altText">';
         lvSidebarContentHTML += '      <div class="altText-top">';
         if(recommendations[i].baluFavourite){
             lvSidebarContentHTML += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
@@ -504,7 +553,7 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
             lvSidebarContentHTML += '<br /><span class="altProductProductName">' + recommendations[i].productName + '</span>';
         //}
         lvSidebarContentHTML += '      </div>';
-        lvSidebarContentHTML += '      <div style="position: absolute; top: 0px; right: 0px;">';
+        lvSidebarContentHTML += '      <div style="position: absolute; top: 5px; right: 5px;">';
         lvSidebarContentHTML += '        <div class="qtip_tooltips">';
         lvSidebarContentHTML += '          <i class="fi-info brandSpielIcon" id="joyrideStop1"></i>';
         lvSidebarContentHTML += '        </div>';
@@ -514,8 +563,8 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
         lvSidebarContentHTML += '        </div>';
         lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="Block brand: ' + recommendations[i].brandName + '">I don\'t want to see recommendations from this brand again</div>';
         lvSidebarContentHTML += '      </div>';
+        lvSidebarContentHTML += '      <div class="altText-bottom findOutMoreButton">Find Out More</div>';
         lvSidebarContentHTML += '    </div>';
-        lvSidebarContentHTML += '    <div class="altText-bottom findOutMoreButton">Find Out More</div>';
         lvSidebarContentHTML += '  </div>';
         lvSidebarContentHTML += '</div>';
 
@@ -549,17 +598,30 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
 }
 
 /*
- * to do: I don't really want to wait here, I just need to "queue" so listeners are set up on home page, but sometimes that doesnt work :s
+ *
  */
-function waitForIframeThenExecute(counter,callback){
+function waitForScriptsThenExecute(whatAreWeWaitingFor,counter,callback){
 
-   if(gvIsIframeReady || counter > 1000){
-       log(gvScriptName_CSMain + '.waitForScriptsThenExecute: Ending wait, counter === ' + counter,'PROCS');
-       callback();
-   } else {
-       counter++;
-       window.setTimeout(function(){return waitForIframeThenExecute(counter,callback);},10);
-   }
+    var areWeDone = false;
+    if (whatAreWeWaitingFor === 'jquery') {
+        areWeDone = gvIsJQueryReady;
+    } else if (whatAreWeWaitingFor === 'qtips') {
+        areWeDone = gvIsQTipsReady;
+    } else if (whatAreWeWaitingFor === 'iframe') {
+        areWeDone = gvIsIframeReady;
+    } else if (whatAreWeWaitingFor === 'foundation') {
+        areWeDone = gvIsFoundationReady;
+    }
+    if(areWeDone){
+        log(gvScriptName_CSMain + '.waitForScriptsThenExecute (' + whatAreWeWaitingFor + '): Ending wait sucessfully!, counter === ' + counter,'PROCS');
+        callback();
+    } else if (counter > 1000) {
+        log(gvScriptName_CSMain + '.waitForScriptsThenExecute (' + whatAreWeWaitingFor + '): Ending wait UNSUCCESSFULLY, counter === ' + counter,'PROCS');
+    } else {
+        log(gvScriptName_CSMain + '.waitForScriptsThenExecute (' + whatAreWeWaitingFor + '): Still waiting, counter === ' + counter,'DEBUG');
+        counter++;
+        window.setTimeout(function(){return waitForScriptsThenExecute(whatAreWeWaitingFor,counter,callback);},10);
+    }
 }
 
 /*
@@ -575,8 +637,8 @@ function createLogInSidebarContent(a,b,c,d) {
     log(gvScriptName_CSMain + '.' + lvFunctionName + ': Start','PROCS');
 
     var lvHtml = '';
-    lvHtml += '<div class="row text-center" style="margin-top: 70px">';
-    lvHtml += '  <div class="small-10 small-centered columns">';
+    lvHtml += '<div class="grid-x grid-padding-x text-center" style="margin-top: 70px">';
+    lvHtml += '  <div class="small-10 small-centered cell">';
     lvHtml += '    <p class="logInSideBarText">Log back in to Balu to see amazing ethical products while you shop</p>';
     lvHtml += '    <a id="showLogInPageButton" class="button radius signInScreenButtons">Log in</a>';
     lvHtml += '  </div>';

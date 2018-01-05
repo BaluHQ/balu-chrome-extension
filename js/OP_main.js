@@ -13,7 +13,6 @@ var gvTestWebsiteURL = 'balutestwebsite.html';
  *
  */
 (function initialise(){
-
     log(gvScriptName_OPMain + '.initialise: Start','INITS');
     Parse.initialize(chrome.extension.getBackgroundPage().gvAppId);
     Parse.serverURL = chrome.extension.getBackgroundPage().gvParseServerURL;
@@ -66,314 +65,365 @@ function createOptionsPage(pvTabName,pvUserDetails){
 
     var lvHtml = '';
 
-    // Open up the tab structure (section/div/div)
-    lvHtml +=     '<section class="secondary-tabs">';
-    lvHtml +=     '  <div class="row collapse">';
-    lvHtml +=     '    <div class="small-12 columns">';
+    // Outer page structure
+
+    lvHtml += '<div class="grid-x grid-padding-x" style="margin: 40px auto;">';
+    lvHtml += '  <div class="small-12 cell">';
 
     // Tab headings
-    lvHtml +=     '      <ul class="tabs top-tab" data-tab>';
-    lvHtml +=     '        <li class="tab-title"><a href="#start"><i class="fi-home"></i>Getting Started</a></li>';
-    lvHtml +=     '        <li class="tab-title"><a href="#settings"><i class="fi-widget"></i>Settings</a></li>';
-    lvHtml +=     '      </ul>'; // tab headings
 
-    // Tab content (all tabs)
-    lvHtml +=     '      <div class="tabs-content top-tab">';
-
-    // Getting Start tab content (two entry points, "#start" and "#start-from-install") -- contains a numbered lists of steps for the user to follow to get started with Balu
+    lvHtml +=     '<ul class="custom tabs" data-tabs id="main-tabs">';
     if(pvTabName === 'start' || pvTabName === 'start-from-install') {
-        lvHtml += '        <div class="content active top-tab" id="start">';
+        lvHtml +=     '  <li class="custom tabs-title active"><a href="#start" aria-selected="true"><i class="fi-home"></i>&nbsp;&nbsp;Getting Started</a></li>';
+    }
+    else {
+        lvHtml +=     '  <li class="custom tabs-title"><a href="#start"><i class="fi-home"></i>&nbsp;&nbsp;Getting Started</a></li>';
+    }
+    if(pvTabName === 'settings') {
+        lvHtml +=     '  <li class="custom tabs-title active"><a href="#settings" aria-selected="true"><i class="fi-widget"></i>&nbsp;&nbsp;Settings</a></li>';
     } else {
-        lvHtml += '        <div class="content top-tab" id="start">';
+        lvHtml +=     '  <li class="custom tabs-title"><a href="#settings"><i class="fi-widget"></i>&nbsp;&nbsp;Settings</a></li>';
+    }
+    lvHtml +=     '</ul>'; // tab headings
+
+    // Tab content
+
+    lvHtml +=     '<div class="custom tabs-content" data-tabs-content="main-tabs">';
+
+    // Getting Started tab content
+
+    // (two entry points, "#start" and "#start-from-install")
+    if(pvTabName === 'start' || pvTabName === 'start-from-install') {
+        lvHtml += '  <div class="tabs-panel is-active" id="start">';
+    } else {
+        lvHtml += '  <div class="tabs-panel" id="start">';
     }
 
     // Title
-    lvHtml +=     '          <h3 class="subheader" style="margin-bottom: 30px">Balu is connected to your Browser! Now let\'s get started...</h3>';
+    lvHtml +=     '    <h3 style="margin-bottom: 30px; color: #35b19c;">Balu is connected to your Browser! Now let\'s get started...</h3>';
 
-    // Numberd row
-    lvHtml +=     '          <div class="row content top-tab">';
-    lvHtml +=     '            <div class="small-1 columns">';
-    lvHtml +=     '              <img class="number-images" src="' + chrome.extension.getURL("images/1.svg") + '" />';
-    lvHtml +=     '            </div>';
+    // Step 1. log in / sign up
+
+    lvHtml +=     '    <div class="grid-x grid-padding-x">';  // row (step 1)
+    lvHtml +=     '      <div class="small-1 cell">';
+    lvHtml +=     '        <img class="number-images" src="' + chrome.extension.getURL("images/1.svg") + '" />';
+    lvHtml +=     '      </div>';
+    // If user is not logged in we show the log in / sign up form
     if(pvUserDetails.isUserLoggedIn) {
-        lvHtml += '            <div class="small-11 columns">';
-        lvHtml += '              <h3 style="margin-left: 0">You\'re already logged in and ready to go</h3>';
-        lvHtml += '              <p>Your username is ' + pvUserDetails.email + '. Head over to the settings tab to manage your account.</p>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>'; // numbered row (1)
+        lvHtml += '      <div class="small-11 cell">';
+        lvHtml += '        <h3 style="margin-left: 0">You\'re already logged in and ready to go</h3>';
+        lvHtml += '        <p>Your username is ' + pvUserDetails.email + '. Head over to the settings tab to manage your account.</p>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>'; // row (step 1)
     } else {
-        lvHtml += '            <div class="small-11 columns">';
+        lvHtml += '      <div class="small-11 cell">';
+
         // If we've come in from a new install, intro talks about signing up. Otherwse, logging in.
         if(pvTabName === 'start-from-install') {
-            lvHtml += '          <h3 style="margin-left: 0;">Sign up to get all the benefits of shopping with Balu</h3>';
+            lvHtml += '    <h3 style="margin-left: 0; color: #35b19c;">Sign up to get all the benefits of shopping with Balu</h3>';
         } else {
-            lvHtml += '          <h3 style="margin-left: 0;">Log in to get all the benefits of shopping with Balu</h3>';
+            lvHtml += '    <h3 style="margin-left: 0; color: #35b19c;">Log in to get all the benefits of shopping with Balu</h3>';
         }
-        lvHtml += '            </div>';
-        lvHtml += '          </div>'; // numbered row (1)
+        lvHtml += '      </div>';
+        lvHtml += '    </div>'; // row (step 1)
 
         // Sign up / log in form row
-        lvHtml += '          <div id="signUpLogInFormDiv" class="row content">';
-        lvHtml += '            <div class="small-8 columns small-offset-2 end">';
+        lvHtml += '    <div id="signUpLogInFormDiv" class="grid-x grid-padding-x">';
+        lvHtml += '      <div class="small-8 cell small-offset-2 end">';
 
         // Sign up / log in form (tabs)
-        lvHtml += '              <form class="medium-8 columns">';
-        lvHtml += '                <ul class="tabs" data-tab="">';
+        lvHtml += '        <form class="medium-8 cell">';
+
+        // Tabs (within outer tabs) for sign up / log in
+
+        lvHtml += '          <ul class="tabs" data-tabs id="login-tabs">';
+
+        // Tab headings
 
         // If we've come in from a new install, default to the sign up form. Otherwise, log in form.
         if(pvTabName === 'start-from-install') {
-            lvHtml += '              <li class="tab-title active"><a href="#panelRegister" target="_self" style="font-family: Noto Sans; color: #35b19c;">Register</a></li>';
+            lvHtml += '        <li class="tabs-title active"><a href="#panelRegister" aria-selected="true" style="font-family: Noto Sans; color: #35b19c;">Register</a></li>';
         } else {
-            lvHtml += '              <li class="tab-title"><a href="#panelRegister" target="_self" style="font-family: Noto Sans; color: #35b19c;">Sign up</a></li>';
+            lvHtml += '        <li class="tabs-title"><a href="#panelRegister" style="font-family: Noto Sans; color: #35b19c;">Sign up</a></li>';
         }
         if(pvTabName !== 'start-from-install') {
-            lvHtml += '              <li class="tab-title active"><a href="#panelLogin" target="_self" style="font-family: Noto Sans; color: #35b19c;">Login</a></li>';
+            lvHtml += '        <li class="tabs-title active"><a href="#panelLogin" aria-selected="true" style="font-family: Noto Sans; color: #35b19c;">Login</a></li>';
         } else {
-            lvHtml += '              <li class="tab-title"><a href="#panelLogin" target="_self" style="font-family: Noto Sans; color: #35b19c;">Login</a></li>';
+            lvHtml += '        <li class="tabs-title"><a href="#panelLogin" style="font-family: Noto Sans; color: #35b19c;">Login</a></li>';
         }
-        lvHtml += '                </ul>';
+        lvHtml += '          </ul>';
+
         // Tabs content
-        lvHtml += '                <div class="tabs-content">';
-        // Login tab
-        lvHtml += '                  <div class="content active" id="panelLogin">';
-        lvHtml += '                    <div class="row">';
-        lvHtml += '                      <div id="logInErrorMessageDiv" class="large-12 columns" style="display: none">';
-        lvHtml += '                        <span class="authError" id="logInErrorMessageSpan"><span>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Email';
-        lvHtml += '                          <input id="fieldLogInEmail" type="text" name="email" placeholder="somebody@example.com">';
-        lvHtml += '                        </label>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Password';
-        lvHtml += '                          <input id="fieldLogInPassword" type="password" name="password" placeholder="">';
-        lvHtml += '                        </label>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <input type="button" id="logInUserButton" class="button expand" value="Login" style="background-color: #6bd3c2">';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <p class="text-center"><a id="forgotPasswordLink">Forgot your password?</a></p>';
-        lvHtml += '                      </div>';
-        lvHtml += '                    </div>';
-        lvHtml += '                  </div>'; // log in tab
+
+        lvHtml += '          <div class="tabs-content"  data-tabs-content="login-tabs">';
+
         // Sign up tab
-        lvHtml += '                  <div class="content" id="panelRegister">';
-        lvHtml += '                    <div class="row">';
-        lvHtml += '                      <div id="signUpErrorMessageDiv" class="large-12 columns" style="display: none">';
-        lvHtml += '                        <span class="authError" id="signUpErrorMessageSpan"><span>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Email';
-        lvHtml += '                          <input id="fieldSignUpEmail" type="text" name="email" placeholder="somebody@example.com">';
-        lvHtml += '                        </label>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Password';
-        lvHtml += '                          <input id="fieldSignUpPassword" type="password" name="newPassword" placeholder="">';
-        lvHtml += '                        </label>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <label style="font-family: Noto Sans; color: #35b19c;">Confirm Password';
-        lvHtml += '                          <input id="fieldSignUpPasswordConfirm" type="password" name="confirmPassword" placeholder="">';
-        lvHtml += '                        </label>';
-        lvHtml += '                      </div>';
-        lvHtml += '                      <div class="large-12 columns">';
-        lvHtml += '                        <input type="button" id="signUserUpButton" class="button expanded" style="background-color: #6bd3c2" value="Sign-Up Now">';
-        lvHtml += '                      </div>';
-        lvHtml += '                    </div>';
-        lvHtml += '                  </div>'; // sign up tab
-        lvHtml += '                </div>'; // tabs content
-        lvHtml += '              </form>'; // sign up / log in form
-        lvHtml += '            </div>';
-        lvHtml += '          </div>'; // sign up / log in form row
+        if(pvTabName === 'start-from-install') {
+            lvHtml += '        <div class="tabs-panel is-active" id="panelRegister">';
+        } else {
+            lvHtml += '        <div class="tabs-panel" id="panelRegister">';
+        }
+        lvHtml += '              <div class="grid-x grid-padding-x">';
+        lvHtml += '                <div id="signUpErrorMessageDiv" class="large-12 cell" style="display: none">';
+        lvHtml += '                  <span class="authError" id="signUpErrorMessageSpan"><span>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <label style="font-family: Noto Sans; color: #35b19c;">Email';
+        lvHtml += '                    <input id="fieldSignUpEmail" type="text" name="email" placeholder="somebody@example.com">';
+        lvHtml += '                  </label>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <label style="font-family: Noto Sans; color: #35b19c;">Password';
+        lvHtml += '                    <input id="fieldSignUpPassword" type="password" name="newPassword" placeholder="">';
+        lvHtml += '                  </label>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <label style="font-family: Noto Sans; color: #35b19c;">Confirm Password';
+        lvHtml += '                    <input id="fieldSignUpPasswordConfirm" type="password" name="confirmPassword" placeholder="">';
+        lvHtml += '                  </label>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <input type="button" id="signUserUpButton" class="button expanded" style="background-color: #6bd3c2" value="Sign-Up Now">';
+        lvHtml += '                </div>';
+        lvHtml += '              </div>';
+        lvHtml += '            </div>'; // sign up tab
+
+        // Login tab
+        if(pvTabName !== 'start-from-install') {
+            lvHtml += '        <div class="tabs-panel is-active" id="panelLogin">';
+        } else {
+            lvHtml += '        <div class="tabs-panel" id="panelLogin">';
+        }
+        lvHtml += '              <div class="grid-x grid-padding-x">';
+        lvHtml += '                <div id="logInErrorMessageDiv" class="large-12 cell" style="display: none">';
+        lvHtml += '                  <span class="authError" id="logInErrorMessageSpan"><span>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <label style="font-family: Noto Sans; color: #35b19c;">Email';
+        lvHtml += '                    <input id="fieldLogInEmail" type="text" name="email" placeholder="somebody@example.com">';
+        lvHtml += '                  </label>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <label style="font-family: Noto Sans; color: #35b19c;">Password';
+        lvHtml += '                    <input id="fieldLogInPassword" type="password" name="password" placeholder="">';
+        lvHtml += '                  </label>';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <input type="button" id="logInUserButton" class="button expand" value="Login" style="background-color: #6bd3c2">';
+        lvHtml += '                </div>';
+        lvHtml += '                <div class="large-12 cell">';
+        lvHtml += '                  <p class="text-center"><a id="forgotPasswordLink">Forgot your password?</a></p>';
+        lvHtml += '                </div>';
+        lvHtml += '              </div>';
+        lvHtml += '            </div>'; // log in tab
+
+        // Close divs
+        lvHtml += '          </div>'; // tabs content
+        lvHtml += '        </form>'; // sign up / log in form
+        lvHtml += '      </div>';
+        lvHtml += '    </div>'; // sign up / log in form row
 
         // Add in an invisible alterntive to this form, for the password reset. We'll switch these over when the user clicks the "forgot password" link
 
         // Reset password form row
-        lvHtml += '          <div id="resetPasswordFormDiv" class="row content" style="display: none">';
-        lvHtml += '            <div class="small-8 columns small-offset-2 end">';
-        lvHtml += '              <form class="medium-8 columns">';
-        lvHtml += '                <div class="row">';
-        lvHtml += '                  <div class="large-12 columns">';
-        lvHtml += '                    <span class="authError" style="display: none" id="resetPasswordEmailConfirmation"></span>';
-        lvHtml += '                  </div>';
-        lvHtml += '                  <div class="large-12 columns">';
-        lvHtml += '                    <label style="font-family: Noto Sans; color: #35b19c;">Email';
-        lvHtml += '                      <input id="fieldResetPasswordEmail" type="text" name="email" placeholder="somebody@example.com">';
-        lvHtml += '                    </label>';
-        lvHtml += '                  </div>';
-        lvHtml += '                  <div class="large-12 columns">';
-        lvHtml += '                    <input type="button" id="resetPasswordButton" class="button expand" value="Reset Password" style="background-color: #6bd3c2">';
-        lvHtml += '                  </div>';
-        lvHtml += '                  <div class="large-12 columns">';
-        lvHtml += '                    <p class="text-center"><a id="backToLoginLink">Back to log in form</a></p>';
-        lvHtml += '                  </div>';
-        lvHtml += '                </div>';
-        lvHtml += '              </form>'; // reset password form
+        lvHtml += '    <div id="resetPasswordFormDiv" class="grid-x grid-padding-x" style="display: none">';
+        lvHtml += '      <div class="small-8 cell small-offset-2 end">';
+        lvHtml += '        <form class="medium-8 cell">';
+        lvHtml += '          <div class="grid-x grid-padding-x">';
+        lvHtml += '            <div class="large-12 cell">';
+        lvHtml += '              <span class="authError" style="display: none" id="resetPasswordEmailConfirmation"></span>';
         lvHtml += '            </div>';
-        lvHtml += '          </div>'; // reset password form row
+        lvHtml += '            <div class="large-12 cell">';
+        lvHtml += '              <label style="font-family: Noto Sans; color: #35b19c;">Email';
+        lvHtml += '                <input id="fieldResetPasswordEmail" type="text" name="email" placeholder="somebody@example.com">';
+        lvHtml += '              </label>';
+        lvHtml += '            </div>';
+        lvHtml += '            <div class="large-12 cell">';
+        lvHtml += '              <input type="button" id="resetPasswordButton" class="button expand" value="Reset Password" style="background-color: #6bd3c2">';
+        lvHtml += '            </div>';
+        lvHtml += '            <div class="large-12 cell">';
+        lvHtml += '              <p class="text-center"><a id="backToLoginLink">Back to log in form</a></p>';
+        lvHtml += '            </div>';
+        lvHtml += '          </div>';
+        lvHtml += '        </form>'; // reset password form
+        lvHtml += '      </div>';
+        lvHtml += '    </div>'; // reset password form row
     }
 
     // Numberd row
-    lvHtml +=     '          <div class="row content top-tab">';
-    lvHtml +=     '            <div class="small-1 columns">';
-    lvHtml +=     '              <img class="number-images" src="' + chrome.extension.getURL("images/2.svg") + '" />';
-    lvHtml +=     '            </div>';
+    lvHtml +=     '    <div class="grid-x grid-padding-x top-tab">';
+    lvHtml +=     '      <div class="small-1 cell">';
+    lvHtml +=     '        <img class="number-images" src="' + chrome.extension.getURL("images/2.svg") + '" />';
+    lvHtml +=     '      </div>';
 
     // Section to the right of the number 2
-    lvHtml +=     '            <div class="small-11 columns">';
-    lvHtml +=     '              <div class="row">';
-    lvHtml +=     '                <div class="small-12 columns">';
-    lvHtml +=     '                  <h3 style="margin-left: 0">Start shopping</h3>';
-    lvHtml +=     '                </div>';
-    lvHtml +=     '              </div>';
-    lvHtml +=     '              <div class="row">';
-    lvHtml +=     '                <div class="small-3 columns">';
-    lvHtml +=     '                  <a id="asosExampleButton" href="http://www.asos.com/men/t-shirts/cat/?cid=7616" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Check out Balu on ASOS</a>';
-    lvHtml +=     '                </div>';
-    lvHtml +=     '                <div class="small-3 columns end">';
-    lvHtml +=     '                  <a id="directoryButton" href="http://balu-directory.herokuapp.com/" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Search the Directory</a>';
-    lvHtml +=     '                </div>';
-    lvHtml +=     '              </div>';
+    lvHtml +=     '      <div class="small-11 cell">';
+    lvHtml +=     '        <div class="grid-x grid-padding-x">';
+    lvHtml +=     '          <div class="small-12 cell">';
+    lvHtml +=     '            <h3 style="margin-left: 0; color: #35b19c;">Get shopping</h3>';
+    lvHtml +=     '          </div>';
+    lvHtml +=     '        </div>';
+    lvHtml +=     '        <div class="grid-x grid-padding-x">';
+    lvHtml +=     '          <div class="small-3 cell">';
+    lvHtml +=     '            <a id="asosExampleButton" href="http://www.asos.com/men/t-shirts/cat/?cid=7616" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Check out Balu on ASOS</a>';
+    lvHtml +=     '          </div>';
+    lvHtml +=     '          <div class="small-3 cell end">';
+    lvHtml +=     '            <a id="directoryButton" href="http://balu-directory.herokuapp.com/" target="_blank" class="button radius medium" style="background-color: #6bd3c2;">Search the Directory</a>';
+    lvHtml +=     '          </div>';
+    lvHtml +=     '        </div>';
 
     // Website list
-    lvHtml +=     '              <div class="row">';
-    lvHtml +=     '                <div class="small-12 columns">';
-    lvHtml +=     '                  <p>Try Balu out on any of these websites...</p>';
-    lvHtml +=     '                </div>';
-    lvHtml +=     '                <div id="listOfWebsitesDiv" class="small-12 columns" style="padding-right: 150px">';
+    lvHtml +=     '        <div class="grid-x grid-padding-x">';
+    lvHtml +=     '          <div class="small-12 cell">';
+    lvHtml +=     '            <p>Try Balu out on any of these websites...</p>';
+    lvHtml +=     '          </div>';
+    lvHtml +=     '          <div id="listOfWebsitesDiv" class="small-12 cell" style="padding-right: 150px">';
     // We'll attach the list of websites here later (so as not to slow the page load down)
-    lvHtml +=     '                </div>';
-    lvHtml +=     '              </div>';
+    lvHtml +=     '          </div>';
+    lvHtml +=     '        </div>';
 
-    lvHtml +=     '            </div>'; // Section to the right of the number 2
-    lvHtml +=     '          </div>'; // numbered row (2)
+    lvHtml +=     '      </div>'; // Section to the right of the number 2
+    lvHtml +=     '    </div>'; // numbered row (2)
 
     // Numberd row
-    lvHtml +=     '          <div class="row content top-tab">';
-    lvHtml +=     '            <div class="small-1 columns">';
-    lvHtml +=     '              <img class="number-images" src="' + chrome.extension.getURL("images/3.svg") + '" />';
-    lvHtml +=     '            </div>';
-    lvHtml +=     '            <div class="small-11 columns">';
-    lvHtml +=     '              <h3 style="margin-left: 0">Start changing the world!</h3>';
-    lvHtml +=     '            </div>';
-    lvHtml +=     '          </div>'; // numbered row (3)
+    lvHtml +=     '    <div class="grid-x grid-padding-x top-tab">';
+    lvHtml +=     '      <div class="small-1 cell">';
+    lvHtml +=     '        <img class="number-images" src="' + chrome.extension.getURL("images/3.svg") + '" />';
+    lvHtml +=     '      </div>';
+    lvHtml +=     '      <div class="small-11 cell">';
+    lvHtml +=     '        <h3 style="margin-left: 0; color: #35b19c;">Start changing the world!</h3>';
+    lvHtml +=     '      </div>';
+    lvHtml +=     '    </div>'; // numbered row (3)
 
     // Some text at the bottom of the tab panel
-    lvHtml +=     '          <div style="margin-top: 50px; font-family: Noto Sans; color: #35b19c;">For help or feedback, contact us at info@getbalu.org</div>';
+    lvHtml +=     '    <div style="margin-top: 50px; font-family: Noto Sans; color: #35b19c;">For help or feedback, contact us at info@getbalu.org</div>';
 
     // Close down the Getting Started tab
-    lvHtml +=     '        </div>'; // Getting Started tab content
+    lvHtml +=     '  </div>'; // Getting Started tab content
 
     // Settings tab content
+
     if(pvTabName === 'settings') {
-        lvHtml += '        <div class="content active top-tab" id="settings">';
+        lvHtml += '  <div class="tabs-panel is-active" id="settings">';
     } else {
-        lvHtml += '        <div class="content top-tab" id="settings">';
+        lvHtml += '  <div class="tabs-panel" id="settings">';
     }
     // Title
-    lvHtml +=     '          <h3 class="subheader" style="margin-bottom: 30px">Edit your Balu settings</h3>';
+    lvHtml +=     '    <h3 style="margin-bottom: 30px; color: #35b19c;">Edit your Balu settings</h3>';
 
     if(pvUserDetails.isUserLoggedIn) {
 
         // Log out button
-        lvHtml += '           <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <h3>Account</h3>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '  <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <h3>Account</h3>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <p>You\'re logged in as ' + pvUserDetails.email + '</p>';
-        lvHtml += '              <p>Don\'t worry, all our logging and analytics is anonymous</p>';
-        lvHtml += '              <a id="logOutButton" class="button radius tiny" style="background-color: #6bd3c2;">Log Out</a>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <p>You\'re logged in as ' + pvUserDetails.email + '</p>';
+        lvHtml += '        <p>Don\'t worry, all our logging and analytics is anonymous</p>';
+        lvHtml += '        <a id="logOutButton" class="button radius tiny" style="background-color: #6bd3c2;">Log Out</a>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
         // Sidebar show/hide
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <h3>Default sidebar behaviour</h3>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <h3>Default sidebar behaviour</h3>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <input type="radio" name="defaultShowOption" id="alwaysShow" value="alwaysShow"><label for="alwaysShow">Always open sidebar when Balu has recommendations available</label>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <input type="radio" name="defaultShowOption" id="alwaysShow" value="alwaysShow"><label for="alwaysShow">Always open sidebar when Balu has recommendations available</label>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <input type="radio" name="defaultShowOption" id="alwaysHide" value="alwaysHide"><label for="alwaysHide">Keep sidebar hidden, display recommendation count on Balu icon instead</label>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <input type="radio" name="defaultShowOption" id="alwaysHide" value="alwaysHide"><label for="alwaysHide">Keep sidebar hidden, display recommendation count on Balu icon instead</label>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
         // Balu on/off
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <h3>Turn Balu on or off</h3>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <h3>Turn Balu on or off</h3>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <input type="radio" name="turnBaluOnAndOff" id="baluOn" value="on"><label for="baluOn">Balu is active and will alert you when it has recommendations available</label>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <input type="radio" name="turnBaluOnAndOff" id="baluOn" value="on"><label for="baluOn">Balu is active and will alert you when it has recommendations available</label>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-8 columns end">';
-        lvHtml += '              <input type="radio" name="turnBaluOnAndOff" id="baluOff" value="off"><label for="baluOff">Balu is off - no recommendations will be shown for any websites</label>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-8 cell end">';
+        lvHtml += '        <input type="radio" name="turnBaluOnAndOff" id="baluOff" value="off"><label for="baluOff">Balu is off - no recommendations will be shown for any websites</label>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
 
+        // Joyride lost in foundation 6 :(
+        /*
+        // Joyride
         if(!chrome.extension.getBackgroundPage().gvShowJoyride) {
+            lvHtml += '<div class="grid-x grid-padding-x top-tab-thin">';
+            lvHtml += '  <div class="small-12 cell end">';
+            lvHtml += '    <h3>Reactivate the Balu sidebar tour</h3>';
+            lvHtml += '  </div>';
+            lvHtml += '</div>';
 
-            // Reactivate Joyride
-
-            lvHtml += '      <div class="row content top-tab-thin">';
-            lvHtml += '        <div class="small-12 columns end">';
-            lvHtml += '          <h3>Reactivate the Balu sidebar tour</h3>';
-            lvHtml += '        </div>';
-            lvHtml += '      </div>';
-
-            lvHtml += '      <div class="row content top-tab-thin">';
-            lvHtml += '        <div class="small-12 columns end">';
-            lvHtml += '          <a id="reactivateJoyRide_button" class="button radius tiny" style="background-color: #6bd3c2;">Reactivate</a>';
-            lvHtml += '        </div>';
-            lvHtml += '      </div>';
+            lvHtml += '<div class="grid-x grid-padding-x top-tab-thin">';
+            lvHtml += '  <div class="small-12 cell end">';
+            lvHtml += '    <a id="reactivateJoyRide_button" class="button radius tiny" style="background-color: #6bd3c2;">Reactivate</a>';
+            lvHtml += '  </div>';
+            lvHtml += '</div>';
         }
+        */
     } else { // if user is not logged in
-        lvHtml += '          <div class="row content top-tab-thin">';
-        lvHtml += '            <div class="small-12 columns end">';
-        lvHtml += '              <h5>Log in on the Getting Started tab to change your settings</h5>';
-        lvHtml += '            </div>';
-        lvHtml += '          </div>';
+        lvHtml += '    <div class="grid-x grid-padding-x top-tab-thin">';
+        lvHtml += '      <div class="small-12 cell end">';
+        lvHtml += '        <h5>Log in on the Getting Started tab to change your settings</h5>';
+        lvHtml += '      </div>';
+        lvHtml += '    </div>';
     }
 
     // Some text at the bottom of the tab panel
-    lvHtml +=     '          <div style="margin-top: 50px; font-family: Noto Sans; color: #35b19c;">For help or feedback, contact us at info@getbalu.org</div>';
+    lvHtml +=     '    <div style="margin-top: 50px; font-family: Noto Sans; color: #35b19c;">For help or feedback, contact us at info@getbalu.org</div>';
 
     // Close down the settings tab content
-    lvHtml +=     '        </div>'; // Settings tab content
+    lvHtml +=     '  </div>'; // Settings tab content
 
     // Close down the tab content
-    lvHtml +=     '      </div>'; // Tab content (all tabs)
+    lvHtml +=     '</div>'; // Tab content (all tabs)
 
-    // Close down the tab structure (div/div/section)
-    lvHtml +=     '    </div>';
-    lvHtml +=     '  </div>';
-    lvHtml +=     '</section>';
+    // Close down outer page structure
+
+    lvHtml += '  </div>';
+    lvHtml += '</div>';
 
     // Append to DOM
     var lvContentDiv = document.getElementById('contentDiv');
     lvContentDiv.innerHTML = lvHtml;
+
+    // init foundation
     $(document).foundation();
-    $(document).foundation('tab', 'reflow');
+    // We need to do this extra thing for the selected tab - don't know why. New version of foundation... ??
+    if(pvTabName === 'start' || pvTabName === 'start-from-install') {
+        $('#main-tabs').foundation('selectTab', 'start');
+    } else if(pvTabName === 'settings') {
+        $('#main-tabs').foundation('selectTab', 'settings');
+    }
+    if(!pvUserDetails.isUserLoggedIn) {
+        if(pvTabName === 'start-from-install') {
+            $('#login-tabs').foundation('selectTab', 'panelRegister');
+        } else {
+            $('#login-tabs').foundation('selectTab', 'panelLogin');
+        }
+    }
 
     // Append website list to DOM
     var lvWebsiteListHmtl = '';
@@ -406,9 +456,12 @@ function createOptionsPage(pvTabName,pvUserDetails){
         document.getElementById("baluOn").addEventListener('click', baluOnOrOff_listener);
         document.getElementById("baluOff").addEventListener('click', baluOnOrOff_listener);
 
+        // Joyride lost in foundation 6 :(
+        /*
         if(!chrome.extension.getBackgroundPage().gvShowJoyride){
             document.getElementById('reactivateJoyRide_button').addEventListener('click', reactivateJoyRide_listener);
         }
+        */
 
         // Set radio buttons
         chrome.storage.sync.get('isBaluOnOrOff',function (obj) {
@@ -435,67 +488,6 @@ function createOptionsPage(pvTabName,pvUserDetails){
         document.getElementById("fieldSignUpPasswordConfirm").addEventListener('keydown', signUpPasswordField_keydown_listener);
     }
 }
-
-    /*
-    if(userDetails.isUserLoggedIn) {
-
-        // Blocked Brands
-
-        var blockedBrandsHTML = '';
-
-        var UserBlockedBrand = Parse.Object.extend("UserBlockedBrand");
-        var userBlockedBrandQuery = new Parse.Query(UserBlockedBrand);
-
-        userBlockedBrandQuery.include('ethicalBrand');
-        userBlockedBrandQuery.ascending('createdAt');
-
-        userBlockedBrandQuery.find({
-            success: function(userBlockedBrands){
-
-                blockedBrandsHTML += '<div class="row">';
-                blockedBrandsHTML += '  <div class="large-4 columns end">';
-                blockedBrandsHTML += '    <h4>Blocked Brands</h4>';
-
-                if(userBlockedBrands.length === 0){
-
-                    blockedBrandsHTML += '<ul><li>You have no blocked brands</li></ul>';
-
-                    blockedBrandsHTML += '  </div>';
-                    blockedBrandsHTML += '</div>';
-
-                    blockedBrandsHTML += '<br />';
-
-                } else {
-                    blockedBrandsHTML += '    <span>You have blocked the following brands from appearing in your sidebar. To unblock them again, just click the tick next to the brand name.</span>';
-                    blockedBrandsHTML += '  </div>';
-                    blockedBrandsHTML += '</div>';
-
-                    blockedBrandsHTML += '<div class="row">';
-                    blockedBrandsHTML += '  <div class="large-12 columns end">';
-                    blockedBrandsHTML += '    <ul>';
-                    for (var j = 0; j < userBlockedBrands.length; j++) {
-                        blockedBrandsHTML += '    <li><label>' + userBlockedBrands[j].get('ethicalBrand').get('brandName') + '  <a class="unBlockBrandTick_icons" data-brandid="' + userBlockedBrands[j].get('ethicalBrand').id + '"><i class="fi-check unBlockBrandTickIcon"></i></a></label>';
-                    }
-                    blockedBrandsHTML += '    </ul>';
-
-                    blockedBrandsHTML += '  </div>';
-                    blockedBrandsHTML += '</div>';
-                }
-                // Add to DOM
-                blockedBrandsDiv.innerHTML = blockedBrandsHTML;
-                var unBlockBrandTick_icons = document.getElementsByClassName('unBlockBrandTick_icons');
-                for(x=0; x<unBlockBrandTick_icons.length; x++){
-                    unBlockBrandTick_icons[x].addEventListener('click',unBlockBrandTick_listener);
-                }
-
-            },
-            error: chrome.extension.getBackgroundPage().parseErrorFind
-        });
-
-
-    }
-    */
-
 
 /**********************
  * Listener Functions *

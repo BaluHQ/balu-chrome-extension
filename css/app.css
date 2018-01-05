@@ -235,6 +235,8 @@
     background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
 }
 
+
+
 .userSubmittedRecBody {
   margin-left: 20px;
   margin-right: 20px;
@@ -374,7 +376,6 @@
 }
 
 .altText-top {
-    padding-left: 5px;
     padding-right: 15px;
 }
 
@@ -504,57 +505,34 @@
     width: 120px
 }
 
-
 /**************************************************************************
  * This next section is taken from Zurb, for the tabs on the options page * http://zurb.com/building-blocks/dashboard-control-tabs
  **************************************************************************/
-.secondary-tabs {
-    margin-top: 40px;
-}
-.secondary-tabs .tabs.top-tab {
-  text-align: center; }
-  .secondary-tabs .tabs.top-tab i {
-    font-size: 1.5rem;
-    margin-right: 1rem; }
-  .secondary-tabs .tabs.top-tab li {
-    width: 25%;}
-    .secondary-tabs .tabs.top-tab li:hover {
-      font-weight: bolder; }
-  .secondary-tabs .tabs.top-tab .tab-title > a {
-    background-color: #ffffff;
-    font-family: Noto Sans;
-    outline: none;
-    font-size: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-    color: #35b19c;  /* Darker than Balu Green */}
-.secondary-tabs .tabs-content.top-tab {
-  border: 1px solid #999;
-  border-top: none;
-  background-color: #f2f2f2; /* very light grey */
-  background-image: url("../images/extension_background_image_20.png"); /* 20% opacity */
-}
-.secondary-tabs .tabs-content.top-tab h3 {
-    font-family: Noto Sans;
-    color: #35b19c;  /* Darker than Balu Green */}
 
-.secondary-tabs .tabs-content.top-tab div.content.top-tab-thin {
-  margin-left: 2.7rem;
-}
-.secondary-tabs .tabs-content.top-tab div.content.top-tab {
-  margin-left: 2.7rem;
-  margin-top: 1rem;
-}
+ /* override foundation tabs style */
+.custom.tabs > .tabs-title > a:focus, .custom.tabs > .tabs-title > a[aria-selected='true'], .custom.tabs > .tabs-title > a[aria-selected='false'] {
+     background-color: #ffffff;
+     font-family: Noto Sans;
+     outline: none;
+     font-size: 1.5rem;
+     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+     padding-bottom: 1rem;
+     padding-top: 1rem;
+     color: #35b19c;
+ }
+ li.custom.tabs-title {
+     width: 50%;
+     text-align: center;
+ }
 
-  .secondary-tabs .tabs-content.top-tab h5 {
-    color: #e74c3c;
-    margin-left: 2.7rem; }
-  .secondary-tabs .tabs-content.top-tab p {
-    margin-bottom: 0.2rem; }
-  .secondary-tabs .tabs-content.top-tab .switch {
-    margin-bottom: 1rem; }
+ .custom.tabs-content {
+     background-color: #f2f2f2;
+     background-image: url("../images/extension_background_image_20.png"); /* 20% opacit */
+ }
 
+.tabs-content > h3 {
+    color: #35b19c;
+}
 /* These are from the log-in-form example, http://www.codeply.com/go/1eK1ltMYAx */
 .tabs {
     display: -webkit-flex;
@@ -576,6 +554,7 @@
     text-align: center;
     overflow: hidden;
 }
+
 /* */
 .number-images {
     width: 100px;

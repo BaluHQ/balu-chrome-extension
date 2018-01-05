@@ -18,7 +18,6 @@ var gvScriptName_IFMain = 'IF_main';
     // Listen for messages from the content script
     window.addEventListener("message", contentScriptMessage_listener, false);
 
-    sendMessage('CS_main','pleaseRegisterIframeAsReady',{});
 })();
 
 /*************

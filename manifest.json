@@ -1,6 +1,6 @@
 {
 
-    "version":          "4.10",
+    "version":          "4.12",
     "manifest_version": 2,
     "name":             "Balu (Beta)",
     "options_page":     "options.html",
@@ -45,10 +45,10 @@
 
         "js/externalJS/jquery-3.2.1.min.js",
         "js/externalJS/jquery.qtip.min.js",
-        "js/externalJS/vendor/modernizr.js",
-        "js/externalJS/vendor/fastclick.js",
+        "js/externalJS/modernizr.js",
+        "js/externalJS/fastclick.js",
         "js/externalJS/foundation.min.js",
-        "css/foundation.css",
+        "css/foundation.min.css",
         "css/app.css",
         "css/foundation-icons.css",
         "css/foundation-icons.woff",

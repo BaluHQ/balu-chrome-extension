@@ -131,7 +131,7 @@ function searchPage_master(pvArgs){
     // matches the user's current URL, we're going to pass it through to getElements, to pull data
     // off the page and search it for the searchProducts we just passed through.
 
-    // If we find a match, we add the matchign searchProduct to a searchResults array and pass
+    // If we find a match, we add the matching searchProduct to a searchResults array and pass
     // that on to the getRecs functions
     var lvArgs = {tabURL: pvArgs.tab.tab.url,
                   websiteURL: pvArgs.tab.website.websiteURL,
@@ -743,7 +743,6 @@ function getElements(pvArgs) {
 
                 if(asos_bc !== null){
                     lvBreadcrumbs = asos_bc.textContent.toLowerCase().trim();
-                    console.log(lvBreadcrumbs);
                     logMessage_extra += '  Breadcrumbs: found in id="chrome-breadcrumb" or id="breadcrumb"' + '\n';
                     lvFoundBreadcrumbs = true;
                 }
@@ -2306,11 +2305,13 @@ function getElements(pvArgs) {
                                 sexOverride:  sexOverride};
 
             if(runSexSearch) {
+                // Calls sexSearch(), which in turn calls productSearch
                 sexSearchCallback(pageElements,websiteURL,productSearchCallback,searchData,logMessage, departmentOverride, pvArgs.websiteSearchResults);
             } else {
+                // Calls productSearch()
                 productSearchCallback(pageElements,websiteURL,searchData,logMessage, departmentOverride, pvArgs.websiteSearchResults);
             }
-        } else { // if we havne't found every page element we need
+        } else { // if we haven't found every page element we need
             log(gvScriptName_CSSearch + '.getElements: Failed to pull expected elements from the pvDOM on websiteURL == ' + websiteURL,'ERROR');
             // No need to call our search functions, just return no search results (although there might be websiteSearchResults)
             logMessage += '\n' + 'FAILED to pull any productNames from pvDOM elements, skipping search and returning no results' + '\n';
@@ -2463,6 +2464,7 @@ function sexSearch(pageElements, websiteURL, productSearchCallback, searchData, 
      pageElements.foundMen = foundMen;
      pageElements.foundWomen = foundWomen;
 
+     // Call productSearch
      productSearchCallback(pageElements,websiteURL,searchData,logMessage, departmentOverride, pvWebsiteSearchResults);
 }
 
