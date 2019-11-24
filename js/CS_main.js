@@ -254,14 +254,14 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
         topRow += '      <a href="' + chrome.extension.getURL("options.html") + '#settings" target="_blank"><i id="settingsCog_icon" class="fi-widget settingsCogIcon"></i></a>';
         topRow += '    </div>';
         topRow += '  </div>'; // Top row
-        topRow += '  <div class="grid-x grid-padding-x sidebar_searchBarRow">';
-        topRow += '    <div class="small-12 cell text-center manualSearchDiv">';
-        topRow += '      <div class="manualSearchDiv" id="joyrideStop4">';
-        topRow += '        <i id="manualSearchSubmit_icon" class="fi-magnifying-glass manualSearchIcon"></i>';
-        topRow += '        <input id="fieldManualSearch" ' + searchTermString + ' class="manualSearchField" />';
-        topRow += '      </div>';
-        topRow += '    </div>';
-        topRow += '  </div>';
+        // topRow += '  <div class="grid-x grid-padding-x sidebar_searchBarRow">';
+        // topRow += '    <div class="small-12 cell text-center manualSearchDiv">';
+        // topRow += '      <div class="manualSearchDiv" id="joyrideStop4">';
+        // topRow += '        <i id="manualSearchSubmit_icon" class="fi-magnifying-glass manualSearchIcon"></i>';
+        // topRow += '        <input id="fieldManualSearch" ' + searchTermString + ' class="manualSearchField" />';
+        // topRow += '      </div>';
+        // topRow += '    </div>';
+        // topRow += '  </div>';
         topRow += '</div>';
         topRow += '</form>';
 
@@ -388,8 +388,8 @@ function createSidebarTemplate(thenCreateSidebarContent,recommendationData, sear
     // All listeners for clickable items in the template. These listeners all call back to CS_main
 
     if(showTopRow){
-        gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
-        gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
+        //gvIframe.contentWindow.document.getElementById('fieldManualSearch').addEventListener('keydown',manualSearchSubmit_keydown_listener);
+        //gvIframe.contentWindow.document.getElementById('manualSearchSubmit_icon').addEventListener('click',manualSearchSubmit_listener);
         //gvIframe.contentWindow.document.getElementById('showOptionsPageWindow_icon').addEventListener('click',showOptionsPageWindow_listener);
         //gvIframe.contentWindow.document.getElementById('showUserSubmittedRecWindow_icon').addEventListener('click',showUserSubmittedRecWindow_listener);
     }
@@ -491,107 +491,27 @@ function createResultsSidebarContent(recommendations,showJoyride,callback,search
     var lvSidebarContentHTML = '';
 
     // Vars to control the flow through the ProductGroup loop
-    var firstInProductGroup = true;
-    var prevProductGroupId = "";
-    var thisProductGroupId = "";
 
-    if(!recommendations || recommendations.length === 0) {
-        lvSidebarContentHTML += '<div class="origProductBlock">';
-        lvSidebarContentHTML += '  <p class="sideBarFreeText">We couldn\'t find anything. Try making your search term simpler - For example, "shoes" would be better than "men\'s shoes"</p>';
-        lvSidebarContentHTML += '  <p class="sideBarFreeText"><b>Think we\'re missing something? <a class="showUserSubmittedRecWindow_text">Tell us about it!</a></b></p>';
-        lvSidebarContentHTML += '</div>';
-    }
+    lvSidebarContentHTML += '<div class="altProductsBlock">';
+    lvSidebarContentHTML += '  <div class="grid-x grid-padding-x collapse altProductBlock productLinks">';
 
-    for (var i = 0; i < recommendations.length; i++) {
+    lvSidebarContentHTML += '<b>Balu is shutting down!</b><br />';
+    lvSidebarContentHTML += 'Thank you SO MUCH for using Balu.<br /><br />';
+    lvSidebarContentHTML += 'Sadly, Balu is no more.<br /><br />';
+    lvSidebarContentHTML += 'In 2019 we joined forces with CoGo, an incredible app doing the same thing as Balu - but better :)<br /><br  />';
+    lvSidebarContentHTML += 'And so we made the difficult decision to close Balu down - allowing us to focus solely on CoGo<br /><br  />';
+    lvSidebarContentHTML += 'Read more about our decision <a href="http://www.getbalu.org/goodbye-balu/" target="_blank">here</a> <br />';
+    lvSidebarContentHTML += 'If you have enjoyed using Balu we strongly recommend you check out <a href="https://cogo-uk.app.link/aR5CmqdgS1" target="_blank">CoGo</a><br /><br />';
+    lvSidebarContentHTML += '</div>';
+    lvSidebarContentHTML += '</div>';
 
-        // Set our vars to control flow through the loop
-        thisProductGroupId  = recommendations[i].productGroupId;
-        if (prevProductGroupId != thisProductGroupId) {
-            firstInProductGroup = true;
-        }
-
-        // For the first recommendation in a new ProductGroup, set up a new ProductGroup section header
-        if (firstInProductGroup) {
-            firstInProductGroup = false;
-            lvSidebarContentHTML += '<div class="origProductBlock">';
-            lvSidebarContentHTML += '  <div class="grid-x grid-padding-x origProductHeaderStrip">';
-            lvSidebarContentHTML += '    <div class="small-8 cell origProductHeaderStripText">' + recommendations[i].sectionTitle + '</div>';
-            lvSidebarContentHTML += '  </div>';
-            lvSidebarContentHTML += '</div>';
-        }
-/*
-        // Before starting the recommendation block, let's build our twitter content for this recommendation
-        var tweetContent =  'Just%20discovered%20' + recommendations[i].productName + '%20from%20';
-        if(recommendations[i].twitterHandle){
-            tweetContent += recommendations[i].twitterHandle;
-        } else {
-            tweetContent += recommendations[i].brandName;
-        }
-        tweetContent += '%20-%20found%20with%20%40BaluHQ. ' + recommendations[i].productURL + '%20%23ShopWithoutTheSideEffects';
-*/
-
-        // If we're in manual search, make it clear in the products links so we can log it
-        var searchTermHTML = '';
-        if(searchTerm){
-            searchTermHTML = 'data-fromsearch="true"';
-        }
-
-        lvSidebarContentHTML += '<div class="altProductsBlock">';
-        lvSidebarContentHTML += '  <div class="grid-x grid-padding-x collapse altProductBlock productLinks" data-url="' + recommendations[i].productURL + '" data-recid="' + recommendations[i].recommendationId + '" data-productname="' + recommendations[i].productName + '" data-pageconfirmationsearch="' + recommendations[i].pageConfirmationSearch + '" ' + searchTermHTML + '>';
-        lvSidebarContentHTML += '    <div class="small-5 cell">';
-        lvSidebarContentHTML += '      <div class="grid-x grid-padding-x text-center">';
-        lvSidebarContentHTML += '        <img class="altImage" src="' + recommendations[i].imageURL + '" />';
-        lvSidebarContentHTML += '      </div>';
-        lvSidebarContentHTML += '    </div>';
-        lvSidebarContentHTML += '    <div class="small-7 cell altText">';
-        lvSidebarContentHTML += '      <div class="altText-top">';
-        if(recommendations[i].baluFavourite){
-            lvSidebarContentHTML += '    <i class="fi-star" class="baluFavourite" title="Balu Favourite"></i>';
-        }
-        lvSidebarContentHTML += '          <span class="altProductBrandName">' + recommendations[i].brandName + '</span>';
-        //if(recommendations[i].productGroupName !== recommendations[i].productName){
-            lvSidebarContentHTML += '<br /><span class="altProductProductName">' + recommendations[i].productName + '</span>';
-        //}
-        lvSidebarContentHTML += '      </div>';
-        lvSidebarContentHTML += '      <div style="position: absolute; top: 5px; right: 5px;">';
-        lvSidebarContentHTML += '        <div class="qtip_tooltips">';
-        lvSidebarContentHTML += '          <i class="fi-info brandSpielIcon" id="joyrideStop1"></i>';
-        lvSidebarContentHTML += '        </div>';
-        lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="' + recommendations[i].brandName + '">' + recommendations[i].brandSpiel + '</div>';
-        lvSidebarContentHTML += '        <div>';
-        lvSidebarContentHTML += '          <a class="blockBrand_icons" id="blockBrand_icon_' + recommendations[i].recommendationId + '" data-recid="' + recommendations[i].recommendationId + '" data-brandname="' + recommendations[i].brandName + '" data-brandid="' + recommendations[i].brandId + '" data-productname="' + recommendations[i].productName + '"><i id="joyrideStop2" class="fi-x-circle blockedBrand_notBlocked" id="blockBrand_' + recommendations[i].recommendationId + '"></i></a>';
-        lvSidebarContentHTML += '        </div>';
-        lvSidebarContentHTML += '        <div style="position: fixed" class="brandSpielHidden" data-qtiptitle="Block brand: ' + recommendations[i].brandName + '">I don\'t want to see recommendations from this brand again</div>';
-        lvSidebarContentHTML += '      </div>';
-        lvSidebarContentHTML += '      <div class="altText-bottom findOutMoreButton">Find Out More</div>';
-        lvSidebarContentHTML += '    </div>';
-        lvSidebarContentHTML += '  </div>';
-        lvSidebarContentHTML += '</div>';
-
-        // Set our variables to control flow through the loop
-        prevProductGroupId = thisProductGroupId;
-
-    } // end of recommendations loop
+    lvSidebarContentHTML += '<div class="altProductsBlock">';
+    lvSidebarContentHTML += '  <div class="grid-x grid-padding-x collapse altProductBlock productLinks" style="font-size: large; color: #6bd3c2; font-family: Noto Sans; text-transform: uppercase">';
+    lvSidebarContentHTML += '<a href="https://cogo-uk.app.link/aR5CmqdgS1" target="_blank">Get CoGo</a>';
+    lvSidebarContentHTML += '</div>';
+    lvSidebarContentHTML += '</div>';
 
     gvIframe.contentWindow.document.getElementById("contentDiv").innerHTML = lvSidebarContentHTML;
-
-    // Product link listeners
-    var productLinks = gvIframe.contentWindow.document.getElementsByClassName("productLinks");
-    for(var x = 0; x < productLinks.length; x++) {
-        productLinks[x].addEventListener('click',showProductLinkWindow_listener);
-    }
-
-    // Block brand listeners
-    var blockBrandIcons = gvIframe.contentWindow.document.getElementsByClassName("blockBrand_icons");
-    for(var u = 0; u < blockBrandIcons.length; u++) {
-        blockBrandIcons[u].addEventListener('click',blockBrand_listener);
-    }
-
-    // User submitted rec link listeners
-    var userSubRecLinks = gvIframe.contentWindow.document.getElementsByClassName("showUserSubmittedRecWindow_text");
-    for(var w = 0; w < userSubRecLinks.length; w++) {
-        userSubRecLinks[w].addEventListener('click',showUserSubmittedRecWindow_listener);
-    }
 
     callback(showJoyride); // will add the final scripts to the bottom of the body.
 
